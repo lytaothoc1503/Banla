@@ -1,20 +1,58 @@
-// Smooth scroll for anchor links
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-  anchor.addEventListener('click', function (e) {
-    e.preventDefault();
-    const target = document.querySelector(this.getAttribute('href'));
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+// Mobile menu
+const menuToggle = document.querySelector('.menu-toggle');
+const navLinks = document.querySelector('#navLinks');
+
+if (menuToggle && navLinks) {
+  menuToggle.addEventListener('click', () => {
+    navLinks.classList.toggle('open');
   });
+
+  navLinks.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      navLinks.classList.remove('open');
+    });
+  });
+}
+
+// Header scroll effect
+const header = document.querySelector('#header');
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 40) {
+    header.classList.add('scrolled');
+  } else {
+    header.classList.remove('scrolled');
+  }
 });
 
-// Header background on scroll
-const header = document.querySelector('.header');
-window.addEventListener('scroll', () => {
-  if (window.scrollY > 50) {
-    header.style.boxShadow = '0 2px 20px rgba(61, 43, 31, 0.08)';
-  } else {
-    header.style.boxShadow = 'none';
-  }
+// Booking form
+const form = document.querySelector('#bookingForm');
+if (form) {
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const btn = form.querySelector('button');
+    const originalText = btn.textContent;
+    btn.textContent = 'Đã gửi ✓';
+    btn.disabled = true;
+    setTimeout(() => {
+      alert('Cảm ơn bạn! Banla sẽ liên hệ xác nhận trong thời gian sớm nhất.');
+      form.reset();
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }, 400);
+  });
+}
+
+// Smooth scroll offset for fixed header
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function (e) {
+    const targetId = this.getAttribute('href');
+    if (targetId === '#') return;
+    const target = document.querySelector(targetId);
+    if (target) {
+      e.preventDefault();
+      const headerHeight = document.querySelector('.header').offsetHeight;
+      const top = target.getBoundingClientRect().top + window.pageYOffset - headerHeight - 10;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
+  });
 });
