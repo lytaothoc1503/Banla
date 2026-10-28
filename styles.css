@@ -455,3 +455,43 @@ body {
   .hero { padding-top: 120px; }
   .section { padding: 72px 0; }
 }
+
+/* Gallery */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.gallery-item {
+  height: 220px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #c9b8a0, #a89070);
+}
+.g1 { background: linear-gradient(135deg, #d4c4b0, #b89a78); }
+.g2 { background: linear-gradient(160deg, #5c3a21, #8b5e3c); }
+.g3 { background: linear-gradient(135deg, #e0d0bc, #c4a882); }
+.g4 { background: linear-gradient(135deg, #c8b49a, #a07858); }
+.g5 { background: linear-gradient(180deg, #f3ebe3, #d4c0a8); }
+.g6 { background: linear-gradient(135deg, #8b5e3c, #c4a882); }
+
+.room-4 { background: linear-gradient(135deg, #b89a78, #8b6b4a); }
+
+.booking-form select {
+  width: 100%;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  border: 1px solid #e5d9cc;
+  border-radius: 10px;
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  background: var(--bg);
+  color: var(--text);
+}
+
+@media (max-width: 860px) {
+  .gallery-grid { grid-template-columns: 1fr 1fr; }
+  .gallery-item { height: 160px; }
+}
+@media (max-width: 480px) {
+  .gallery-grid { grid-template-columns: 1fr; }
+}
