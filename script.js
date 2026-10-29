@@ -44,7 +44,8 @@ if (form) {
       checkin: form.querySelector('[name="checkin"]')?.value || '',
       checkout: form.querySelector('[name="checkout"]')?.value || '',
       room: form.querySelector('[name="room"]')?.value || '',
-      message: form.querySelector('[name="message"]')?.value || ''
+      guests: form.querySelector('[name="guests"]')?.value || '',
+      message: form.querySelector('[name="message"]')?.value || form.querySelector('[name="note"]')?.value || ''
     };
 
     try {
@@ -55,11 +56,12 @@ if (form) {
       });
       const result = await res.json();
       alert(result.message || 'Cảm ơn bạn! Banla sẽ liên hệ sớm.');
+      if (res.ok) form.reset();
     } catch {
-      alert('Cảm ơn bạn! Banla sẽ liên hệ xác nhận trong thời gian sớm nhất.');
+      // Bản tĩnh (GitHub Pages) không có API
+      alert('Hiện chưa gửi được yêu cầu trực tuyến. Vui lòng liên hệ Banla qua điện thoại tel:0965999999 hoặc Zalo https://zalo.me/0965999999 để đặt phòng.');
     }
 
-    form.reset();
     btn.textContent = originalText;
     btn.disabled = false;
   });
