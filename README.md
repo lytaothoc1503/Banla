@@ -12,11 +12,11 @@ Nguồn sự thật giao diện: [`DESIGN.md`](DESIGN.md).
 
 | File | Mô tả |
 |------|--------|
-| `index.html` | Trang chủ (hero, slider 7 phòng, The Roof, gallery, contact) |
+| `index.html` | Trang chủ (hero full-bleed, slider 7 phòng, The Roof, gallery, contact) |
 | `room.html` | Trang chi tiết phòng động |
 | `rooms.json` | Dữ liệu 7 phòng |
 | `DESIGN.md` | Design system — khóa màu + typography (2 tử huyệt) |
-| `styles.css` | Highland mist + ember, responsive |
+| `styles.css` | Highland mist + ember, responsive, ảnh phòng |
 | `script.js` | Slider, lightbox, form, Anime.js motion |
 | `vendor/anime.umd.min.js` | Anime.js v4 (local) |
 | `server.js` | Express API `/api/rooms`, `/api/booking` |
