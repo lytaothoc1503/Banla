@@ -1,7 +1,8 @@
 # Banla Boutique Hotel — Website
 
 Website chính thức cho Banla Boutique Hotel Đà Lạt.  
-Phong cách boutique ấm áp, tinh tế — “Ngoài lạnh. Trong ấm.”
+Phong cách boutique — highland mist + ember — “Ngoài lạnh. Trong ấm.”  
+Nguồn sự thật giao diện: [`DESIGN.md`](DESIGN.md).
 
 ## Trạng thái
 
@@ -14,8 +15,10 @@ Phong cách boutique ấm áp, tinh tế — “Ngoài lạnh. Trong ấm.”
 | `index.html` | Trang chủ (hero, slider 7 phòng, The Roof, gallery, contact) |
 | `room.html` | Trang chi tiết phòng động |
 | `rooms.json` | Dữ liệu 7 phòng |
-| `styles.css` | Giao diện terracotta, responsive, ảnh phòng |
-| `script.js` | Slider, lightbox, form, menu |
+| `DESIGN.md` | Design system — khóa màu + typography (2 tử huyệt) |
+| `styles.css` | Highland mist + ember, responsive |
+| `script.js` | Slider, lightbox, form, Anime.js motion |
+| `vendor/anime.umd.min.js` | Anime.js v4 (local) |
 | `server.js` | Express API `/api/rooms`, `/api/booking` |
 | `sw.js` | Service Worker |
 | `robots.txt`, `sitemap.xml` | SEO |
