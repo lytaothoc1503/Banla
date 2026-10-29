@@ -11,24 +11,27 @@ if (menuToggle && navLinks) {
   navLinks.querySelectorAll('a').forEach(link => {
     link.addEventListener('click', () => {
       navLinks.classList.remove('open');
+      menuToggle.setAttribute('aria-expanded', 'false');
     });
   });
 }
 
 // Header scroll effect
 const header = document.querySelector('#header');
-if (header) {
-  window.addEventListener('scroll', () => {
-    header.classList.toggle('scrolled', window.scrollY > 40);
-  });
-}
+window.addEventListener('scroll', () => {
+  if (!header) return;
+  if (window.scrollY > 40) {
+    header.classList.add('scrolled');
+  } else {
+    header.classList.remove('scrolled');
+  }
+}, { passive: true });
 
-// Booking forms (room list in the select is intentionally unchanged)
+// Booking forms — room options stay as authored on each page
 document.querySelectorAll('form.booking-form').forEach((form) => {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const btn = form.querySelector('button[type="submit"], button');
-    if (!btn) return;
+    const btn = form.querySelector('button');
     const originalText = btn.textContent;
     btn.textContent = 'Đang gửi...';
     btn.disabled = true;
@@ -44,16 +47,6 @@ document.querySelectorAll('form.booking-form').forEach((form) => {
       message: form.querySelector('[name="message"]')?.value || form.querySelector('[name="note"]')?.value || ''
     };
 
-    const staticHost = location.hostname.endsWith('github.io') || location.protocol === 'file:';
-    const offlineNote = 'Hiện chưa gửi được yêu cầu trực tuyến. Vui lòng gọi 02633.633.777 hoặc email sales@banlaboutiquehotel.com.';
-
-    if (staticHost) {
-      alert(offlineNote);
-      btn.textContent = originalText;
-      btn.disabled = false;
-      return;
-    }
-
     try {
       const res = await fetch('/api/booking', {
         method: 'POST',
@@ -64,7 +57,7 @@ document.querySelectorAll('form.booking-form').forEach((form) => {
       alert(result.message || 'Cảm ơn bạn! Banla sẽ liên hệ sớm.');
       if (res.ok) form.reset();
     } catch {
-      alert(offlineNote);
+      alert('Hiện chưa gửi được yêu cầu trực tuyến. Vui lòng liên hệ Banla qua điện thoại tel:0965999999 hoặc Zalo https://zalo.me/0965999999 để đặt phòng.');
     }
 
     btn.textContent = originalText;
@@ -80,34 +73,78 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     const target = document.querySelector(targetId);
     if (target) {
       e.preventDefault();
-      const bar = document.querySelector('.header');
-      const headerHeight = bar ? bar.offsetHeight : 0;
+      const headerHeight = document.querySelector('.header')?.offsetHeight || 72;
       const top = target.getBoundingClientRect().top + window.pageYOffset - headerHeight - 10;
       window.scrollTo({ top, behavior: 'smooth' });
     }
   });
 });
 
-// Soft intersection observer for section reveal (optional enhancement)
-if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-  const revealEls = document.querySelectorAll('.section-header, .feature, .review, .gallery-item, .hotel-card, .deal-card, .dest-card, .post-card');
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.style.opacity = '1';
-        entry.target.style.transform = 'translateY(0)';
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+// --- Anime.js motion (DESIGN.md) ---
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const animeApi = window.anime;
 
-  revealEls.forEach((el) => {
-    el.style.opacity = '0';
-    el.style.transform = 'translateY(20px)';
-    el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-    observer.observe(el);
-  });
+function initMotion() {
+  const revealEls = document.querySelectorAll('.reveal');
+
+  if (reduceMotion || !animeApi || typeof animeApi.animate !== 'function') {
+    revealEls.forEach((el) => el.classList.add('in'));
+    return;
+  }
+
+  const { animate, stagger } = animeApi;
+
+  // 1) Hero entrance — brand → title → sub → CTA
+  const heroTargets = document.querySelectorAll('[data-hero]');
+  if (heroTargets.length) {
+    animate(heroTargets, {
+      opacity: [0, 1],
+      translateY: [28, 0],
+      delay: stagger(120, { start: 180 }),
+      duration: 900,
+      ease: 'out(3)'
+    });
+  }
+
+  // 2) Hero media slow drift
+  const heroMedia = document.querySelector('.hero-media img');
+  if (heroMedia) {
+    animate(heroMedia, {
+      scale: [1.06, 1.12],
+      duration: 14000,
+      ease: 'linear',
+      loop: true,
+      alternate: true
+    });
+  }
+
+  // 3) Scroll reveals
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+        observer.unobserve(el);
+        animate(el, {
+          opacity: [0, 1],
+          translateY: [28, 0],
+          duration: 700,
+          ease: 'out(3)',
+          onComplete: () => el.classList.add('in')
+        });
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+    revealEls.forEach((el) => {
+      el.style.opacity = '0';
+      observer.observe(el);
+    });
+  } else {
+    revealEls.forEach((el) => el.classList.add('in'));
+  }
 }
+
+initMotion();
 
 // Room Slider
 (function() {
@@ -121,7 +158,6 @@ if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-mot
 
   slides.forEach((_, i) => {
     const dot = document.createElement('button');
-    dot.type = 'button';
     dot.setAttribute('aria-label', 'Slide ' + (i + 1));
     if (i === 0) dot.classList.add('active');
     dot.addEventListener('click', () => goTo(i));
@@ -140,7 +176,6 @@ if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-mot
   prevBtn.addEventListener('click', () => goTo(current - 1));
   nextBtn.addEventListener('click', () => goTo(current + 1));
 
-  // Auto-play with visibility check (performance)
   let timer = null;
   function startAuto() {
     if (timer) clearInterval(timer);
@@ -158,7 +193,7 @@ if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-mot
   startAuto();
 })();
 
-// Lightbox for room slider and gallery
+// Lightbox reads the real <img> alt and src
 (function() {
   const lightbox = document.getElementById('lightbox');
   if (!lightbox) return;
@@ -167,20 +202,21 @@ if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-mot
   const closeBtn = lightbox.querySelector('.lightbox-close');
   const prevBtn = lightbox.querySelector('.lightbox-prev');
   const nextBtn = lightbox.querySelector('.lightbox-next');
+  if (!imgEl || !closeBtn || !prevBtn || !nextBtn) return;
 
-  const triggers = [];
+  const sources = [];
   document.querySelectorAll('.room-slide-visual, .gallery-item, .roof-visual').forEach((node) => {
     const img = node.querySelector('img');
     if (!img) return;
-    triggers.push({ node, img });
+    sources.push({ img, el: node });
   });
-  if (!triggers.length || !imgEl || !closeBtn || !prevBtn || !nextBtn) return;
+  if (!sources.length) return;
 
   let current = 0;
 
   function open(index) {
-    current = (index + triggers.length) % triggers.length;
-    const source = triggers[current].img;
+    current = (index + sources.length) % sources.length;
+    const source = sources[current].img;
     imgEl.src = source.currentSrc || source.src;
     imgEl.alt = source.alt || 'Banla Boutique Hotel tại Đà Lạt';
     if (source.width) imgEl.width = source.width;
@@ -193,26 +229,27 @@ if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-mot
     lightbox.classList.remove('open');
     document.body.style.overflow = '';
   }
+  function prev() { open(current - 1); }
+  function next() { open(current + 1); }
 
-  triggers.forEach((item, i) => {
-    item.node.style.cursor = 'zoom-in';
-    item.node.addEventListener('click', () => open(i));
+  sources.forEach((src, i) => {
+    src.el.style.cursor = 'zoom-in';
+    src.el.addEventListener('click', () => open(i));
   });
 
   closeBtn.addEventListener('click', close);
-  prevBtn.addEventListener('click', () => open(current - 1));
-  nextBtn.addEventListener('click', () => open(current + 1));
+  prevBtn.addEventListener('click', prev);
+  nextBtn.addEventListener('click', next);
   lightbox.addEventListener('click', (e) => { if (e.target === lightbox) close(); });
   document.addEventListener('keydown', (e) => {
     if (!lightbox.classList.contains('open')) return;
     if (e.key === 'Escape') close();
-    if (e.key === 'ArrowLeft') open(current - 1);
-    if (e.key === 'ArrowRight') open(current + 1);
+    if (e.key === 'ArrowLeft') prev();
+    if (e.key === 'ArrowRight') next();
   });
 })();
 
-
-// Listing filters (progressive enhancement; canonical stays on the clean URL)
+// Listing filters (canonical stays the clean URL)
 (function () {
   const list = document.getElementById('roomList');
   const form = document.getElementById('roomFilters');
@@ -270,17 +307,9 @@ if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-mot
 
   function syncUrl() {
     const params = new URLSearchParams();
-    const data = new FormData(form);
-    data.forEach((value, key) => {
-      if (value) params.set(key, value);
-    });
+    new FormData(form).forEach((value, key) => { if (value) params.set(key, value); });
     const qs = params.toString();
     history.replaceState(null, '', qs ? `${location.pathname}?${qs}` : location.pathname);
-  }
-
-  function schedule() {
-    clearTimeout(timer);
-    timer = setTimeout(() => { apply(); syncUrl(); }, 200);
   }
 
   const initial = new URLSearchParams(location.search);
@@ -290,7 +319,10 @@ if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-mot
   });
 
   form.addEventListener('submit', (e) => { e.preventDefault(); apply(); syncUrl(); });
-  form.addEventListener('input', schedule);
+  form.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => { apply(); syncUrl(); }, 200);
+  });
   form.addEventListener('change', () => { apply(); syncUrl(); });
   apply();
 })();
@@ -321,7 +353,7 @@ if (heroSearch) {
   window.scrollTo({ top, behavior: 'smooth' });
 })();
 
-// Service Worker registration (project Pages lives under /Banla/)
+// Service Worker — project Pages lives under /Banla/
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     const path = location.pathname;

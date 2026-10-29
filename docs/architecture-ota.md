@@ -18,7 +18,7 @@ OTA / form Banla ──POST /api/booking──▶ validate ─▶ data/bookings.
 ```
 
 ## Fallback tĩnh
-Trên GitHub Pages không có API: form hiển thị thông báo liên hệ qua điện thoại/Zalo (placeholder `[SỐ ĐIỆN THOẠI]`).
+Trên GitHub Pages không có API: form hiển thị thông báo liên hệ qua điện thoại tel:0965999999 hoặc Zalo https://zalo.me/0965999999.
 
 ## Việc tiếp theo (đề xuất)
 - Thêm CORS giới hạn domain OTA khi có domain thật.
