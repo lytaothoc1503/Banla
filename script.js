@@ -56,7 +56,7 @@ if (form) {
       if (res.ok) form.reset();
     } catch {
       // Bản tĩnh (GitHub Pages) không có API
-      alert('Hiện chưa gửi được yêu cầu trực tuyến. Vui lòng liên hệ Banla qua điện thoại/Zalo: [SỐ ĐIỆN THOẠI] để đặt phòng.');
+      alert('Hiện chưa gửi được yêu cầu trực tuyến. Vui lòng liên hệ Banla qua điện thoại tel:0965999999 hoặc Zalo https://zalo.me/0965999999 để đặt phòng.');
     }
 
     btn.textContent = originalText;

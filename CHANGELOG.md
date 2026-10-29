@@ -10,4 +10,5 @@
 - `.gitignore` (node_modules, data/bookings.json, .env).
 ### Sửa
 - `script.js`: gửi đúng trường ghi chú (`note`), thêm `guests`; chỉ reset form khi gửi thành công; thông báo rõ khi không gọi được API (bản GitHub Pages) kèm placeholder điện thoại/Zalo.
+- Thay placeholder `[SỐ ĐIỆN THOẠI]` bằng `0965999999` (`tel:0965999999`, `https://zalo.me/0965999999`).
 - `server.js`: export `app` để test, chỉ listen khi chạy trực tiếp.
