@@ -20,6 +20,7 @@ Phong cách boutique ấm áp, tinh tế — “Ngoài lạnh. Trong ấm.”
 | `sw.js` | Service Worker |
 | `robots.txt`, `sitemap.xml` | SEO |
 | `images/` | 7 ảnh phòng thật |
+| `docs/deploy.md` | Hướng dẫn deploy chi tiết |
 
 ## Ảnh phòng
 
@@ -38,6 +39,10 @@ npm install
 npm start
 # http://localhost:3000
 ```
+
+## Deploy
+
+Xem hướng dẫn đầy đủ: [docs/deploy.md](docs/deploy.md)
 
 ## Live
 
