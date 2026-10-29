@@ -58,7 +58,6 @@ if (form) {
       alert(result.message || 'Cảm ơn bạn! Banla sẽ liên hệ sớm.');
       if (res.ok) form.reset();
     } catch {
-      // Bản tĩnh (GitHub Pages) không có API
       alert('Hiện chưa gửi được yêu cầu trực tuyến. Vui lòng liên hệ Banla qua điện thoại tel:0965999999 hoặc Zalo https://zalo.me/0965999999 để đặt phòng.');
     }
 
@@ -82,20 +81,71 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   });
 });
 
-// Section reveal
-if ('IntersectionObserver' in window) {
-  const revealEls = document.querySelectorAll('.reveal');
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('in');
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+// --- Anime.js motion (DESIGN.md) ---
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const animeApi = window.anime;
 
-  revealEls.forEach((el) => observer.observe(el));
+function initMotion() {
+  const revealEls = document.querySelectorAll('.reveal');
+
+  if (reduceMotion || !animeApi || typeof animeApi.animate !== 'function') {
+    revealEls.forEach((el) => el.classList.add('in'));
+    return;
+  }
+
+  const { animate, stagger } = animeApi;
+
+  // 1) Hero entrance — brand → title → sub → CTA
+  const heroTargets = document.querySelectorAll('[data-hero]');
+  if (heroTargets.length) {
+    animate(heroTargets, {
+      opacity: [0, 1],
+      translateY: [28, 0],
+      delay: stagger(120, { start: 180 }),
+      duration: 900,
+      ease: 'out(3)'
+    });
+  }
+
+  // 2) Hero media slow drift
+  const heroMedia = document.querySelector('.hero-media img');
+  if (heroMedia) {
+    animate(heroMedia, {
+      scale: [1.06, 1.12],
+      duration: 14000,
+      ease: 'linear',
+      loop: true,
+      alternate: true
+    });
+  }
+
+  // 3) Scroll reveals
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+        observer.unobserve(el);
+        animate(el, {
+          opacity: [0, 1],
+          translateY: [28, 0],
+          duration: 700,
+          ease: 'out(3)',
+          onComplete: () => el.classList.add('in')
+        });
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+    revealEls.forEach((el) => {
+      el.style.opacity = '0';
+      observer.observe(el);
+    });
+  } else {
+    revealEls.forEach((el) => el.classList.add('in'));
+  }
 }
+
+initMotion();
 
 // Room Slider
 (function() {

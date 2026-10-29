@@ -142,11 +142,7 @@ a { color: inherit; }
   object-fit: cover;
   object-position: center 40%;
   transform: scale(1.08);
-  animation: heroDrift 22s var(--ease) infinite alternate;
-}
-@keyframes heroDrift {
-  from { transform: scale(1.08) translate3d(0, 0, 0); }
-  to { transform: scale(1.14) translate3d(-1.5%, -1%, 0); }
+  will-change: transform;
 }
 .hero-veil {
   position: absolute;
@@ -173,9 +169,6 @@ a { color: inherit; }
   letter-spacing: 0.22em;
   line-height: 0.95;
   margin-bottom: 18px;
-  opacity: 0;
-  transform: translateY(28px);
-  animation: riseIn 1s var(--ease) 0.15s forwards;
 }
 .hero h1 {
   font-family: var(--display);
@@ -185,9 +178,6 @@ a { color: inherit; }
   line-height: 1.25;
   max-width: 16ch;
   margin-bottom: 16px;
-  opacity: 0;
-  transform: translateY(24px);
-  animation: riseIn 1s var(--ease) 0.35s forwards;
 }
 .hero-sub {
   font-size: clamp(1rem, 2vw, 1.15rem);
@@ -195,20 +185,15 @@ a { color: inherit; }
   color: rgba(255, 255, 255, 0.86);
   margin-bottom: 32px;
   font-weight: 400;
-  opacity: 0;
-  transform: translateY(20px);
-  animation: riseIn 1s var(--ease) 0.5s forwards;
 }
 .hero-cta {
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
-  opacity: 0;
-  transform: translateY(16px);
-  animation: riseIn 1s var(--ease) 0.65s forwards;
 }
-@keyframes riseIn {
-  to { opacity: 1; transform: translateY(0); }
+/* Anime.js sets entrance; keep initial hide until JS runs */
+[data-hero] {
+  opacity: 0;
 }
 
 .btn {
@@ -259,8 +244,7 @@ a { color: inherit; }
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.7);
-  opacity: 0;
-  animation: riseIn 1s var(--ease) 1s forwards;
+  opacity: 0.7;
 }
 
 /* Sections */
@@ -709,15 +693,13 @@ a { color: inherit; }
   font-size: 0.85rem;
 }
 
-/* Reveal motion */
+/* Reveal motion — Anime.js drives opacity/transform; .in is final state */
 .reveal {
   opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
 }
 .reveal.in {
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
 }
 
 /* Lightbox */
@@ -865,12 +847,12 @@ a { color: inherit; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-media img { animation: none; transform: scale(1.05); }
+  .hero-media img { transform: scale(1.05); }
+  [data-hero],
   .brand-mark, .hero h1, .hero-sub, .hero-cta, .scroll-cue {
-    animation: none;
-    opacity: 1;
-    transform: none;
+    opacity: 1 !important;
+    transform: none !important;
   }
-  .reveal { opacity: 1; transform: none; transition: none; }
+  .reveal { opacity: 1 !important; transform: none !important; }
   .room-slide.active { animation: none; }
 }

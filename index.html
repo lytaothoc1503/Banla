@@ -114,10 +114,10 @@
       </div>
       <div class="hero-veil" aria-hidden="true"></div>
       <div class="hero-content">
-        <p class="brand-mark">BANLA</p>
-        <h1>Ngoài lạnh. Trong ấm.</h1>
-        <p class="hero-sub">Boutique hotel giữa sương Đà Lạt – nơi chiếc bàn là ủi phẳng cái se lạnh của phố núi.</p>
-        <div class="hero-cta">
+        <p class="brand-mark" data-hero="brand">BANLA</p>
+        <h1 data-hero="title">Ngoài lạnh. Trong ấm.</h1>
+        <p class="hero-sub" data-hero="sub">Boutique hotel giữa sương Đà Lạt – nơi chiếc bàn là ủi phẳng cái se lạnh của phố núi.</p>
+        <div class="hero-cta" data-hero="cta">
           <a href="#rooms" class="btn btn-primary">Khám phá phòng</a>
           <a href="#contact" class="btn btn-ghost">Đặt phòng</a>
         </div>
@@ -383,6 +383,7 @@
           <div class="contact-info reveal">
             <p><strong>Địa chỉ</strong>47 Nguyễn Đình Chiểu, Phường 9, Đà Lạt</p>
             <p><strong>Điện thoại</strong><a href="tel:02633633777">02633.633.777</a></p>
+            <p><strong>Mobile / Zalo</strong><a href="tel:0965999999">0965.999.999</a> · <a href="https://zalo.me/0965999999" target="_blank" rel="noopener">Zalo</a></p>
             <p><strong>Email</strong><a href="mailto:sales@banlaboutiquehotel.com">sales@banlaboutiquehotel.com</a></p>
             <p><strong>Instagram</strong><a href="https://instagram.com/banla.boutiquehotel" target="_blank" rel="noopener">@banla.boutiquehotel</a></p>
             <p><strong>TikTok</strong><a href="https://www.tiktok.com/@banlaboutiquehotel" target="_blank" rel="noopener">@banlaboutiquehotel</a></p>
@@ -410,8 +411,8 @@
               <option>Deluxe Balcony</option>
               <option>Chưa chắc, cần tư vấn</option>
             </select>
-            <input type="number" name="guests" min="1" max="20" placeholder="Số khách">
-            <textarea name="note" placeholder="Ghi chú (số người, yêu cầu đặc biệt...)" rows="3"></textarea>
+            <input type="number" name="guests" min="1" max="20" placeholder="Số khách" aria-label="Số khách">
+            <textarea name="message" placeholder="Ghi chú (yêu cầu đặc biệt...)" rows="3"></textarea>
             <button type="submit" class="btn btn-primary">Gửi yêu cầu</button>
             <p class="form-note">Chúng tôi sẽ liên hệ xác nhận trong thời gian sớm nhất.</p>
           </form>
@@ -436,7 +437,7 @@
       </div>
       <div class="footer-bottom">
         <p>© 2026 Banla Boutique Hotel Đà Lạt. All rights reserved.</p>
-        <p>47 Nguyễn Đình Chiểu, Phường 9, Đà Lạt · 02633.633.777</p>
+        <p>47 Nguyễn Đình Chiểu, Phường 9, Đà Lạt · <a href="tel:0965999999">0965.999.999</a></p>
       </div>
     </div>
   </footer>
@@ -451,6 +452,7 @@
     </div>
   </div>
 
+  <script src="vendor/anime.umd.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
