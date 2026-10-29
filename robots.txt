@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://lytaothoc1503.github.io/Banla/sitemap.xml

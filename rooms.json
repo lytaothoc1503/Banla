@@ -1,0 +1,67 @@
+{
+  "rooms": [
+    {
+      "id": "elite",
+      "name": "Élite Room",
+      "area": "30m²",
+      "capacity": "2 người lớn + 1 trẻ",
+      "description": "Phòng gác mái ấm cúng với trần gỗ tối, giường lớn và góc ngồi riêng. Ánh sáng dịu, bồn tắm và chi tiết nội thất tạo cảm giác như thư phòng nghệ sĩ giữa phố núi.",
+      "image": "images/elite.jpg",
+      "tag": "Gác mái · Ấm cúng"
+    },
+    {
+      "id": "signature",
+      "name": "Banla Signature",
+      "area": "28m²",
+      "capacity": "2 người lớn + 1 trẻ",
+      "description": "Tường xanh olive, trần gỗ và không gian kết nối tinh tế. Phù hợp cho những ai muốn cảm giác ấm, riêng tư và có chút nghệ thuật.",
+      "image": "images/signature.jpg",
+      "tag": "Signature · Nghệ thuật"
+    },
+    {
+      "id": "highland",
+      "name": "Highland Room",
+      "area": "28m²",
+      "capacity": "2 người lớn + 1 trẻ",
+      "description": "Trần gỗ cao với ánh đèn ấm, giường lớn và tầm nhìn thoáng. Không gian mở, cảm giác như đang ở trên cao nguyên.",
+      "image": "images/highland.jpg",
+      "tag": "Hướng núi · Rộng rãi"
+    },
+    {
+      "id": "connecting",
+      "name": "Connecting Room",
+      "area": "35m²",
+      "capacity": "4 người lớn + 1-2 trẻ",
+      "description": "Hai phòng thông nhau, phù hợp gia đình hoặc nhóm bạn. Không gian rộng, giữ đúng tinh thần ấm áp và riêng tư của Banla.",
+      "image": "images/connecting.jpg",
+      "tag": "Gia đình · Thông nhau"
+    },
+    {
+      "id": "twin",
+      "name": "Deluxe Twin",
+      "area": "22m²",
+      "capacity": "2-3 người lớn",
+      "description": "Hai giường đơn êm ái, trần gỗ và cửa sổ nhỏ. Lý tưởng cho bạn bè hoặc gia đình nhỏ muốn nghỉ ngơi thoải mái.",
+      "image": "images/twin.jpg",
+      "tag": "Twin · Thoải mái"
+    },
+    {
+      "id": "suite",
+      "name": "Original Suite",
+      "area": "35m²",
+      "capacity": "2 người lớn + 1 trẻ",
+      "description": "Không gian suite rộng hơn với tường đỏ ấm, giường lớn và góc làm việc. Tầm nhìn đẹp, cảm giác sang trọng nhưng vẫn gần gũi.",
+      "image": "images/suite.jpg",
+      "tag": "Suite · Riêng tư"
+    },
+    {
+      "id": "balcony",
+      "name": "Deluxe Balcony",
+      "area": "20m²",
+      "capacity": "2 người lớn + 1 trẻ",
+      "description": "Ban công nhỏ nhìn ra phố, ánh sáng tự nhiên và nội thất ấm. Nơi lý tưởng để ngồi ngắm sương mù buổi sớm.",
+      "image": "images/balcony.jpg",
+      "tag": "Ban công · Ánh sáng"
+    }
+  ]
+}

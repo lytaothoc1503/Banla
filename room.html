@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chi tiết phòng — Banla Boutique Hotel</title>
+  <meta name="description" content="Xem chi tiết phòng tại Banla Boutique Hotel Đà Lạt.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .room-detail { max-width: 1100px; margin: 100px auto 60px; padding: 0 20px; }
+    .room-detail-hero { height: 480px; background-size: cover; background-position: center; border-radius: var(--radius); margin-bottom: 40px; }
+    .room-detail-info h1 { font-family: var(--serif); font-size: 2.4rem; color: var(--accent-dark); margin-bottom: 12px; }
+    .room-meta { display: flex; gap: 24px; margin: 16px 0 24px; color: var(--text-muted); font-size: 0.95rem; }
+    .room-detail-info p { line-height: 1.8; color: var(--text); margin-bottom: 28px; }
+    .back-link { display: inline-block; margin-bottom: 20px; color: var(--accent); text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <header class="header" id="header">
+    <nav class="nav">
+      <a href="index.html" class="logo">BANLA</a>
+      <ul class="nav-links">
+        <li><a href="index.html#rooms">Phòng nghỉ</a></li>
+        <li><a href="index.html#contact" class="btn-nav">Đặt phòng</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="room-detail">
+    <a href="index.html#rooms" class="back-link">← Quay lại danh sách phòng</a>
+    <div class="room-detail-hero" id="hero"></div>
+    <div class="room-detail-info">
+      <h1 id="name">Đang tải...</h1>
+      <div class="room-meta">
+        <span id="area"></span>
+        <span id="capacity"></span>
+      </div>
+      <p id="description"></p>
+      <span class="room-tag" id="tag"></span>
+      <br><br>
+      <a href="index.html#contact" class="btn btn-primary">Đặt phòng này</a>
+    </div>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    if (!id) { location.href = 'index.html#rooms'; }
+
+    fetch('rooms.json')
+      .then(r => r.json())
+      .then(data => {
+        const room = data.rooms.find(r => r.id === id);
+        if (!room) { location.href = 'index.html#rooms'; return; }
+        document.title = room.name + ' — Banla Boutique Hotel';
+        document.getElementById('hero').style.backgroundImage = `url('${room.image}')`;
+        document.getElementById('name').textContent = room.name;
+        document.getElementById('area').textContent = room.area;
+        document.getElementById('capacity').textContent = room.capacity;
+        document.getElementById('description').textContent = room.description;
+        document.getElementById('tag').textContent = room.tag;
+      })
+      .catch(() => location.href = 'index.html#rooms');
+  </script>
+</body>
+</html>

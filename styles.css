@@ -1,14 +1,19 @@
 :root {
-  --bg: #faf6f1;
-  --bg-alt: #f3ebe3;
-  --text: #3d2b1f;
-  --text-muted: #6b5344;
-  --accent: #8b5e3c;
-  --accent-dark: #5c3a21;
+  /* Màu lấy cảm hứng từ gạch terracotta thật của Banla */
+  --bg: #f6f0e8;
+  --bg-alt: #ede2d4;
+  --text: #3c2b22;
+  --text-muted: #6d5648;
+  --accent: #7d4a35;          /* terracotta Banla */
+  --accent-soft: #a06a4e;
+  --accent-dark: #5a3426;
+  --terracotta: #8b4e38;
+  --warm-cream: #faf7f3;
   --white: #ffffff;
   --serif: 'Playfair Display', Georgia, serif;
   --sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --shadow: 0 8px 32px rgba(61, 43, 31, 0.08);
+  --shadow: 0 8px 32px rgba(60, 43, 34, 0.08);
+  --shadow-hover: 0 16px 48px rgba(60, 43, 34, 0.12);
   --radius: 16px;
 }
 
@@ -70,7 +75,7 @@ body {
 .nav-links a:hover { color: var(--accent); }
 
 .btn-nav {
-  background: var(--accent);
+  background: var(--terracotta);
   color: white !important;
   padding: 10px 22px;
   border-radius: 30px;
@@ -102,7 +107,7 @@ body {
   text-align: center;
   position: relative;
   padding: 140px 24px 100px;
-  background: linear-gradient(160deg, #faf6f1 0%, #e8d9c8 50%, #d4c0a8 100%);
+  background: linear-gradient(160deg, #f8f3ee 0%, #e8d5c0 45%, #c9a888 100%);
 }
 .hero-overlay {
   position: absolute;
@@ -121,7 +126,7 @@ body {
 }
 .hero h1 {
   font-family: var(--serif);
-  font-size: clamp(3.2rem, 9vw, 6rem);
+  font-size: clamp(3.8rem, 10vw, 7.2rem);
   font-weight: 400;
   line-height: 1.05;
   color: var(--accent-dark);
@@ -147,14 +152,14 @@ body {
   border: none;
   cursor: pointer;
 }
-.btn-primary { background: var(--accent); color: white; }
+.btn-primary { background: var(--terracotta); color: white; }
 .btn-primary:hover { background: var(--accent-dark); transform: translateY(-2px); }
 .btn-outline {
   background: transparent;
   color: var(--accent-dark);
   border: 1.5px solid var(--accent);
 }
-.btn-outline:hover { background: var(--accent); color: white; }
+.btn-outline:hover { background: var(--terracotta); color: white; }
 
 .scroll-indicator {
   position: absolute;
@@ -265,7 +270,7 @@ body {
   letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--accent);
-  background: rgba(139, 94, 60, 0.08);
+  background: rgba(138, 90, 58, 0.1);
   padding: 6px 12px;
   border-radius: 20px;
 }
@@ -393,7 +398,7 @@ body {
 .booking-form input:focus,
 .booking-form textarea:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--accent-soft);
 }
 .form-note {
   font-size: 0.85rem;
@@ -494,4 +499,337 @@ body {
 }
 @media (max-width: 480px) {
   .gallery-grid { grid-template-columns: 1fr; }
+}
+
+/* ===== Smooth UI Enhancements ===== */
+
+/* Smooth page load fade */
+body {
+  animation: pageFadeIn 0.6s ease-out;
+}
+@keyframes pageFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Hero content staggered entrance */
+.hero-content .eyebrow,
+.hero-content h1,
+.hero-content .hero-sub,
+.hero-content .hero-cta {
+  opacity: 0;
+  animation: fadeUp 0.8s ease-out forwards;
+}
+.hero-content .eyebrow { animation-delay: 0.1s; }
+.hero-content h1 { animation-delay: 0.25s; }
+.hero-content .hero-sub { animation-delay: 0.4s; }
+.hero-content .hero-cta { animation-delay: 0.55s; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Button micro-interactions */
+.btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.15);
+  transform: translateX(-100%);
+  transition: transform 0.4s ease;
+}
+.btn:hover::after { transform: translateX(0); }
+.btn:active { transform: scale(0.97); }
+
+/* Card hover lift + soft shadow */
+.room-card, .visual-card, .review {
+  transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              box-shadow 0.35s ease;
+}
+.room-card:hover, .visual-card:hover, .review:hover {
+  transform: translateY(-10px);
+  box-shadow: var(--shadow-hover);
+}
+
+/* Gallery items soft zoom on hover */
+.gallery-item {
+  transition: transform 0.4s ease, filter 0.4s ease;
+  cursor: pointer;
+}
+.gallery-item:hover {
+  transform: scale(1.04);
+  filter: brightness(1.05);
+}
+
+/* Nav link underline animation */
+.nav-links a:not(.btn-nav) {
+  position: relative;
+}
+.nav-links a:not(.btn-nav)::after {
+  content: '';
+  position: absolute;
+  left: 0; bottom: -4px;
+  width: 0; height: 1px;
+  background: var(--terracotta);
+  transition: width 0.3s ease;
+}
+.nav-links a:not(.btn-nav):hover::after { width: 100%; }
+
+/* Form input focus glow */
+.booking-form input:focus,
+.booking-form textarea:focus,
+.booking-form select:focus {
+  box-shadow: 0 0 0 3px rgba(139, 94, 60, 0.12);
+  border-color: var(--accent-soft);
+}
+
+/* Scroll indicator smoother */
+.scroll-line {
+  animation: scrollPulse 2.2s ease-in-out infinite;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ===== Room Slider ===== */
+.room-slider {
+  position: relative;
+  max-width: 980px;
+  margin: 0 auto;
+}
+.room-slider-track {
+  position: relative;
+  min-height: 480px;
+}
+.room-slide {
+  display: none;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 40px;
+  align-items: center;
+  background: white;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.room-slide.active {
+  display: grid;
+  opacity: 1;
+}
+.room-slide-visual {
+  height: 420px;
+  background: linear-gradient(135deg, #c9b8a0, #a89070);
+}
+.room-1 { background: linear-gradient(135deg, #d4c4b0, #b89a78); }
+.room-2 { background: linear-gradient(135deg, #e0d0bc, #c4a882); }
+.room-3 { background: linear-gradient(135deg, #c8b49a, #a07858); }
+.room-4 { background: linear-gradient(135deg, #b89a78, #8b6b4a); }
+.room-slide-info {
+  padding: 40px 36px 40px 8px;
+}
+.room-slide-info h3 {
+  font-family: var(--serif);
+  font-size: 1.8rem;
+  color: var(--accent-dark);
+  margin-bottom: 16px;
+}
+.room-slide-info p {
+  color: var(--text-muted);
+  margin-bottom: 20px;
+  line-height: 1.7;
+}
+.room-slider-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 28px;
+}
+.slider-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  background: white;
+  color: var(--accent-dark);
+  font-size: 1.4rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.slider-btn:hover {
+  background: var(--terracotta);
+  color: white;
+  border-color: var(--terracotta);
+}
+.slider-dots {
+  display: flex;
+  gap: 8px;
+}
+.slider-dots button {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: none;
+  background: #d4c4b0;
+  cursor: pointer;
+  transition: background 0.25s;
+}
+.slider-dots button.active {
+  background: var(--terracotta);
+}
+@media (max-width: 860px) {
+  .room-slide.active {
+    grid-template-columns: 1fr;
+  }
+  .room-slide-visual { height: 260px; }
+  .room-slide-info { padding: 28px 24px; }
+  .room-slider-track { min-height: auto; }
+}
+
+/* Real room visual placeholders (replace with actual photos later) */
+.room-elite { background: url('images/elite.jpg') center/cover no-repeat; }
+.room-signature { background: url('images/signature.jpg') center/cover no-repeat; }
+.room-highland { background: url('images/highland.jpg') center/cover no-repeat; }
+.room-connecting { background: url('images/connecting.jpg') center/cover no-repeat; }
+.room-twin { background: url('images/twin.jpg') center/cover no-repeat; }
+.room-suite { background: url('images/suite.jpg') center/cover no-repeat; }
+.room-balcony { background: url('images/balcony.jpg') center/cover no-repeat; }
+
+/* ===== Lightbox ===== */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 20, 15, 0.92);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.lightbox.open { display: flex; }
+.lightbox-content {
+  max-width: 90vw;
+  max-height: 90vh;
+  text-align: center;
+}
+.lightbox-content img {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 8px;
+}
+.lightbox-caption {
+  color: #f5ebe3;
+  margin-top: 16px;
+  font-family: var(--serif);
+  font-size: 1.2rem;
+}
+.lightbox-close, .lightbox-prev, .lightbox-next {
+  position: absolute;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 2.5rem;
+  cursor: pointer;
+  padding: 8px 16px;
+  transition: opacity 0.2s;
+}
+.lightbox-close { top: 20px; right: 24px; }
+.lightbox-prev { left: 16px; top: 50%; transform: translateY(-50%); }
+.lightbox-next { right: 16px; top: 50%; transform: translateY(-50%); }
+.lightbox-close:hover, .lightbox-prev:hover, .lightbox-next:hover { opacity: 0.7; }
+
+/* Slide CTA - prominent but refined */
+.slide-cta {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 12px 28px;
+  font-size: 0.9rem;
+}
+.room-slide-visual {
+  /* Lazy-load friendly: background only when slide is active */
+}
+
+/* ===== Motion refinements (smooth, subtle) ===== */
+.room-slide {
+  transition: opacity 0.55s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.room-slide.active {
+  animation: slideIn 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.room-slide-visual {
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.room-slide.active .room-slide-visual {
+  transform: scale(1.02);
+}
+.slide-cta {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.slide-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(125, 74, 53, 0.18);
+}
+.slider-btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.slider-dots button {
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+.slider-dots button.active {
+  transform: scale(1.25);
+}
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .room-slide, .room-slide-visual, .slide-cta, .slider-btn, .slider-dots button {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Performance optimizations for slider */
+.room-slide-visual {
+  will-change: opacity;
+  contain: layout style paint;
+}
+.room-slide {
+  contain: layout;
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1.5px solid var(--accent);
+  color: var(--accent-dark);
+}
+.btn-secondary:hover {
+  background: var(--accent);
+  color: white;
+}
+
+/* Refined card style (inspired by clean data interfaces) */
+.room-card, .feature, .review {
+  border: 1px solid rgba(125, 74, 53, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.room-card:hover, .feature:hover, .review:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(125, 74, 53, 0.12);
 }
