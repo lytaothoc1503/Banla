@@ -15,6 +15,7 @@
 - Ô "Số khách" trong form đặt phòng.
 - Test `test/api.test.js` (node:test + fetch) và script `npm test`.
 - `.gitignore` (node_modules, data/bookings.json, .env).
+- Hiệu ứng trang chủ (`effects.css`, `effects.js`): video nền hero Coverr sương núi (poster `images/elite.jpg`), parallax, reveal khi cuộn, thanh tiến trình `#f97316`.
 ### Sửa
 - `script.js`: gửi đúng trường ghi chú (`note`), thêm `guests`; chỉ reset form khi gửi thành công; thông báo rõ khi không gọi được API (bản GitHub Pages) kèm placeholder điện thoại/Zalo.
 - Thay placeholder `[SỐ ĐIỆN THOẠI]` bằng `0965999999` (`tel:0965999999`, `https://zalo.me/0965999999`).
