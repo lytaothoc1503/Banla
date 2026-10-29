@@ -98,7 +98,8 @@ body {
   background: linear-gradient(145deg, #0d1b33 0%, #16325c 58%, #1d4e89 100%);
   color: #fff;
 }
-.hero-content { position: relative; z-index: 1; max-width: 780px; }
+.hero-content { position: relative; z-index: 1; max-width: 980px; }
+.hero-home { min-height: auto; padding-bottom: 72px; }
 .eyebrow {
   font-size: 0.8rem;
   letter-spacing: 4px;
