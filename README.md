@@ -11,10 +11,10 @@ Phong cách boutique ấm áp, tinh tế — “Ngoài lạnh. Trong ấm.”
 
 | File | Mô tả |
 |------|--------|
-| `index.html` | Trang chủ (hero, slider 7 phòng, The Roof, gallery, contact) |
+| `index.html` | Trang chủ (hero full-bleed, slider 7 phòng, The Roof, gallery, contact) |
 | `room.html` | Trang chi tiết phòng động |
 | `rooms.json` | Dữ liệu 7 phòng |
-| `styles.css` | Giao diện terracotta, responsive, ảnh phòng |
+| `styles.css` | Giao diện highland mist + ember, responsive, ảnh phòng |
 | `script.js` | Slider, lightbox, form, menu |
 | `server.js` | Express API `/api/rooms`, `/api/booking` |
 | `sw.js` | Service Worker |
