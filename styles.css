@@ -1,12 +1,31 @@
 :root {
+  /* Màu lấy cảm hứng từ gạch terracotta thật của Banla */
   --bg: #f6f0e8;
+  --bg-alt: #ede2d4;
+  --text: #3c2b22;
+  --text-muted: #6d5648;
   --accent: #7d4a35;
+  --accent-soft: #a06a4e;
   --accent-dark: #5a3426;
   --terracotta: #8b4e38;
+  --warm-cream: #faf7f3;
+  --white: #ffffff;
+  --serif: 'Playfair Display', Georgia, serif;
+  --sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --shadow: 0 8px 32px rgba(60, 43, 34, 0.08);
+  --shadow-hover: 0 16px 48px rgba(60, 43, 34, 0.12);
+  --radius: 16px;
 }
+
 .hero h1 {
+  font-family: var(--serif);
   font-size: clamp(3.8rem, 10vw, 7.2rem);
+  font-weight: 400;
+  line-height: 1.05;
+  color: var(--accent-dark);
+  margin-bottom: 24px;
 }
+
 .btn-primary {
   background: var(--terracotta);
   color: white;
