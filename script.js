@@ -4,12 +4,14 @@ const navLinks = document.querySelector('#navLinks');
 
 if (menuToggle && navLinks) {
   menuToggle.addEventListener('click', () => {
-    navLinks.classList.toggle('open');
+    const open = navLinks.classList.toggle('open');
+    menuToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
   });
 
   navLinks.querySelectorAll('a').forEach(link => {
     link.addEventListener('click', () => {
       navLinks.classList.remove('open');
+      menuToggle.setAttribute('aria-expanded', 'false');
     });
   });
 }
@@ -17,12 +19,13 @@ if (menuToggle && navLinks) {
 // Header scroll effect
 const header = document.querySelector('#header');
 window.addEventListener('scroll', () => {
+  if (!header) return;
   if (window.scrollY > 40) {
     header.classList.add('scrolled');
   } else {
     header.classList.remove('scrolled');
   }
-});
+}, { passive: true });
 
 // Booking form
 const form = document.querySelector('#bookingForm');
@@ -70,32 +73,26 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     const target = document.querySelector(targetId);
     if (target) {
       e.preventDefault();
-      const headerHeight = document.querySelector('.header').offsetHeight;
+      const headerHeight = document.querySelector('.header')?.offsetHeight || 72;
       const top = target.getBoundingClientRect().top + window.pageYOffset - headerHeight - 10;
       window.scrollTo({ top, behavior: 'smooth' });
     }
   });
 });
 
-// Soft intersection observer for section reveal (optional enhancement)
+// Section reveal
 if ('IntersectionObserver' in window) {
-  const revealEls = document.querySelectorAll('.section-header, .room-card, .feature, .review, .gallery-item');
+  const revealEls = document.querySelectorAll('.reveal');
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) {
-        entry.target.style.opacity = '1';
-        entry.target.style.transform = 'translateY(0)';
+        entry.target.classList.add('in');
         observer.unobserve(entry.target);
       }
     });
   }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
 
-  revealEls.forEach((el) => {
-    el.style.opacity = '0';
-    el.style.transform = 'translateY(20px)';
-    el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-    observer.observe(el);
-  });
+  revealEls.forEach((el) => observer.observe(el));
 }
 
 // Room Slider
@@ -128,7 +125,6 @@ if ('IntersectionObserver' in window) {
   prevBtn.addEventListener('click', () => goTo(current - 1));
   nextBtn.addEventListener('click', () => goTo(current + 1));
 
-  // Auto-play with visibility check (performance)
   let timer = null;
   function startAuto() {
     if (timer) clearInterval(timer);
@@ -146,7 +142,7 @@ if ('IntersectionObserver' in window) {
   startAuto();
 })();
 
-// Lightbox for room slider
+// Lightbox for room slider + gallery
 (function() {
   const lightbox = document.getElementById('lightbox');
   if (!lightbox) return;
@@ -156,15 +152,25 @@ if ('IntersectionObserver' in window) {
   const prevBtn = lightbox.querySelector('.lightbox-prev');
   const nextBtn = lightbox.querySelector('.lightbox-next');
 
-  const slides = document.querySelectorAll('.room-slide');
   const sources = [];
-  slides.forEach(slide => {
+
+  document.querySelectorAll('.room-slide').forEach(slide => {
     const visual = slide.querySelector('.room-slide-visual');
     const title = slide.querySelector('h3')?.textContent || '';
+    if (!visual) return;
     const bg = getComputedStyle(visual).backgroundImage;
     const url = bg.replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
     if (url && !url.includes('gradient')) {
-      sources.push({ url, title });
+      sources.push({ url, title, el: visual });
+    }
+  });
+
+  document.querySelectorAll('.gallery-item').forEach(item => {
+    const bg = getComputedStyle(item).backgroundImage;
+    const url = bg.replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
+    const title = item.getAttribute('aria-label') || '';
+    if (url && !url.includes('gradient')) {
+      sources.push({ url, title, el: item });
     }
   });
 
@@ -173,6 +179,7 @@ if ('IntersectionObserver' in window) {
   function open(index) {
     current = index;
     imgEl.src = sources[current].url;
+    imgEl.alt = sources[current].title;
     captionEl.textContent = sources[current].title;
     lightbox.classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -184,12 +191,9 @@ if ('IntersectionObserver' in window) {
   function prev() { open((current - 1 + sources.length) % sources.length); }
   function next() { open((current + 1) % sources.length); }
 
-  slides.forEach((slide, i) => {
-    const visual = slide.querySelector('.room-slide-visual');
-    if (visual) {
-      visual.style.cursor = 'pointer';
-      visual.addEventListener('click', () => open(i));
-    }
+  sources.forEach((src, i) => {
+    src.el.style.cursor = 'zoom-in';
+    src.el.addEventListener('click', () => open(i));
   });
 
   closeBtn.addEventListener('click', close);
@@ -203,7 +207,6 @@ if ('IntersectionObserver' in window) {
     if (e.key === 'ArrowRight') next();
   });
 })();
-
 
 // Service Worker registration
 if ('serviceWorker' in navigator) {
