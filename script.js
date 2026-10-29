@@ -4,7 +4,8 @@ const navLinks = document.querySelector('#navLinks');
 
 if (menuToggle && navLinks) {
   menuToggle.addEventListener('click', () => {
-    navLinks.classList.toggle('open');
+    const open = navLinks.classList.toggle('open');
+    menuToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
   });
 
   navLinks.querySelectorAll('a').forEach(link => {
@@ -16,13 +17,11 @@ if (menuToggle && navLinks) {
 
 // Header scroll effect
 const header = document.querySelector('#header');
-window.addEventListener('scroll', () => {
-  if (window.scrollY > 40) {
-    header.classList.add('scrolled');
-  } else {
-    header.classList.remove('scrolled');
-  }
-});
+if (header) {
+  window.addEventListener('scroll', () => {
+    header.classList.toggle('scrolled', window.scrollY > 40);
+  });
+}
 
 // Booking form
 const form = document.querySelector('#bookingForm');
@@ -72,7 +71,8 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     const target = document.querySelector(targetId);
     if (target) {
       e.preventDefault();
-      const headerHeight = document.querySelector('.header').offsetHeight;
+      const bar = document.querySelector('.header');
+      const headerHeight = bar ? bar.offsetHeight : 0;
       const top = target.getBoundingClientRect().top + window.pageYOffset - headerHeight - 10;
       window.scrollTo({ top, behavior: 'smooth' });
     }
@@ -112,6 +112,7 @@ if ('IntersectionObserver' in window) {
 
   slides.forEach((_, i) => {
     const dot = document.createElement('button');
+    dot.type = 'button';
     dot.setAttribute('aria-label', 'Slide ' + (i + 1));
     if (i === 0) dot.classList.add('active');
     dot.addEventListener('click', () => goTo(i));
@@ -148,7 +149,7 @@ if ('IntersectionObserver' in window) {
   startAuto();
 })();
 
-// Lightbox for room slider
+// Lightbox for room slider and gallery
 (function() {
   const lightbox = document.getElementById('lightbox');
   if (!lightbox) return;
@@ -158,24 +159,24 @@ if ('IntersectionObserver' in window) {
   const prevBtn = lightbox.querySelector('.lightbox-prev');
   const nextBtn = lightbox.querySelector('.lightbox-next');
 
-  const slides = document.querySelectorAll('.room-slide');
-  const sources = [];
-  slides.forEach(slide => {
-    const visual = slide.querySelector('.room-slide-visual');
-    const title = slide.querySelector('h3')?.textContent || '';
-    const bg = getComputedStyle(visual).backgroundImage;
-    const url = bg.replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
-    if (url && !url.includes('gradient')) {
-      sources.push({ url, title });
-    }
+  const triggers = [];
+  document.querySelectorAll('.room-slide-visual, .gallery-item, .roof-visual').forEach((node) => {
+    const img = node.querySelector('img');
+    if (!img) return;
+    triggers.push({ node, img });
   });
+  if (!triggers.length || !imgEl || !closeBtn || !prevBtn || !nextBtn) return;
 
   let current = 0;
 
   function open(index) {
-    current = index;
-    imgEl.src = sources[current].url;
-    captionEl.textContent = sources[current].title;
+    current = (index + triggers.length) % triggers.length;
+    const source = triggers[current].img;
+    imgEl.src = source.currentSrc || source.src;
+    imgEl.alt = source.alt || 'Banla Boutique Hotel tại Đà Lạt';
+    if (source.width) imgEl.width = source.width;
+    if (source.height) imgEl.height = source.height;
+    if (captionEl) captionEl.textContent = source.alt || '';
     lightbox.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -183,33 +184,32 @@ if ('IntersectionObserver' in window) {
     lightbox.classList.remove('open');
     document.body.style.overflow = '';
   }
-  function prev() { open((current - 1 + sources.length) % sources.length); }
-  function next() { open((current + 1) % sources.length); }
 
-  slides.forEach((slide, i) => {
-    const visual = slide.querySelector('.room-slide-visual');
-    if (visual) {
-      visual.style.cursor = 'pointer';
-      visual.addEventListener('click', () => open(i));
-    }
+  triggers.forEach((item, i) => {
+    item.node.style.cursor = 'zoom-in';
+    item.node.addEventListener('click', () => open(i));
   });
 
   closeBtn.addEventListener('click', close);
-  prevBtn.addEventListener('click', prev);
-  nextBtn.addEventListener('click', next);
+  prevBtn.addEventListener('click', () => open(current - 1));
+  nextBtn.addEventListener('click', () => open(current + 1));
   lightbox.addEventListener('click', (e) => { if (e.target === lightbox) close(); });
   document.addEventListener('keydown', (e) => {
     if (!lightbox.classList.contains('open')) return;
     if (e.key === 'Escape') close();
-    if (e.key === 'ArrowLeft') prev();
-    if (e.key === 'ArrowRight') next();
+    if (e.key === 'ArrowLeft') open(current - 1);
+    if (e.key === 'ArrowRight') open(current + 1);
   });
 })();
 
 
-// Service Worker registration
+// Service Worker registration (project Pages lives under /Banla/)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    const path = location.pathname;
+    const marker = '/Banla/';
+    const at = path.indexOf(marker);
+    const root = at === -1 ? '/' : path.slice(0, at + marker.length);
+    navigator.serviceWorker.register(root + 'sw.js').catch(() => {});
   });
 }
