@@ -19,6 +19,7 @@
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
+[hidden] { display: none !important; }
 .skip-link {
   position: absolute;
   left: -999px;
@@ -100,6 +101,7 @@ body {
 }
 .hero-content { position: relative; z-index: 1; max-width: 980px; }
 .hero-home { min-height: auto; padding-bottom: 72px; }
+.hero-home .scroll-indicator { display: none; }
 .eyebrow {
   font-size: 0.8rem;
   letter-spacing: 4px;
@@ -658,8 +660,10 @@ body {
   display: grid;
   grid-template-columns: 320px 1fr;
   margin-bottom: 28px;
+  align-items: stretch;
 }
-.hotel-feature img { height: 100%; min-height: 240px; }
+.hotel-feature > a { display: block; min-height: 240px; overflow: hidden; }
+.hotel-feature img { width: 100%; height: 100%; min-height: 240px; max-height: 360px; object-fit: cover; }
 .placeholder-note {
   display: inline-block;
   background: #fff4ec;

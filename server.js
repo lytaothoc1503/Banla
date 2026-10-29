@@ -71,6 +71,11 @@ app.post('/api/booking', async (req, res) => {
   res.json({ success: true, id: record.id, message: 'Đã nhận yêu cầu. Banla sẽ liên hệ sớm.' });
 });
 
+app.use((req, res) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return res.status(404).end();
+  res.status(404).sendFile(path.join(__dirname, '404.html'));
+});
+
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Banla server running at http://localhost:${PORT}`);

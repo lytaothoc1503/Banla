@@ -96,6 +96,7 @@ def head(title, description, canonical, prefix, extra=""):
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
+  <link rel="icon" href="{prefix}favicon.ico" type="image/png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{esc(title)}</title>
   <meta name="description" content="{esc(description)}">

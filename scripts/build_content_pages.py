@@ -99,6 +99,7 @@ def write_page(rel, title, description, canonical, body, prefix, current, og_typ
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
+  <link rel="icon" href="{prefix}favicon.ico" type="image/png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{title_html}</title>
   <meta name="description" content="{description_html}">
