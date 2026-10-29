@@ -12,8 +12,18 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://lytaothoc1503.github.io/Banla/#contact</loc>
+    <loc>https://lytaothoc1503.github.io/Banla/#roof</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lytaothoc1503.github.io/Banla/#gallery</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lytaothoc1503.github.io/Banla/#contact</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
 </urlset>
