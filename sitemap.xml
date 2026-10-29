@@ -1,29 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://lytaothoc1503.github.io/Banla/</loc>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>https://lytaothoc1503.github.io/Banla/sitemap-pages.xml</loc>
     <lastmod>2026-10-29</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://lytaothoc1503.github.io/Banla/#rooms</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://lytaothoc1503.github.io/Banla/#roof</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lytaothoc1503.github.io/Banla/#gallery</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://lytaothoc1503.github.io/Banla/#contact</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-</urlset>
+  </sitemap>
+  <sitemap>
+    <loc>https://lytaothoc1503.github.io/Banla/sitemap-hotels.xml</loc>
+    <lastmod>2026-10-29</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://lytaothoc1503.github.io/Banla/sitemap-blog.xml</loc>
+    <lastmod>2026-10-29</lastmod>
+  </sitemap>
+</sitemapindex>

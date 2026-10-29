@@ -27,9 +27,8 @@ window.addEventListener('scroll', () => {
   }
 }, { passive: true });
 
-// Booking form
-const form = document.querySelector('#bookingForm');
-if (form) {
+// Booking forms — room options stay as authored on each page
+document.querySelectorAll('form.booking-form').forEach((form) => {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = form.querySelector('button');
@@ -64,7 +63,7 @@ if (form) {
     btn.textContent = originalText;
     btn.disabled = false;
   });
-}
+});
 
 // Smooth scroll offset for fixed header
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -194,7 +193,7 @@ initMotion();
   startAuto();
 })();
 
-// Lightbox for room slider + gallery
+// Lightbox reads the real <img> alt and src
 (function() {
   const lightbox = document.getElementById('lightbox');
   if (!lightbox) return;
@@ -203,36 +202,26 @@ initMotion();
   const closeBtn = lightbox.querySelector('.lightbox-close');
   const prevBtn = lightbox.querySelector('.lightbox-prev');
   const nextBtn = lightbox.querySelector('.lightbox-next');
+  if (!imgEl || !closeBtn || !prevBtn || !nextBtn) return;
 
   const sources = [];
-
-  document.querySelectorAll('.room-slide').forEach(slide => {
-    const visual = slide.querySelector('.room-slide-visual');
-    const title = slide.querySelector('h3')?.textContent || '';
-    if (!visual) return;
-    const bg = getComputedStyle(visual).backgroundImage;
-    const url = bg.replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
-    if (url && !url.includes('gradient')) {
-      sources.push({ url, title, el: visual });
-    }
+  document.querySelectorAll('.room-slide-visual, .gallery-item, .roof-visual').forEach((node) => {
+    const img = node.querySelector('img');
+    if (!img) return;
+    sources.push({ img, el: node });
   });
-
-  document.querySelectorAll('.gallery-item').forEach(item => {
-    const bg = getComputedStyle(item).backgroundImage;
-    const url = bg.replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
-    const title = item.getAttribute('aria-label') || '';
-    if (url && !url.includes('gradient')) {
-      sources.push({ url, title, el: item });
-    }
-  });
+  if (!sources.length) return;
 
   let current = 0;
 
   function open(index) {
-    current = index;
-    imgEl.src = sources[current].url;
-    imgEl.alt = sources[current].title;
-    captionEl.textContent = sources[current].title;
+    current = (index + sources.length) % sources.length;
+    const source = sources[current].img;
+    imgEl.src = source.currentSrc || source.src;
+    imgEl.alt = source.alt || 'Banla Boutique Hotel tại Đà Lạt';
+    if (source.width) imgEl.width = source.width;
+    if (source.height) imgEl.height = source.height;
+    if (captionEl) captionEl.textContent = source.alt || '';
     lightbox.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -240,8 +229,8 @@ initMotion();
     lightbox.classList.remove('open');
     document.body.style.overflow = '';
   }
-  function prev() { open((current - 1 + sources.length) % sources.length); }
-  function next() { open((current + 1) % sources.length); }
+  function prev() { open(current - 1); }
+  function next() { open(current + 1); }
 
   sources.forEach((src, i) => {
     src.el.style.cursor = 'zoom-in';
@@ -260,9 +249,117 @@ initMotion();
   });
 })();
 
-// Service Worker registration
+// Listing filters (canonical stays the clean URL)
+(function () {
+  const list = document.getElementById('roomList');
+  const form = document.getElementById('roomFilters');
+  if (!list || !form) return;
+  const cards = Array.from(list.querySelectorAll('[data-room-card]'));
+  const empty = document.getElementById('roomEmpty');
+  const count = document.getElementById('roomCount');
+  let timer = null;
+
+  function areaOk(value, filter) {
+    if (!filter) return true;
+    const parts = filter.split('-').map(Number);
+    if (parts.length !== 2 || parts.some((n) => Number.isNaN(n))) return true;
+    return value >= parts[0] && value <= parts[1];
+  }
+
+  function read() {
+    const data = new FormData(form);
+    return {
+      q: String(data.get('q') || '').trim().toLowerCase(),
+      type: String(data.get('type') || ''),
+      guests: Number(data.get('guests') || 0),
+      area: String(data.get('area') || ''),
+      sort: String(data.get('sort') || '')
+    };
+  }
+
+  function apply() {
+    const filters = read();
+    const visible = cards.filter((card) => {
+      const text = (card.dataset.text || '').toLowerCase();
+      const guests = Number(card.dataset.guests || 0);
+      const area = Number(card.dataset.area || 0);
+      if (filters.q && !text.includes(filters.q)) return false;
+      if (filters.type && card.dataset.type !== filters.type) return false;
+      if (filters.guests && guests < filters.guests) return false;
+      if (!areaOk(area, filters.area)) return false;
+      return true;
+    });
+    visible.sort((a, b) => {
+      if (filters.sort === 'name') return (a.dataset.name || '').localeCompare(b.dataset.name || '', 'vi');
+      if (filters.sort === 'area-asc') return Number(a.dataset.area) - Number(b.dataset.area);
+      if (filters.sort === 'area-desc') return Number(b.dataset.area) - Number(a.dataset.area);
+      if (filters.sort === 'guests-desc') return Number(b.dataset.guests) - Number(a.dataset.guests);
+      return Number(a.dataset.order) - Number(b.dataset.order);
+    });
+    cards.forEach((card) => { card.hidden = true; });
+    visible.forEach((card) => {
+      card.hidden = false;
+      list.appendChild(card);
+    });
+    if (empty) empty.hidden = visible.length !== 0;
+    if (count) count.textContent = visible.length + ' hạng phòng';
+  }
+
+  function syncUrl() {
+    const params = new URLSearchParams();
+    new FormData(form).forEach((value, key) => { if (value) params.set(key, value); });
+    const qs = params.toString();
+    history.replaceState(null, '', qs ? `${location.pathname}?${qs}` : location.pathname);
+  }
+
+  const initial = new URLSearchParams(location.search);
+  ['q', 'type', 'guests', 'area', 'sort'].forEach((key) => {
+    const field = form.elements[key];
+    if (field && initial.get(key)) field.value = initial.get(key);
+  });
+
+  form.addEventListener('submit', (e) => { e.preventDefault(); apply(); syncUrl(); });
+  form.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => { apply(); syncUrl(); }, 200);
+  });
+  form.addEventListener('change', () => { apply(); syncUrl(); });
+  apply();
+})();
+
+const heroSearch = document.getElementById('heroSearch');
+if (heroSearch) {
+  heroSearch.addEventListener('submit', () => {
+    const dest = heroSearch.elements.destination ? heroSearch.elements.destination.value : '';
+    const params = new URLSearchParams(new FormData(heroSearch));
+    params.delete('destination');
+    let url = 'listing.html';
+    if (dest === 'da-lat') url = 'khach-san/da-lat/';
+    else if (dest === 'nha-trang') url = 'khach-san/nha-trang/';
+    else if (dest === 'ho-chi-minh') url = 'khach-san/ho-chi-minh/';
+    const qs = params.toString();
+    heroSearch.action = qs ? `${url}?${qs}` : url;
+  });
+}
+
+(function () {
+  const area = new URLSearchParams(location.search).get('khu-vuc');
+  if (!area) return;
+  const target = document.getElementById('khu-' + area);
+  if (!target) return;
+  target.classList.add('is-highlighted');
+  const bar = document.querySelector('.header');
+  const top = target.getBoundingClientRect().top + window.pageYOffset - ((bar && bar.offsetHeight) || 0) - 12;
+  window.scrollTo({ top, behavior: 'smooth' });
+})();
+
+// Service Worker — project Pages lives under /Banla/
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    const path = location.pathname;
+    const marker = '/Banla/';
+    const at = path.indexOf(marker);
+    const root = at === -1 ? '/' : path.slice(0, at + marker.length);
+    navigator.serviceWorker.register(root + 'sw.js').catch(() => {});
   });
 }

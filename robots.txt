@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
+Disallow: /tim-kiem
+Disallow: /tai-khoan
+Disallow: /Banla/tim-kiem
+Disallow: /Banla/tai-khoan
 
 Sitemap: https://lytaothoc1503.github.io/Banla/sitemap.xml

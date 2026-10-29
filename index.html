@@ -2,21 +2,23 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
+  <link rel="icon" href="favicon.ico" type="image/png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Banla Boutique Hotel Đà Lạt | Khách sạn boutique ấm áp — Ngoài lạnh. Trong ấm.</title>
   <meta name="description" content="Banla Boutique Hotel Đà Lạt — boutique hotel ấm áp, tinh tế tại 47 Nguyễn Đình Chiểu. The Roof by Banla, phòng gác mái, không gian nghệ thuật. Đặt phòng trực tiếp.">
-  <meta name="keywords" content="Banla Boutique Hotel, khách sạn boutique Đà Lạt, Banla Đà Lạt, The Roof by Banla, khách sạn gác mái Đà Lạt, boutique hotel Đà Lạt, đặt phòng Banla, 47 Nguyễn Đình Chiểu">
   <meta name="author" content="Banla Boutique Hotel">
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
   <link rel="canonical" href="https://lytaothoc1503.github.io/Banla/">
+  <link rel="alternate" hreflang="vi" href="https://lytaothoc1503.github.io/Banla/">
+  <link rel="alternate" hreflang="x-default" href="https://lytaothoc1503.github.io/Banla/">
   <meta name="theme-color" content="#B8612E">
 
   <!-- Open Graph -->
   <meta property="og:title" content="Banla Boutique Hotel Đà Lạt — Ngoài lạnh. Trong ấm.">
   <meta property="og:description" content="Boutique hotel ấm áp, tinh tế tại Đà Lạt. The Roof by Banla — nơi ngắm phố núi từ gác mái. Đặt phòng trực tiếp.">
   <meta property="og:image" content="https://lytaothoc1503.github.io/Banla/images/elite.jpg">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
+  <meta property="og:image:width" content="1500">
+  <meta property="og:image:height" content="2000">
   <meta property="og:url" content="https://lytaothoc1503.github.io/Banla/">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="vi_VN">
@@ -82,6 +84,16 @@
   }
   </script>
 
+
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@graph":[
+    {"@type":"Organization","@id":"https://lytaothoc1503.github.io/Banla/#org","name":"Banla","url":"https://lytaothoc1503.github.io/Banla/","logo":"https://lytaothoc1503.github.io/Banla/images/logo.png",
+     "contactPoint":{"@type":"ContactPoint","telephone":"+842633633777","contactType":"customer service","areaServed":"VN","availableLanguage":"vi"},
+     "sameAs":["https://instagram.com/banla.boutiquehotel","https://www.tiktok.com/@banlaboutiquehotel"]},
+    {"@type":"WebSite","@id":"https://lytaothoc1503.github.io/Banla/#website","url":"https://lytaothoc1503.github.io/Banla/","name":"Banla","inLanguage":"vi","publisher":{"@id":"https://lytaothoc1503.github.io/Banla/#org"},
+     "potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://lytaothoc1503.github.io/Banla/listing.html?q={search_term_string}"},"query-input":"required name=search_term_string"}}
+  ]}
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,450;0,9..144,500;1,9..144,400;1,9..144,450&display=swap" rel="stylesheet">
@@ -90,28 +102,33 @@
   <link rel="preload" href="images/elite.jpg" as="image">
 </head>
 <body>
+  <a class="skip-link" href="#main">Đến nội dung</a>
   <header class="header" id="header">
     <nav class="nav">
       <a href="#home" class="logo">BANLA</a>
       <button class="menu-toggle" aria-label="Menu" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
-      <ul class="nav-links" id="navLinks">
+            <ul class="nav-links" id="navLinks">
         <li><a href="#story">Câu chuyện</a></li>
         <li><a href="#rooms">Phòng nghỉ</a></li>
         <li><a href="#roof">The Roof</a></li>
         <li><a href="#gallery">Không gian</a></li>
         <li><a href="#location">Vị trí</a></li>
+        <li><a href="listing.html">Hạng phòng</a></li>
+        <li><a href="khach-san/da-lat/">Đà Lạt</a></li>
+        <li><a href="blog/">Cẩm nang</a></li>
+        <li><a href="ve-chung-toi/">Về chúng tôi</a></li>
         <li><a href="#contact" class="btn-nav">Đặt phòng</a></li>
       </ul>
     </nav>
   </header>
 
-  <main>
+  <main id="main">
     <!-- Hero: brand + one line + one sentence + CTA + full-bleed image -->
     <section id="home" class="hero">
       <div class="hero-media" aria-hidden="true">
-        <img src="images/elite.jpg" alt="" width="1600" height="1067">
+        <img src="images/elite.jpg" alt="" width="1500" height="2000">
       </div>
       <div class="hero-veil" aria-hidden="true"></div>
       <div class="hero-content">
@@ -141,7 +158,7 @@
             <p class="pull">Banla không muốn chỉ là nơi nghỉ. Banla muốn là một phần ký ức của bạn về Đà Lạt.</p>
           </div>
           <div class="story-aside reveal">
-            <img src="images/signature.jpg" alt="Không gian ấm áp tại Banla Boutique Hotel" width="800" height="1000" loading="lazy">
+            <img src="images/signature.jpg" alt="Banla Boutique Hotel – Banla Signature tại Đà Lạt" width="1500" height="2000" loading="lazy" decoding="async">
           </div>
         </div>
       </div>
@@ -158,7 +175,12 @@
         <div class="room-slider reveal" id="roomSlider">
           <div class="room-slider-track">
             <article class="room-slide active">
-              <div class="room-slide-visual room-elite" role="img" aria-label="Élite Room"></div>
+              <div class="room-slide-visual">
+                <picture>
+                  <source srcset="images/elite.webp" type="image/webp">
+                  <img src="images/elite.jpg" width="1500" height="2000" alt="Banla Boutique Hotel – Élite Room tại Đà Lạt" decoding="async" loading="lazy">
+                </picture>
+              </div>
               <div class="room-slide-info">
                 <h3>Élite Room</h3>
                 <p>Phòng gác mái ấm cúng với trần gỗ tối, giường lớn và góc ngồi riêng. Ánh sáng dịu, bồn tắm và chi tiết nội thất tạo cảm giác như thư phòng nghệ sĩ giữa phố núi.</p>
@@ -170,7 +192,12 @@
               </div>
             </article>
             <article class="room-slide">
-              <div class="room-slide-visual room-signature" role="img" aria-label="Banla Signature"></div>
+              <div class="room-slide-visual">
+                <picture>
+                  <source srcset="images/signature.webp" type="image/webp">
+                  <img src="images/signature.jpg" width="1500" height="2000" alt="Banla Boutique Hotel – Banla Signature tại Đà Lạt" decoding="async" loading="lazy">
+                </picture>
+              </div>
               <div class="room-slide-info">
                 <h3>Banla Signature</h3>
                 <p>Tường xanh olive, trần gỗ và không gian kết nối tinh tế. Phù hợp cho những ai muốn cảm giác ấm, riêng tư và có chút nghệ thuật.</p>
@@ -182,7 +209,12 @@
               </div>
             </article>
             <article class="room-slide">
-              <div class="room-slide-visual room-highland" role="img" aria-label="Highland Room"></div>
+              <div class="room-slide-visual">
+                <picture>
+                  <source srcset="images/highland.webp" type="image/webp">
+                  <img src="images/highland.jpg" width="1500" height="2000" alt="Banla Boutique Hotel – Highland Room tại Đà Lạt" decoding="async" loading="lazy">
+                </picture>
+              </div>
               <div class="room-slide-info">
                 <h3>Highland Room</h3>
                 <p>Trần gỗ cao với ánh đèn ấm, giường lớn và tầm nhìn thoáng. Không gian mở, cảm giác như đang ở trên cao nguyên.</p>
@@ -194,7 +226,12 @@
               </div>
             </article>
             <article class="room-slide">
-              <div class="room-slide-visual room-connecting" role="img" aria-label="Connecting Room"></div>
+              <div class="room-slide-visual">
+                <picture>
+                  <source srcset="images/connecting.webp" type="image/webp">
+                  <img src="images/connecting.jpg" width="1500" height="2000" alt="Banla Boutique Hotel – Connecting Room tại Đà Lạt" decoding="async" loading="lazy">
+                </picture>
+              </div>
               <div class="room-slide-info">
                 <h3>Connecting Room</h3>
                 <p>Hai phòng thông nhau, phù hợp gia đình hoặc nhóm bạn. Không gian rộng, giữ đúng tinh thần ấm áp và riêng tư của Banla.</p>
@@ -206,7 +243,12 @@
               </div>
             </article>
             <article class="room-slide">
-              <div class="room-slide-visual room-twin" role="img" aria-label="Deluxe Twin"></div>
+              <div class="room-slide-visual">
+                <picture>
+                  <source srcset="images/twin.webp" type="image/webp">
+                  <img src="images/twin.jpg" width="1500" height="2000" alt="Banla Boutique Hotel – Deluxe Twin tại Đà Lạt" decoding="async" loading="lazy">
+                </picture>
+              </div>
               <div class="room-slide-info">
                 <h3>Deluxe Twin</h3>
                 <p>Hai giường đơn êm ái, trần gỗ và cửa sổ nhỏ. Lý tưởng cho bạn bè hoặc gia đình nhỏ muốn nghỉ ngơi thoải mái.</p>
@@ -218,7 +260,12 @@
               </div>
             </article>
             <article class="room-slide">
-              <div class="room-slide-visual room-suite" role="img" aria-label="Original Suite"></div>
+              <div class="room-slide-visual">
+                <picture>
+                  <source srcset="images/suite.webp" type="image/webp">
+                  <img src="images/suite.jpg" width="1500" height="2000" alt="Banla Boutique Hotel – Original Suite tại Đà Lạt" decoding="async" loading="lazy">
+                </picture>
+              </div>
               <div class="room-slide-info">
                 <h3>Original Suite</h3>
                 <p>Không gian suite rộng hơn với tường đỏ ấm, giường lớn và góc làm việc. Tầm nhìn đẹp, cảm giác sang trọng nhưng vẫn gần gũi.</p>
@@ -230,7 +277,12 @@
               </div>
             </article>
             <article class="room-slide">
-              <div class="room-slide-visual room-balcony" role="img" aria-label="Deluxe Balcony"></div>
+              <div class="room-slide-visual">
+                <picture>
+                  <source srcset="images/balcony.webp" type="image/webp">
+                  <img src="images/balcony.jpg" width="1500" height="2000" alt="Banla Boutique Hotel – Deluxe Balcony tại Đà Lạt" decoding="async" loading="lazy">
+                </picture>
+              </div>
               <div class="room-slide-info">
                 <h3>Deluxe Balcony</h3>
                 <p>Ban công nhỏ nhìn ra phố, ánh sáng tự nhiên và nội thất ấm. Nơi lý tưởng để ngồi ngắm sương mù buổi sớm.</p>
@@ -271,7 +323,12 @@
             </div>
             <p>Không gian đủ riêng tư, tầm nhìn thoáng, và không khí rất “Đà Lạt”. Khách lưu trú tại Banla được giảm giá khi thưởng thức đồ uống tại The Roof.</p>
           </div>
-          <div class="roof-visual reveal" role="img" aria-label="The Roof by Banla"></div>
+          <div class="roof-visual reveal">
+            <picture>
+              <source srcset="images/highland.webp" type="image/webp">
+              <img src="images/highland.jpg" width="1500" height="2000" alt="Banla Boutique Hotel – The Roof tại Đà Lạt" decoding="async" loading="lazy">
+            </picture>
+          </div>
         </div>
       </div>
     </section>
@@ -283,13 +340,13 @@
           <p class="section-kicker">Không gian</p>
           <h2>Những khoảnh khắc của Banla</h2>
         </div>
-        <div class="gallery-strip reveal">
-          <div class="gallery-item g1" role="img" aria-label="Élite Room"></div>
-          <div class="gallery-item g2" role="img" aria-label="Banla Signature"></div>
-          <div class="gallery-item g3" role="img" aria-label="Original Suite"></div>
-          <div class="gallery-item g4" role="img" aria-label="Deluxe Balcony"></div>
-          <div class="gallery-item g5" role="img" aria-label="Connecting Room"></div>
-          <div class="gallery-item g6" role="img" aria-label="Deluxe Twin"></div>
+                <div class="gallery-strip reveal">
+          <button type="button" class="gallery-item g1"><picture><source srcset="images/elite.webp" type="image/webp"><img src="images/elite.jpg" width="1500" height="2000" alt="Banla Boutique Hotel – Élite Room tại Đà Lạt" decoding="async" loading="lazy"></picture></button>
+          <button type="button" class="gallery-item g2"><picture><source srcset="images/signature.webp" type="image/webp"><img src="images/signature.jpg" width="1500" height="2000" alt="Banla Boutique Hotel – Banla Signature tại Đà Lạt" decoding="async" loading="lazy"></picture></button>
+          <button type="button" class="gallery-item g3"><picture><source srcset="images/suite.webp" type="image/webp"><img src="images/suite.jpg" width="1500" height="2000" alt="Banla Boutique Hotel – Original Suite tại Đà Lạt" decoding="async" loading="lazy"></picture></button>
+          <button type="button" class="gallery-item g4"><picture><source srcset="images/balcony.webp" type="image/webp"><img src="images/balcony.jpg" width="1500" height="2000" alt="Banla Boutique Hotel – Deluxe Balcony tại Đà Lạt" decoding="async" loading="lazy"></picture></button>
+          <button type="button" class="gallery-item g5"><picture><source srcset="images/connecting.webp" type="image/webp"><img src="images/connecting.jpg" width="1500" height="2000" alt="Banla Boutique Hotel – Connecting Room tại Đà Lạt" decoding="async" loading="lazy"></picture></button>
+          <button type="button" class="gallery-item g6"><picture><source srcset="images/twin.webp" type="image/webp"><img src="images/twin.jpg" width="1500" height="2000" alt="Banla Boutique Hotel – Deluxe Twin tại Đà Lạt" decoding="async" loading="lazy"></picture></button>
         </div>
       </div>
     </section>
@@ -373,6 +430,187 @@
       </div>
     </section>
 
+
+    <section id="tim-phong" class="section">
+      <div class="container">
+        <div class="section-header reveal">
+          <p class="section-kicker">Đặt phòng</p>
+          <h2>Tìm hạng phòng Banla</h2>
+          <p class="section-lead">Chọn điểm đến và ngày. Giá niêm yết chưa được công bố — Banla xác nhận sau khi nhận yêu cầu.</p>
+        </div>
+        <form class="search-card reveal" id="heroSearch" action="listing.html" method="get">
+          <label>Điểm đến
+            <select name="destination">
+              <option value="da-lat">Đà Lạt</option>
+              <option value="nha-trang">Nha Trang</option>
+              <option value="ho-chi-minh">TP. Hồ Chí Minh</option>
+              <option value="phong">Hạng phòng Banla</option>
+            </select>
+          </label>
+          <label>Nhận phòng<input type="date" name="checkin"></label>
+          <label>Trả phòng<input type="date" name="checkout"></label>
+          <label>Khách
+            <select name="guests">
+              <option value="">Tất cả</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4+</option>
+            </select>
+          </label>
+          <button class="btn btn-primary" type="submit">Tìm phòng</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="featured" class="section section-mist">
+      <div class="container">
+        <div class="section-header reveal">
+          <p class="section-kicker">Lựa chọn</p>
+          <h2>Khách sạn nổi bật</h2>
+          <p class="section-lead">Banla Boutique Hotel là khách sạn đã xác minh. Các thẻ khác là bố cục minh họa.</p>
+        </div>
+        <div class="card-grid">
+          <article class="hotel-card reveal">
+            <a href="khach-san/banla-boutique-hotel/"><img src="images/elite.webp" width="1500" height="2000" alt="Banla Boutique Hotel – Élite Room tại Đà Lạt" loading="lazy" decoding="async"></a>
+            <div class="hotel-card-body">
+              <p class="card-kicker">Đà Lạt · Đã xác minh</p>
+              <h3>Banla Boutique Hotel</h3>
+              <p>47 Nguyễn Đình Chiểu, Phường 9. The Roof và phòng gác mái. Ngoài lạnh. Trong ấm.</p>
+              <p class="card-price">Giá: liên hệ — chưa công bố</p>
+              <div class="card-actions"><a class="btn btn-primary" href="khach-san/banla-boutique-hotel/">Xem khách sạn</a></div>
+            </div>
+          </article>
+          <article class="hotel-card is-placeholder reveal">
+            <div class="hotel-card-body">
+              <p class="placeholder-note">Nội dung minh họa — chưa có trong dữ liệu đã xác minh.</p>
+              <h3>Khách sạn minh họa Nha Trang</h3>
+              <p>Chưa có giá hay hạng phòng để đặt.</p>
+              <a class="btn btn-secondary" href="khach-san/nha-trang/">Xem điểm đến</a>
+            </div>
+          </article>
+          <article class="hotel-card is-placeholder reveal">
+            <div class="hotel-card-body">
+              <p class="placeholder-note">Nội dung minh họa — chưa có trong dữ liệu đã xác minh.</p>
+              <h3>Khách sạn minh họa Quận 1</h3>
+              <p>Chưa gắn với một cơ sở lưu trú thật.</p>
+              <a class="btn btn-secondary" href="khach-san/ho-chi-minh/">Xem điểm đến</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="deals" class="section">
+      <div class="container">
+        <div class="section-header reveal">
+          <p class="section-kicker">Ưu đãi</p>
+          <h2>Ưu đãi hôm nay</h2>
+        </div>
+        <div class="card-grid">
+          <article class="deal-card reveal">
+            <img src="images/highland.webp" width="1500" height="2000" alt="Banla Boutique Hotel – The Roof tại Đà Lạt" loading="lazy" decoding="async">
+            <div class="deal-copy">
+              <p class="card-kicker">Đã xác minh · The Roof</p>
+              <h3>Giảm giá đồ uống cho khách lưu trú</h3>
+              <p>Khách ở Banla được giảm giá tại The Roof. Café 8:00–16:00, bar 16:00–00:00. Mức giảm chưa được công bố.</p>
+              <a class="btn btn-primary" href="#roof">Xem The Roof</a>
+            </div>
+          </article>
+          <article class="deal-card is-placeholder reveal">
+            <div class="deal-copy">
+              <p class="placeholder-note">Ưu đãi minh họa — không phải giá thật.</p>
+              <h3>Đặt sớm cuối tuần</h3>
+              <p>Chưa có chương trình giảm giá được Banla xác nhận.</p>
+            </div>
+          </article>
+          <article class="deal-card is-placeholder reveal">
+            <div class="deal-copy">
+              <p class="placeholder-note">Ưu đãi minh họa — không phải giá thật.</p>
+              <h3>Gói ở dài ngày</h3>
+              <p>Chưa có bảng giá theo số đêm.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="destinations" class="section section-mist">
+      <div class="container">
+        <div class="section-header reveal">
+          <p class="section-kicker">Điểm đến</p>
+          <h2>Điểm đến được yêu thích</h2>
+        </div>
+        <div class="dest-grid">
+          <article class="dest-card reveal">
+            <a href="khach-san/da-lat/"><img src="images/balcony.webp" width="1500" height="2000" alt="Banla Boutique Hotel – Deluxe Balcony tại Đà Lạt" loading="lazy" decoding="async"></a>
+            <div class="dest-copy">
+              <h3>Đà Lạt</h3>
+              <p>Hồ Xuân Hương, chợ Đà Lạt và Banla gần trung tâm. Sân bay Liên Khương khoảng 30 km.</p>
+              <a href="khach-san/da-lat/">Khách sạn Đà Lạt</a>
+            </div>
+          </article>
+          <article class="dest-card no-photo reveal">
+            <div>
+              <p class="placeholder-note">Điểm đến gợi ý — chưa có khách sạn đối tác.</p>
+              <h3>Nha Trang</h3>
+              <p>Khoảng 135 km từ Đà Lạt qua đèo Khánh Lê.</p>
+              <a href="khach-san/nha-trang/">Xem Nha Trang</a>
+            </div>
+          </article>
+          <article class="dest-card no-photo reveal">
+            <div>
+              <p class="placeholder-note">Điểm đến gợi ý — chưa có khách sạn đối tác.</p>
+              <h3>TP. Hồ Chí Minh</h3>
+              <p>Bay đến Liên Khương rồi vào Đà Lạt.</p>
+              <a href="khach-san/ho-chi-minh/">Xem TP. Hồ Chí Minh</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="why" class="section">
+      <div class="container">
+        <div class="section-header reveal">
+          <p class="section-kicker">Banla</p>
+          <h2>Vì sao chọn Banla</h2>
+        </div>
+        <div class="features-list">
+          <article class="feature reveal"><div class="feature-index">01</div><h3>Đặt trực tiếp</h3><p>Gửi yêu cầu cho Banla. Trang không thu tiền trực tuyến.</p></article>
+          <article class="feature reveal"><div class="feature-index">02</div><h3>Phòng có mô tả thật</h3><p>Bảy hạng phòng: diện tích, sức chứa và ảnh phòng.</p></article>
+          <article class="feature reveal"><div class="feature-index">03</div><h3>Hai số liên hệ</h3><p>Điện thoại 02633.633.777. Mobile / Zalo 0965.999.999.</p></article>
+          <article class="feature reveal"><div class="feature-index">04</div><h3>Đọc trước khi gửi</h3><p><a href="faq/">Câu hỏi thường gặp</a> và <a href="chinh-sach/">chính sách</a>.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="blog-home" class="section section-mist">
+      <div class="container">
+        <div class="section-header reveal">
+          <p class="section-kicker">Đọc thêm</p>
+          <h2>Cẩm nang du lịch</h2>
+        </div>
+        <div class="post-grid">
+          <article class="post-card reveal">
+            <a href="blog/kinh-nghiem-du-lich-da-lat-theo-mua/"><img src="images/elite.webp" width="1500" height="2000" alt="Sương và phố núi Đà Lạt nhìn từ Banla Boutique Hotel" loading="lazy" decoding="async"></a>
+            <div class="post-copy">
+              <h3>Kinh nghiệm du lịch Đà Lạt theo mùa</h3>
+              <p>Tháng nào trời trong, tháng nào nên hỏi phòng sớm.</p>
+              <a href="blog/kinh-nghiem-du-lich-da-lat-theo-mua/">Đọc kinh nghiệm du lịch Đà Lạt theo mùa</a>
+            </div>
+          </article>
+          <article class="post-card reveal">
+            <a href="blog/meo-dat-phong-khach-san-gia-tot/"><img src="images/suite.webp" width="1500" height="2000" alt="Góc phòng Original Suite tại Banla Boutique Hotel, Đà Lạt" loading="lazy" decoding="async"></a>
+            <div class="post-copy">
+              <h3>Mẹo đặt phòng khách sạn giá tốt</h3>
+              <p>Ngày thường, cuối tuần và câu hỏi trước khi chuyển khoản.</p>
+              <a href="blog/meo-dat-phong-khach-san-gia-tot/">Đọc mẹo đặt phòng khách sạn giá tốt</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <!-- Contact -->
     <section id="contact" class="section section-mist">
       <div class="container">
@@ -434,6 +672,13 @@
           <a href="#rooms">Phòng nghỉ</a>
           <a href="#roof">The Roof</a>
           <a href="#contact">Đặt phòng</a>
+          <a href="listing.html">Hạng phòng</a>
+          <a href="blog/">Cẩm nang</a>
+          <a href="ve-chung-toi/">Về chúng tôi</a>
+          <a href="lien-he/">Liên hệ</a>
+          <a href="faq/">FAQ</a>
+          <a href="chinh-sach/">Chính sách</a>
+          <a href="dieu-khoan/">Điều khoản</a>
         </div>
       </div>
       <div class="footer-bottom">
@@ -448,7 +693,7 @@
     <button class="lightbox-prev" aria-label="Trước">‹</button>
     <button class="lightbox-next" aria-label="Sau">›</button>
     <div class="lightbox-content">
-      <img src="" alt="">
+      <img src="" alt="Ảnh phòng Banla Boutique Hotel tại Đà Lạt">
       <p class="lightbox-caption"></p>
     </div>
   </div>
