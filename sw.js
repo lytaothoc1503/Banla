@@ -1,4 +1,4 @@
-const CACHE = 'banla-v1';
+const CACHE = 'banla-v2';
 const ASSETS = [
   '/',
   '/index.html',
@@ -22,6 +22,10 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
+  if (e.request.mode === 'navigate') {
+    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+    return;
+  }
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
