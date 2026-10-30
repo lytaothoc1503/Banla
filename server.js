@@ -1,13 +1,40 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Security headers
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+}));
+
+// Basic DDoS / abuse protection
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Quá nhiều yêu cầu. Vui lòng thử lại sau.' }
+});
+app.use(limiter);
+
+// Stricter limit for booking API
+const bookingLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10,
+  message: { success: false, message: 'Bạn đã gửi quá nhiều yêu cầu đặt phòng. Vui lòng thử lại sau.' }
+});
+
 app.use(express.json({ limit: '10kb' }));
-// Không public dữ liệu booking, mã nguồn server, cấu hình
+
+// Block sensitive paths
 app.use((req, res, next) => (/^\/(data|node_modules|test|docs|\.)|^\/(server\.js|package(-lock)?\.json)$/i.test(req.path) ? res.status(404).end() : next()));
+
 app.use(express.static(path.join(__dirname), { dotfiles: 'deny' }));
 
 // API: Get all rooms
@@ -16,7 +43,7 @@ app.get('/api/rooms', (req, res) => {
   res.json(data);
 });
 
-// API: Booking inquiry — validate, lưu data/bookings.json, gửi email nếu có SMTP
+// API: Booking inquiry
 const BOOKINGS_FILE = process.env.BOOKINGS_FILE || path.join(__dirname, 'data', 'bookings.json');
 const isDate = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && !isNaN(Date.parse(v));
 
@@ -54,7 +81,7 @@ async function maybeSendEmail(booking) {
   return true;
 }
 
-app.post('/api/booking', async (req, res) => {
+app.post('/api/booking', bookingLimiter, async (req, res) => {
   const { errors, booking } = validateBooking(req.body);
   if (errors.length) return res.status(400).json({ success: false, errors, message: errors.join(' ') });
   const record = { id: Date.now().toString(36), createdAt: new Date().toISOString(), ...booking };
