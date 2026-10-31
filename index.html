@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -119,6 +119,7 @@
         <li><a href="khach-san/da-lat/">Đà Lạt</a></li>
         <li><a href="blog/">Cẩm nang</a></li>
         <li><a href="ve-chung-toi/">Về chúng tôi</a></li>
+        <li><button type="button" class="btn-lookup-nav" id="openLookupBtn">Tra cứu</button></li>
         <li><a href="#contact" class="btn-nav">Đặt phòng</a></li>
       </ul>
     </nav>
@@ -698,7 +699,23 @@
     </div>
   </div>
 
+  <!-- Modal Tra cứu đặt phòng -->
+  <div class="lookup-modal" id="lookupModal" role="dialog" aria-modal="true" aria-labelledby="lookupTitle">
+    <div class="lookup-card">
+      <button class="lookup-close" id="closeLookupBtn" aria-label="Đóng">&times;</button>
+      <h3 class="lookup-title" id="lookupTitle">Tra cứu đặt phòng</h3>
+      <p class="lookup-desc">Nhập mã đặt phòng và số điện thoại/email để kiểm tra trạng thái phòng tại Banla.</p>
+      <form class="lookup-form" id="lookupForm">
+        <input type="text" name="bookingId" id="lookupBookingId" placeholder="Mã đặt phòng (ví dụ: m1ab2c)" required autocomplete="off">
+        <input type="text" name="bookingContact" id="lookupBookingContact" placeholder="Số điện thoại hoặc Email đã đặt" required autocomplete="tel">
+        <button type="submit" class="btn btn-primary" id="lookupSubmitBtn">Tra cứu ngay</button>
+      </form>
+      <div class="lookup-result" id="lookupResult" aria-live="polite"></div>
+    </div>
+  </div>
+
   <script src="vendor/anime.umd.min.js"></script>
+  <script src="banla_payment_module/frontend/banla-priority-modal.js"></script>
   <script src="script.js"></script>
   <script src="effects.js" defer></script>
 </body>

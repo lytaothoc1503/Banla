@@ -872,6 +872,17 @@ a { color: inherit; }
     border: none !important;
   }
   .header:not(.scrolled) .nav-links a { color: var(--ink) !important; }
+  .nav-links .btn-lookup-nav {
+    color: var(--ink) !important;
+    border: 1px solid var(--line) !important;
+    text-align: center;
+    width: 100%;
+    padding: 10px 14px;
+  }
+  .header:not(.scrolled) .nav-links .btn-lookup-nav {
+    color: var(--ink) !important;
+    border-color: var(--line) !important;
+  }
   .features-list { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
   .hero-content { padding-bottom: 12vh; padding-top: 20vh; }
@@ -1067,4 +1078,156 @@ a { color: inherit; }
   .search-card, .filters, .card-grid, .post-grid, .dest-grid, .gallery-grid { grid-template-columns: 1fr; }
   .page-hero h1 { max-width: none; }
   .roof-visual, .roof-visual img { min-height: 240px; }
+}
+
+
+/* Booking Lookup Modal & Card */
+.lookup-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 36, 40, 0.6);
+  backdrop-filter: blur(8px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s var(--ease), visibility 0.3s var(--ease);
+}
+.lookup-modal.open {
+  opacity: 1;
+  visibility: visible;
+}
+.lookup-card {
+  background: var(--paper);
+  border: 1px solid var(--mist-deep);
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 16px 36px rgba(26, 36, 40, 0.15);
+  position: relative;
+  transform: translateY(16px);
+  transition: transform 0.3s var(--ease);
+}
+.lookup-modal.open .lookup-card {
+  transform: translateY(0);
+}
+.lookup-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.lookup-close:hover {
+  color: var(--ink);
+}
+.lookup-title {
+  font-family: var(--display);
+  font-size: 1.5rem;
+  font-weight: 450;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.lookup-desc {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+.lookup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.lookup-form input {
+  padding: 12px 14px;
+  border: 1px solid var(--mist-deep);
+  border-radius: 6px;
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 0.95rem;
+}
+.lookup-form input:focus {
+  outline: none;
+  border-color: var(--ember);
+}
+.lookup-result {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 8px;
+  background: var(--fog);
+  border: 1px solid var(--mist);
+  display: none;
+}
+.lookup-result.show {
+  display: block;
+}
+.lookup-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 12px;
+}
+.badge-pending {
+  background: rgba(196, 137, 74, 0.15);
+  color: var(--brass);
+  border: 1px solid rgba(196, 137, 74, 0.4);
+}
+.badge-confirmed {
+  background: rgba(42, 63, 56, 0.12);
+  color: var(--pine);
+  border: 1px solid rgba(42, 63, 56, 0.3);
+}
+.lookup-detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(26, 36, 40, 0.06);
+}
+.lookup-detail-row:last-child {
+  border-bottom: none;
+}
+.lookup-detail-label {
+  color: var(--muted);
+}
+.lookup-detail-val {
+  font-weight: 500;
+  color: var(--ink);
+}
+.btn-lookup-nav {
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 8px 14px;
+  border-radius: 4px;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  color: var(--ink);
+  transition: all 0.25s var(--ease);
+}
+.header:not(.scrolled) .btn-lookup-nav {
+  color: var(--white);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+.btn-lookup-nav:hover {
+  border-color: var(--ember);
+  color: var(--ember);
+}
+.header:not(.scrolled) .btn-lookup-nav:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--white);
 }

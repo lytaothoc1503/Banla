@@ -1,0 +1,36 @@
+{
+  "files.encoding": "utf8",
+  "files.eol": "\n",
+  "cSpell.enableFiletypes": [
+    "!markdown",
+    "!html"
+  ],
+  "cSpell.ignorePaths": [
+    "docs/**",
+    "blog/**",
+    "chinh-sach/**",
+    "dieu-khoan/**",
+    "faq/**",
+    "khach-san/**",
+    "lien-he/**",
+    "phong/**",
+    "ve-chung-toi/**",
+    "*.md",
+    "*.html",
+    "rooms.json"
+  ],
+  "cSpell.words": [
+    "Banla",
+    "dalat",
+    "checkin",
+    "checkout",
+    "bookings",
+    "subagent",
+    "crossreviewer",
+    "xai",
+    "limiter",
+    "IDOR",
+    "nodemailer"
+  ]
+}
+

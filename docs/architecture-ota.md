@@ -9,18 +9,20 @@
 
 ## Luồng dữ liệu
 1. **`rooms.json`** — nguồn dữ liệu phòng duy nhất của Banla (id, tên, diện tích, sức chứa, mô tả, ảnh). Giá để placeholder, không ghi số chưa xác thực.
-2. **`GET /api/rooms`** — trả nguyên `rooms.json`. OTA gọi endpoint này (hoặc đọc file tĩnh `/rooms.json` trên GitHub Pages) để đồng bộ hạng phòng Banla vào trang chi tiết khách sạn của OTA, map theo `id` phòng. Nên cache phía OTA (vd. 1 giờ).
-3. **`POST /api/booking`** — nhận yêu cầu đặt phòng (`name`, `phone`/`email`, `checkin`, `checkout`, `room`, `guests`, `message`), validate, lưu `data/bookings.json`, gửi email nếu có SMTP (xem `.env.example`). OTA có thể gửi booking về đây và thêm trường `source: "ota"` (đề xuất, chưa triển khai).
+2. **`GET /api/rooms`** — trả nguyên `rooms.json`. OTA gọi endpoint này (hoặc đọc file tĩnh `/rooms.json` trên GitHub Pages) để đồng bộ hạng phòng Banla vào trang chi tiết khách sạn của OTA, map theo `id` phòng. Nên cache phía OTA (vd. 1 giờ). Hỗ trợ CORS cấu hình qua `OTA_ALLOWED_ORIGINS`.
+3. **`POST /api/booking`** — nhận yêu cầu đặt phòng (`name`, `phone`/`email`, `checkin`, `checkout`, `room`, `guests`, `source`, `message`), validate, lưu `data/bookings.json`, gửi email nếu có SMTP (xem `.env.example`).
+   - Trường `source`: nhận giá trị `"direct"` (mặc định nếu đặt trên web Banla) hoặc `"ota"` (nếu đặt từ sàn OTA).
+   - Xác thực: Khi `OTA_API_KEY` được thiết lập trên server, request từ OTA (`source: "ota"` hoặc gửi kèm header) bắt buộc phải truyền header `x-api-key`.
 
 ```
-OTA (navy/cam) ──GET /api/rooms──▶ Banla server ──đọc── rooms.json
-OTA / form Banla ──POST /api/booking──▶ validate ─▶ data/bookings.json (+ email)
+OTA (navy/cam) ──GET /api/rooms (CORS)──▶ Banla server ──đọc── rooms.json
+OTA / form Banla ──POST /api/booking (x-api-key)──▶ validate (source) ─▶ data/bookings.json (+ email)
 ```
 
 ## Fallback tĩnh
 Trên GitHub Pages không có API: form hiển thị thông báo liên hệ qua điện thoại tel:0965999999 hoặc Zalo https://zalo.me/0965999999.
 
 ## Việc tiếp theo (đề xuất)
-- Thêm CORS giới hạn domain OTA khi có domain thật.
-- API key đơn giản cho POST từ OTA; chuyển lưu trữ sang DB khi lưu lượng tăng.
-- Đồng bộ tình trạng phòng trống (hiện chưa có).
+- Chuyển lưu trữ booking từ JSON sang Database (PostgreSQL / SQLite) khi lưu lượng tăng cao.
+- Đồng bộ tình trạng phòng trống theo thời gian thực (Availability calendar).
+- Webhook phản hồi trạng thái xác nhận đặt phòng ngược về OTA.

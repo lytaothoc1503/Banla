@@ -54,8 +54,23 @@ document.querySelectorAll('form.booking-form').forEach((form) => {
         body: JSON.stringify(data)
       });
       const result = await res.json();
-      alert(result.message || 'Cảm ơn bạn! Banla sẽ liên hệ sớm.');
-      if (res.ok) form.reset();
+      if (res.ok) {
+        form.reset();
+        if (window.BanlaPayment && result.id) {
+          window.BanlaPayment.open({
+            bookingId: result.id,
+            amount: 200000,
+            memo: 'BALA' + String(result.id).slice(-4).toUpperCase(),
+            onSuccess: function(payRes) {
+              console.log('Thanh toán Banla Priority hoàn tất:', payRes);
+            }
+          });
+        } else {
+          alert(result.message || 'Cảm ơn bạn! Banla sẽ liên hệ sớm.');
+        }
+      } else {
+        alert(result.message || 'Có lỗi xảy ra khi gửi yêu cầu.');
+      }
     } catch {
       alert('Hiện chưa gửi được yêu cầu trực tuyến. Vui lòng liên hệ Banla qua điện thoại tel:0965999999 hoặc Zalo https://zalo.me/0965999999 để đặt phòng.');
     }
@@ -363,3 +378,84 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register(root + 'sw.js').catch(() => {});
   });
 }
+
+
+// Booking Lookup Controller
+(function() {
+  const modal = document.getElementById('lookupModal');
+  const openBtn = document.getElementById('openLookupBtn');
+  const closeBtn = document.getElementById('closeLookupBtn');
+  const form = document.getElementById('lookupForm');
+  const resultDiv = document.getElementById('lookupResult');
+  const submitBtn = document.getElementById('lookupSubmitBtn');
+
+  if (!modal || !form) return;
+
+  function openModal() {
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    const idInput = document.getElementById('lookupBookingId');
+    if (idInput && !idInput.value) idInput.focus();
+  }
+
+  function closeModal() {
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  if (openBtn) openBtn.addEventListener('click', openModal);
+  if (closeBtn) closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const rawId = (document.getElementById('lookupBookingId')?.value || '').trim();
+    const id = rawId.replace(/^#+/, '').trim();
+    const contact = (document.getElementById('lookupBookingContact')?.value || '').trim();
+
+    if (!id || !contact) {
+      resultDiv.className = 'lookup-result show';
+      resultDiv.innerHTML = '<p style="color: var(--ember);">Vui lòng nhập đầy đủ mã đặt phòng và số điện thoại hoặc email.</p>';
+      return;
+    }
+
+    const origText = submitBtn.textContent;
+    submitBtn.textContent = 'Đang tra cứu...';
+    submitBtn.disabled = true;
+    resultDiv.className = 'lookup-result show';
+    resultDiv.innerHTML = '<p style="color: var(--muted);">Đang tìm kiếm thông tin...</p>';
+
+    try {
+      const res = await fetch('/api/booking/lookup?id=' + encodeURIComponent(id) + '&contact=' + encodeURIComponent(contact));
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        resultDiv.innerHTML = '<p style="color: var(--ember); margin-bottom: 8px;">' + (data.message || 'Không tìm thấy dữ liệu đặt phòng.') + '</p><p style="font-size: 0.85rem; color: var(--muted);">Nếu quý khách vừa đặt phòng hoặc cần hỗ trợ gấp, vui lòng liên hệ hotline/Zalo: <a href="tel:0965999999" style="color: var(--brass); font-weight: 500;">0965.999.999</a>.</p>';
+      } else {
+        const b = data.booking;
+        const isConfirmed = b.status === 'confirmed';
+        const badgeClass = isConfirmed ? 'badge-confirmed' : 'badge-pending';
+        const statusText = isConfirmed ? 'Đã xác nhận' : 'Đang xử lý (Chờ xác nhận)';
+
+        resultDiv.innerHTML =
+          '<div class="lookup-badge ' + badgeClass + '">' + statusText + '</div>' +
+          '<div class="lookup-detail-row"><span class="lookup-detail-label">Mã đặt phòng:</span><span class="lookup-detail-val">#' + b.id + '</span></div>' +
+          '<div class="lookup-detail-row"><span class="lookup-detail-label">Khách hàng:</span><span class="lookup-detail-val">' + b.name + '</span></div>' +
+          '<div class="lookup-detail-row"><span class="lookup-detail-label">Hạng phòng:</span><span class="lookup-detail-val">' + (b.room || 'Tư vấn khi check-in') + '</span></div>' +
+          (b.checkin ? '<div class="lookup-detail-row"><span class="lookup-detail-label">Thời gian:</span><span class="lookup-detail-val">' + b.checkin + ' → ' + b.checkout + '</span></div>' : '') +
+          (b.guests ? '<div class="lookup-detail-row"><span class="lookup-detail-label">Số khách:</span><span class="lookup-detail-val">' + b.guests + ' khách</span></div>' : '') +
+          '<div class="lookup-detail-row"><span class="lookup-detail-label">Liên hệ xác thực:</span><span class="lookup-detail-val">' + (b.phoneMasked || b.emailMasked) + '</span></div>';
+      }
+    } catch {
+      resultDiv.innerHTML = '<p style="color: var(--ember);">Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng hoặc liên hệ qua Zalo 0965.999.999.</p>';
+    } finally {
+      submitBtn.textContent = origText;
+      submitBtn.disabled = false;
+    }
+  });
+})();

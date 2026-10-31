@@ -23,11 +23,43 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+// CORS middleware for OTA integration
+app.use((req, res, next) => {
+  const allowed = process.env.OTA_ALLOWED_ORIGINS || '*';
+  const origins = allowed.split(',').map((s) => s.trim()).filter(Boolean);
+  const origin = req.headers.origin;
+
+  if (origin) {
+    res.setHeader('Vary', 'Origin');
+    if (origins.includes('*') || origins.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origins.includes('*') ? '*' : origin);
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
+    }
+  } else if (origins.includes('*')) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
+    return res.status(204).end();
+  }
+  next();
+});
+
 // Stricter limit for booking API
 const bookingLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 10,
   message: { success: false, message: 'Bạn đã gửi quá nhiều yêu cầu đặt phòng. Vui lòng thử lại sau.' }
+});
+
+// Rate limit for booking lookup (chống quét brute-force IDOR)
+const lookupLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30,
+  message: { success: false, message: 'Bạn đã thực hiện quá nhiều lượt tra cứu. Vui lòng thử lại sau.' }
 });
 
 app.use(express.json({ limit: '10kb' }));
@@ -65,8 +97,20 @@ function validateBooking(b = {}) {
     guests = Number(b.guests);
     if (!Number.isInteger(guests) || guests < 1 || guests > 20) errors.push('Số khách phải từ 1 đến 20.');
   }
+
+  // Validate source (direct / ota)
+  let source = 'direct';
+  if (b.source !== undefined && b.source !== null && b.source !== '') {
+    const s = str(b.source).toLowerCase();
+    if (s !== 'direct' && s !== 'ota') {
+      errors.push('Nguồn đặt phòng (source) không hợp lệ. Chỉ chấp nhận "direct" hoặc "ota".');
+    } else {
+      source = s;
+    }
+  }
+
   return { errors, booking: { name, email, phone, checkin: b.checkin || '', checkout: b.checkout || '',
-    room: str(b.room), guests, message: str(b.message || b.note).slice(0, 1000) } };
+    room: str(b.room), guests, source, message: str(b.message || b.note).slice(0, 1000) } };
 }
 
 async function maybeSendEmail(booking) {
@@ -82,9 +126,21 @@ async function maybeSendEmail(booking) {
 }
 
 app.post('/api/booking', bookingLimiter, async (req, res) => {
+  const otaApiKey = process.env.OTA_API_KEY;
+  const reqApiKey = req.headers['x-api-key'];
+  const rawSource = typeof req.body?.source === 'string' ? req.body.source.trim().toLowerCase() : '';
+
+  // Kiểm tra API key nếu OTA_API_KEY được cấu hình
+  if (otaApiKey) {
+    const isOta = rawSource === 'ota' || Boolean(reqApiKey);
+    if (isOta && (!reqApiKey || reqApiKey !== otaApiKey)) {
+      return res.status(401).json({ success: false, message: 'API key không hợp lệ hoặc thiếu (x-api-key).' });
+    }
+  }
+
   const { errors, booking } = validateBooking(req.body);
   if (errors.length) return res.status(400).json({ success: false, errors, message: errors.join(' ') });
-  const record = { id: Date.now().toString(36), createdAt: new Date().toISOString(), ...booking };
+  const record = { id: Date.now().toString(36), createdAt: new Date().toISOString(), status: 'pending', ...booking };
   try {
     fs.mkdirSync(path.dirname(BOOKINGS_FILE), { recursive: true });
     const list = fs.existsSync(BOOKINGS_FILE) ? JSON.parse(fs.readFileSync(BOOKINGS_FILE, 'utf8')) : [];
@@ -97,6 +153,74 @@ app.post('/api/booking', bookingLimiter, async (req, res) => {
   maybeSendEmail(record).catch((err) => console.error('Gửi email lỗi:', err.message));
   res.json({ success: true, id: record.id, message: 'Đã nhận yêu cầu. Banla sẽ liên hệ sớm.' });
 });
+
+// API: Tra cứu thông tin đặt phòng
+app.get('/api/booking/lookup', lookupLimiter, (req, res) => {
+  const rawId = typeof req.query.id === 'string' ? req.query.id.trim() : '';
+  const id = rawId.replace(/^#+/, '').trim();
+  const contact = typeof req.query.contact === 'string' ? req.query.contact.trim().toLowerCase() : '';
+
+  if (!id || !contact) {
+    return res.status(400).json({
+      success: false,
+      message: 'Vui lòng cung cấp cả Mã đặt phòng (id) và Số điện thoại/Email (contact) để xác thực.'
+    });
+  }
+
+  let list = [];
+  try {
+    if (fs.existsSync(BOOKINGS_FILE)) {
+      list = JSON.parse(fs.readFileSync(BOOKINGS_FILE, 'utf8'));
+    }
+  } catch (err) {
+    console.error('Đọc booking lỗi:', err);
+    return res.status(500).json({ success: false, message: 'Lỗi hệ thống khi tra cứu dữ liệu.' });
+  }
+
+  const cleanPhone = (p) => (p || '').replace(/[^0-9]/g, '');
+  const targetContact = cleanPhone(contact);
+
+  const found = list.find((b) => {
+    if (!b || String(b.id).toLowerCase() !== id.toLowerCase()) return false;
+    const bPhoneClean = cleanPhone(b.phone);
+    const bEmailClean = (b.email || '').trim().toLowerCase();
+    const phoneMatches = targetContact && bPhoneClean && (bPhoneClean.endsWith(targetContact) || targetContact.endsWith(bPhoneClean));
+    const emailMatches = bEmailClean && bEmailClean === contact;
+    return Boolean(phoneMatches || emailMatches);
+  });
+
+  if (!found) {
+    return res.status(404).json({
+      success: false,
+      message: 'Không tìm thấy thông tin đặt phòng khớp với mã và thông tin liên hệ cung cấp.'
+    });
+  }
+
+  // Masking thông tin cá nhân nhạy cảm
+  const maskPhone = (p) => (p && p.length >= 7 ? p.slice(0, 3) + '****' + p.slice(-3) : p ? '***' : '');
+  const maskEmail = (e) => (e ? e.replace(/^(.)(.*)(@.*)$/, (_, a, b, c) => a + '***' + c) : '');
+
+  res.json({
+    success: true,
+    booking: {
+      id: found.id,
+      name: found.name,
+      room: found.room,
+      checkin: found.checkin,
+      checkout: found.checkout,
+      guests: found.guests,
+      status: found.status || 'pending',
+      createdAt: found.createdAt,
+      source: found.source || 'direct',
+      phoneMasked: maskPhone(found.phone),
+      emailMasked: maskEmail(found.email)
+    }
+  });
+});
+
+// Banla Priority Payment Module Router
+const banlaPaymentRouter = require('./banla_payment_module/backend/banla_payment_router');
+app.use('/api/banla', banlaPaymentRouter);
 
 app.use((req, res) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') return res.status(404).end();
