@@ -108,7 +108,7 @@ window.addEventListener('scroll', () => {
 }, { passive: true });
 
 // Helper: Calculate nights & total amount
-function calculateStaySummary(roomName, checkinStr, checkoutStr) {
+function calculateStaySummary(roomName, checkinStr, checkoutStr, paymentOption = 'deposit_50') {
   const unitPrice = ROOM_PRICES[roomName] || 1150000;
   let nights = 1;
   if (checkinStr && checkoutStr) {
@@ -118,8 +118,22 @@ function calculateStaySummary(roomName, checkinStr, checkoutStr) {
     if (diff > 0 && diff <= 60) nights = diff;
   }
   const totalAmount = unitPrice * nights;
-  const depositAmount = 200000;
-  return { unitPrice, nights, totalAmount, depositAmount };
+  const isPay100 = paymentOption === 'pay_100';
+  const depositAmount = Math.round(totalAmount * 0.5); // Cọc 50% tổng đơn
+  const discountAmount = isPay100 ? Math.round(totalAmount * 0.10) : 0; // Giảm 10% khi thanh toán 100%
+  const payAmount = isPay100 ? (totalAmount - discountAmount) : depositAmount;
+  const remainingAmount = isPay100 ? 0 : (totalAmount - depositAmount);
+
+  return {
+    unitPrice,
+    nights,
+    totalAmount,
+    depositAmount,
+    discountAmount,
+    payAmount,
+    remainingAmount,
+    paymentOption: isPay100 ? 'pay_100' : 'deposit_50'
+  };
 }
 
 function formatVND(num) {
@@ -220,20 +234,40 @@ document.querySelectorAll('form.booking-form').forEach((form) => {
     const rName = roomSelect?.value || 'Banla Signature';
     const ci = checkinInput?.value || '';
     const co = checkoutInput?.value || '';
-    const { unitPrice, nights, totalAmount, depositAmount } = calculateStaySummary(rName, ci, co);
+    const selectedOpt = form.querySelector('[name="payment_option"]:checked')?.value || 'deposit_50';
+    const s = calculateStaySummary(rName, ci, co, selectedOpt);
 
     summaryBox.innerHTML = `
       <div class="booking-summary-row">
         <span>Hạng phòng dự kiến:</span>
-        <strong>${rName || 'Banla Signature'} (${formatVND(unitPrice)}/đêm)</strong>
+        <strong>${rName || 'Banla Signature'} (${formatVND(s.unitPrice)}/đêm)</strong>
       </div>
       <div class="booking-summary-row">
         <span>Thời gian lưu trú:</span>
-        <strong>${nights} đêm · Tạm tính: ${formatVND(totalAmount)}</strong>
+        <strong>${s.nights} đêm · Tổng tiền gốc: ${formatVND(s.totalAmount)}</strong>
       </div>
-      <div class="booking-summary-row highlight">
-        <span>Cọc giữ phòng ưu tiên (VietQR):</span>
-        <strong>${formatVND(depositAmount)} (Hoặc thanh toán 100%)</strong>
+      ${s.paymentOption === 'pay_100' ? `
+        <div class="booking-summary-row highlight" style="color: #22c55e;">
+          <span>Ưu đãi thanh toán 100%:</span>
+          <strong>Giảm 10% (-${formatVND(s.discountAmount)})</strong>
+        </div>
+        <div class="booking-summary-row highlight">
+          <span>Số tiền chuyển khoản VietQR ngay:</span>
+          <strong style="color: var(--brass, #d4af37); font-size: 15px;">${formatVND(s.payAmount)} (Đã trừ 10%)</strong>
+        </div>
+      ` : `
+        <div class="booking-summary-row highlight">
+          <span>Cọc 50% giữ phòng (VietQR):</span>
+          <strong style="color: var(--brass, #d4af37); font-size: 15px;">${formatVND(s.payAmount)}</strong>
+        </div>
+        <div class="booking-summary-row" style="font-size: 12px; color: #94a3b8;">
+          <span>Còn lại thanh toán khi check-in:</span>
+          <strong>${formatVND(s.remainingAmount)}</strong>
+        </div>
+      `}
+      <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.15); font-size: 11.5px; color: #cbd5e1; display: flex; align-items: center; gap: 6px;">
+        <span>📸</span>
+        <span>Sau khi quét VietQR, <strong>hãy gửi biên lai qua Facebook Banla</strong> để được Lễ tân đối soát CSDL & cấp mã PIN Smart-Lock chính thức.</span>
       </div>
     `;
   }
@@ -352,8 +386,11 @@ document.querySelectorAll('form.booking-form').forEach((form) => {
     if (window.BanlaPayment && typeof window.BanlaPayment.open === 'function') {
       window.BanlaPayment.open({
         bookingId: cleanCode,
-        amount: depositAmount,
-        totalAmount: totalAmount,
+        amount: summary.payAmount,
+        totalAmount: summary.totalAmount,
+        discountAmount: summary.discountAmount,
+        remainingAmount: summary.remainingAmount,
+        paymentOption: summary.paymentOption,
         guestName: data.name,
         roomName: data.room || 'Banla Signature',
         checkin: data.checkin,
@@ -364,7 +401,7 @@ document.querySelectorAll('form.booking-form').forEach((form) => {
           bookingRecord.payment_status = 'paid';
           bookingRecord.status = 'confirmed';
           bookingRecord.booking_status = 'confirmed';
-          bookingRecord.paidAmount = depositAmount;
+          bookingRecord.paidAmount = summary.payAmount;
           if (payRes && payRes.smartLockPin) {
             bookingRecord.smartLockPin = payRes.smartLockPin;
             bookingRecord.smartlock_pin = payRes.smartLockPin;

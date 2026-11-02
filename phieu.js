@@ -47,6 +47,48 @@
    * Tạo Con dấu mộc tròn vector SVG màu đỏ chữ:
    * "BANLA BOUTIQUE HOTEL - ĐÃ THANH TOÁN" xoay góc nghiêng 12 độ chân thực
    */
+  
+  /**
+   * Tạo Con dấu MỘC NƯỚC MỜ (Màu xám/cam):
+   * "BANLA BOUTIQUE HOTEL - CHỜ ĐỐI SOÁT" (PENDING)
+   * Tuyệt đối KHÔNG DÙNG DẤU ĐỎ khi CSDL chưa chứng minh thanh toán thành công!
+   */
+  function renderPendingSealSvg(bookingCode) {
+    const cleanCode = String(bookingCode || 'BANLA').replace(/^#+/, '').toUpperCase();
+    return `
+      <svg width="150" height="150" viewBox="0 0 200 200" style="transform: rotate(-10deg); opacity: 0.72; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08));">
+        <!-- Vòng tròn ngoài nét đứt màu cam đất -->
+        <circle cx="100" cy="100" r="92" fill="none" stroke="#b8612e" stroke-width="2.5" stroke-dasharray="6,4"/>
+        <circle cx="100" cy="100" r="84" fill="none" stroke="#b8612e" stroke-width="1.2"/>
+
+        <!-- Chữ cong phía trên -->
+        <path id="pendingArcTop" d="M 22,100 A 78,78 0 0,1 178,100" fill="none"/>
+        <text fill="#b8612e" font-size="11" font-weight="700" letter-spacing="2.2" font-family="'Figtree', sans-serif">
+          <textPath href="#pendingArcTop" startOffset="50%" text-anchor="middle">
+            BANLA BOUTIQUE HOTEL
+          </textPath>
+        </text>
+
+        <!-- Chữ cong phía dưới -->
+        <path id="pendingArcBottom" d="M 178,100 A 78,78 0 0,1 22,100" fill="none"/>
+        <text fill="#b8612e" font-size="9" font-weight="600" letter-spacing="2" font-family="'Figtree', sans-serif">
+          <textPath href="#pendingArcBottom" startOffset="50%" text-anchor="middle">
+            CHỜ ĐỐI SOÁT THANH TOÁN
+          </textPath>
+        </text>
+
+        <!-- Khung chữ nhật ở giữa -->
+        <rect x="25" y="80" width="150" height="40" rx="4" fill="#FFF7ED" stroke="#b8612e" stroke-width="1.8"/>
+        <text x="100" y="98" fill="#b8612e" font-size="12" font-weight="800" text-anchor="middle" letter-spacing="1.5" font-family="'Figtree', sans-serif">
+          CHƯA THANH TOÁN
+        </text>
+        <text x="100" y="112" fill="#78350f" font-size="8.5" font-weight="600" text-anchor="middle" letter-spacing="1" font-family="monospace">
+          #${cleanCode} · PROFORMA
+        </text>
+      </svg>
+    `;
+  }
+
   function renderRedSealSvg(bookingCode, dateStr) {
     const today = dateStr || new Date().toLocaleDateString('vi-VN');
     const cleanCode = String(bookingCode || 'BANLA').replace(/^#+/, '').toUpperCase();
@@ -342,22 +384,42 @@
 
     const total = Number(d.total_amount ?? d.totalPrice ?? d.total) || 1500000;
     const payStatus = String(d.payment_status || d.paymentStatus || 'pending').toLowerCase();
-    const isPaid = payStatus === 'paid';
-    const paid = Number(d.paid_amount ?? d.paidAmount ?? d.paid ?? (isPaid ? total : 0));
+    const paidAmountNum = Number(d.paid_amount ?? d.paidAmount ?? 0);
+    // CƠ SỞ DỮ LIỆU CHỨNG MINH THỰC TẾ:
+    // Phải có payment_status = 'paid' hoặc đã nhận được khoản thanh toán/đối soát thật
+    const isPaid = payStatus === 'paid' || (paidAmountNum > 0 && d.booking_status === 'confirmed');
+    const isFullPaid = isPaid && (paidAmountNum >= total || d.payment_option === 'pay_100' || d.paymentOption === 'pay_100');
+    const isDepositPaid = isPaid && !isFullPaid;
+
+    const paid = isPaid ? (paidAmountNum > 0 ? paidAmountNum : total) : 0;
     const remain = Math.max(0, total - paid);
     const refCode = d.reference_code || `BANLA_${String(code).replace(/^#+/, '').toUpperCase()}`;
 
-    let statusBadgeText = 'ĐÃ XÁC NHẬN DỊCH VỤ';
-    let statusBadgeColor = '#2a3f38';
-    if (isPaid || (paid >= total && total > 0)) {
-      statusBadgeText = 'ĐÃ THANH TOÁN ĐỦ (100%)';
+    let slipMainTitle = 'PHIẾU XÁC NHẬN DỊCH VỤ';
+    let slipSubTitle = 'BOOKING CONFIRMATION SLIP';
+    let statusBadgeText = '✓ ĐÃ THANH TOÁN ĐỦ (100%)';
+    let statusBadgeColor = '#15803d';
+
+    if (isFullPaid) {
+      slipMainTitle = 'PHIẾU XÁC NHẬN DỊCH VỤ';
+      slipSubTitle = 'OFFICIAL BOOKING CONFIRMATION';
+      statusBadgeText = '✓ ĐÃ THANH TOÁN ĐỦ (100%)';
       statusBadgeColor = '#15803d';
-    } else if (paid > 0) {
-      statusBadgeText = `ĐÃ ĐẶT CỌC (${vnd(paid)})`;
+    } else if (isDepositPaid) {
+      slipMainTitle = 'PHIẾU XÁC NHẬN ĐẶT CỌC';
+      slipSubTitle = 'DEPOSIT CONFIRMATION SLIP';
+      statusBadgeText = `✓ ĐÃ CỌC 50% (${vnd(paid)})`;
       statusBadgeColor = '#b8612e';
+    } else {
+      // CHƯA CÓ CƠ SỞ DỮ LIỆU CHỨNG MINH THANH TOÁN:
+      slipMainTitle = 'PHIẾU YÊU CẦU ĐẶT PHÒNG';
+      slipSubTitle = 'BOOKING REQUEST - CHỜ ĐỐI SOÁT';
+      statusBadgeText = '⏳ CHỜ THANH TOÁN & ĐỐI SOÁT';
+      statusBadgeColor = '#d97706';
     }
 
-    const sealSvg = renderRedSealSvg(code, d.verifiedDate);
+    // CHỈ ĐÓNG DẤU ĐỎ KHI VÀ CHỈ KHI CSDL ĐÃ XÁC THỰC LÀ ĐÃ THANH TOÁN (PAID)!
+    const sealSvg = isPaid ? renderRedSealSvg(code, d.verifiedDate) : renderPendingSealSvg(code);
 
     return `
       <div class="banla-slip-container" id="banlaSlipPrint">
@@ -375,8 +437,8 @@
             </div>
 
             <div class="slip-title-box">
-              <h1 class="slip-title">PHIẾU XÁC NHẬN DỊCH VỤ</h1>
-              <p class="slip-title-en">BOOKING CONFIRMATION SLIP</p>
+              <h1 class="slip-title">${slipMainTitle}</h1>
+              <p class="slip-title-en">${slipSubTitle}</p>
               <div class="slip-code-pill">
                 <span>MÃ BOOKING:</span>
                 <strong>#${esc(String(code).replace(/^#+/, ''))}</strong>
@@ -436,8 +498,13 @@
                 <tr>
                   <td class="col-label" style="background:#FFF8E1;color:#b8612e;font-weight:700;">Mã Smart-Lock PIN:</td>
                   <td class="col-val" style="background:#FFFDF5;color:#b8612e;">
-                    <strong style="font-size:15px;letter-spacing:1.5px;font-family:monospace;">${pin ? esc(pin) : 'Cấp khi Check-in'}</strong>
-                    <span style="font-size:10.5px;color:#555;display:block;">Hiệu lực: ${esc(checkInStr)} (14:00) → ${esc(checkOutStr)} (12:00)</span>
+                    ${isPaid && pin ? `
+                      <strong style="font-size:16px;letter-spacing:2px;font-family:monospace;color:#15803d;">${esc(pin)}</strong>
+                      <span style="font-size:10.5px;color:#15803d;display:block;font-weight:600;">✓ Đã kích hoạt (Hiệu lực: ${esc(checkInStr)} 14:00 → ${esc(checkOutStr)} 12:00)</span>
+                    ` : `
+                      <strong style="font-size:13px;color:#cf222e;font-family:sans-serif;">⏳ Chưa kích hoạt (Chờ đối soát thanh toán)</strong>
+                      <span style="font-size:10.5px;color:#718096;display:block;">Mã PIN 6 số sẽ tự động kích hoạt ngay sau khi gửi biên lai qua Facebook Banla & được duyệt.</span>
+                    `}
                   </td>
                 </tr>
               </table>
@@ -496,7 +563,7 @@
           </div>
 
           <div class="slip-bottom-bar">
-            <span>Phiếu xác nhận điện tử có đóng dấu đỏ chính thức của Banla Boutique Hotel Đà Lạt.</span>
+            <span>${isPaid ? "✓ Phiếu xác nhận điện tử có đóng dấu đỏ chính thức của Banla Boutique Hotel Đà Lạt." : "⚠️ Bản tạm tính yêu cầu đặt phòng - Chưa có giá trị nhận phòng cho đến khi hoàn tất thanh toán."}</span>
             <span>Hotline 24/7: 0296.9996.999 - 0352554863</span>
           </div>
         </div>
