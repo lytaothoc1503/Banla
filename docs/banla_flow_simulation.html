@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+<style>
+  .step-dot{transition:all .25s}
+  .fade{animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .seal{transform:rotate(-12deg)}
+</style>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased p-5">
+<div class="max-w-5xl mx-auto space-y-5">
+
+  <header class="space-y-1">
+    <p class="text-xs tracking-widest text-[var(--muted-foreground)] uppercase">Banla Boutique Hotel · Mô phỏng</p>
+    <h1 class="text-xl font-semibold">Dòng chảy trải nghiệm: Đặt phòng → Thanh toán → Đối soát → Nhận phòng</h1>
+    <p class="text-sm text-[var(--muted-foreground)]">Bấm từng bước hoặc dùng nút Tiếp. Mỗi bước hiển thị ai thao tác, dữ liệu trong CSDL thay đổi ra sao, và khách nhìn thấy gì. Các điểm <span class="font-semibold text-amber-500">⚠ Lỗ hổng</span> là lỗi thật đang có trong mã nguồn hiện tại.</p>
+  </header>
+
+  <!-- Inputs -->
+  <section class="grid md:grid-cols-4 gap-3 bg-[var(--card)] border border-[var(--border)] rounded-xl p-4">
+    <label class="text-sm space-y-1">
+      <span class="text-[var(--muted-foreground)]">Hạng phòng</span>
+      <select id="room" class="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-2 py-1.5"></select>
+    </label>
+    <label class="text-sm space-y-1">
+      <span class="text-[var(--muted-foreground)]">Số đêm</span>
+      <input id="nights" type="number" min="1" max="30" value="2" class="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-2 py-1.5">
+    </label>
+    <div class="text-sm space-y-1 md:col-span-2">
+      <span class="text-[var(--muted-foreground)]">Phương thức thanh toán</span>
+      <div class="flex gap-2">
+        <button data-opt="deposit_50" class="opt flex-1 border rounded-lg px-2 py-1.5">Cọc 50%</button>
+        <button data-opt="pay_100" class="opt flex-1 border rounded-lg px-2 py-1.5">Trả 100% · giảm 10%</button>
+      </div>
+    </div>
+    <div id="calc" class="md:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm"></div>
+  </section>
+
+  <!-- Stepper -->
+  <nav id="stepper" class="flex flex-wrap gap-2"></nav>
+
+  <!-- Stage -->
+  <section class="grid md:grid-cols-5 gap-4">
+    <div id="stage" class="md:col-span-3 bg-[var(--card)] border border-[var(--border)] rounded-xl p-5 space-y-3"></div>
+    <aside class="md:col-span-2 space-y-4">
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4">
+        <h3 class="text-sm font-semibold mb-2">Trạng thái CSDL (banla.bookings)</h3>
+        <div id="db" class="text-sm font-mono space-y-1"></div>
+      </div>
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4">
+        <h3 class="text-sm font-semibold mb-2">Khách nhìn thấy trên phiếu</h3>
+        <div id="slip"></div>
+      </div>
+    </aside>
+  </section>
+
+  <div class="flex justify-between">
+    <button id="prev" class="border border-[var(--border)] rounded-lg px-4 py-2 text-sm">← Trước</button>
+    <button id="next" class="bg-[var(--primary)] text-[var(--primary-foreground)] rounded-lg px-4 py-2 text-sm font-semibold">Tiếp →</button>
+  </div>
+
+  <!-- Gaps -->
+  <section class="bg-[var(--card)] border border-amber-500/40 rounded-xl p-5 space-y-3">
+    <h2 class="font-semibold">⚠ 5 lỗ hổng logic phát hiện khi đối chiếu mã nguồn</h2>
+    <div id="gaps" class="grid md:grid-cols-2 gap-3 text-sm"></div>
+  </section>
+</div>
+
+<script>
+const ROOMS = {
+  'Banla Signature':1150000,'Élite Room':1250000,'Highland Room':1100000,
+  'Connecting Room':1850000,'Deluxe Twin':950000,'Original Suite':1550000,'Deluxe Balcony':980000
+};
+const vnd = n => Number(n).toLocaleString('vi-VN') + ' ₫';
+const state = { room:'Banla Signature', nights:2, opt:'deposit_50', step:0 };
+
+function calc(){
+  const total = ROOMS[state.room]*state.nights;
+  const p100 = state.opt==='pay_100';
+  const discount = p100 ? Math.round(total*0.10) : 0;
+  const pay = p100 ? total-discount : Math.round(total*0.5);
+  const remain = p100 ? 0 : total-pay;
+  return { total, discount, pay, remain };
+}
+
+const GAPS = [
+  { id:'G1', title:'Popup "thời gian thực" chỉ đọc localStorage của khách',
+    file:'banla-priority-modal.js → checkRealtimeStatus()',
+    body:'Lễ tân duyệt đơn trên máy khác (admin.html → Supabase), nhưng popup của khách chỉ kiểm tra localStorage trên trình duyệt của chính khách. Vì vậy popup sẽ không bao giờ tự chuyển sang "Đã xác thực". Hiện chưa có xác thực thời gian thực đúng nghĩa.',
+    fix:'Polling GET /api/booking/status?id=&contact= (server đọc Supabase) hoặc Supabase Realtime theo booking_code.' },
+  { id:'G2', title:'Phiếu tin dữ liệu phía trình duyệt trước tiên',
+    file:'phieu.html → bước 1 đọc localStorage',
+    body:'Khách có thể tự sửa localStorage thành payment_status = "paid" là phiếu sẽ hiện dấu đỏ và PIN. Ngược lại, bản ghi "pending" cũ trong localStorage che mất trạng thái "paid" thật trên Supabase.',
+    fix:'Phiếu chỉ render dấu đỏ từ phản hồi server/Supabase. localStorage chỉ dùng để nhớ mã đơn.' },
+  { id:'G3', title:'Đơn mẫu (demo) có sẵn dấu đỏ và PIN',
+    file:'phieu.html → defaultSamples (BL9821, BL7342)',
+    body:'Ai mở phieu.html?ma=BL9821 cũng nhận được phiếu "ĐÃ THANH TOÁN" có dấu đỏ và mã PIN 839204. Phiếu giả nhưng trông như thật.',
+    fix:'Xóa dữ liệu mẫu khỏi bản production, hoặc chỉ bật khi ?demo=1 và gắn watermark MẪU.' },
+  { id:'G4', title:'Duyệt đơn luôn ghi nhận thanh toán 100%',
+    file:'admin.html → approveBookingAndIssuePin()',
+    body:'Hàm duyệt đặt paid_amount = total_amount. Đơn cọc 50% sẽ thành "Đã thanh toán đủ 100%", dẫn tới sai đối soát và sai phiếu. Đồng thời saveBookingToSupabase() không gửi payment_option / discount nên CSDL không biết khách chọn gói nào.',
+    fix:'Lưu payment_option, amount_due, discount_amount khi tạo đơn. Khi duyệt, lễ tân nhập số tiền thực nhận và đối chiếu với amount_due.' },
+  { id:'G5', title:'Phiếu tải toàn bộ bảng bookings bằng anon key',
+    file:'phieu.html → .from("bookings").select("*")',
+    body:'Nếu RLS cho phép anon đọc, bất kỳ ai cũng tải được tên, SĐT, email và PIN của mọi khách (lộ PII, đúng loại lỗi IDOR).',
+    fix:'Bỏ select toàn bảng. Tra cứu qua API server với mã đơn + SĐT; RLS chặn anon SELECT.' },
+];
+
+const STEPS = [
+  { t:'1. Xem website', actor:'Khách', lane:'guest',
+    desc:'Khách vào trang chủ, xem Hero, lợi ích, hạng phòng, FAQ và bấm "Đặt phòng ngay".',
+    db:null, slip:'none', gaps:[] },
+  { t:'2. Điền form', actor:'Khách', lane:'guest',
+    desc:'Khách nhập họ tên, SĐT, email, ngày nhận/trả phòng, hạng phòng và chọn Cọc 50% hoặc Trả 100% (giảm 10%). Bảng tạm tính cập nhật ngay khi thay đổi.',
+    db:null, slip:'none', gaps:[] },
+  { t:'3. Tạo đơn', actor:'Hệ thống', lane:'sys',
+    desc:'script.js gọi POST /api/booking. Nếu thất bại (GitHub Pages), hệ thống tự sinh mã BLxxxx, lưu localStorage và Supabase với trạng thái pending.',
+    db:{payment:'pending', booking:'pending', paid:0, pin:'—', option:'(không lưu) ⚠'}, slip:'pending', gaps:['G4'] },
+  { t:'4. Mở VietQR', actor:'Hệ thống', lane:'sys',
+    desc:'Popup hiện mã QR với số tiền và nội dung BANLA_MÃĐƠN, nhãn "ĐANG CHỜ THANH TOÁN", kèm nút gửi biên lai qua Facebook. Popup bắt đầu kiểm tra trạng thái mỗi 2,5 giây.',
+    db:{payment:'pending', booking:'pending', paid:0, pin:'—', option:'(không lưu) ⚠'}, slip:'pending', gaps:['G1'] },
+  { t:'5. Chuyển khoản', actor:'Khách', lane:'guest',
+    desc:'Khách quét QR và chuyển tiền. Lúc này tiền đã rời tài khoản khách nhưng CSDL vẫn chưa biết. Phiếu bắt buộc vẫn ở trạng thái chờ.',
+    db:{payment:'pending', booking:'pending', paid:0, pin:'—', option:'(không lưu) ⚠'}, slip:'pending', gaps:['G2','G3'] },
+  { t:'6. Gửi biên lai FB', actor:'Khách', lane:'guest',
+    desc:'Khách chụp biên lai và gửi qua Fanpage Banla. Đây là bằng chứng do khách cung cấp, chưa phải xác nhận từ ngân hàng.',
+    db:{payment:'pending', booking:'pending', paid:0, pin:'—', option:'(không lưu) ⚠'}, slip:'pending', gaps:[] },
+  { t:'7. Lễ tân đối soát', actor:'Lễ tân', lane:'staff',
+    desc:'Lễ tân mở app ngân hàng, tìm giao dịch có nội dung BANLA_MÃĐƠN và đối chiếu số tiền với số phải trả. Chỉ khi khớp mới được duyệt.',
+    db:{payment:'pending', booking:'pending', paid:0, pin:'—', option:'(không lưu) ⚠'}, slip:'pending', gaps:[] },
+  { t:'8. Duyệt + cấp PIN', actor:'Lễ tân', lane:'staff',
+    desc:'admin.html → "Duyệt đơn": sinh PIN 6 số an toàn và cập nhật Supabase (paid, confirmed) kèm một bản ghi transactions.',
+    db:'approved', slip:'paid', gaps:['G4','G1'] },
+  { t:'9. Phiếu dấu đỏ', actor:'Khách', lane:'guest',
+    desc:'Khách mở phiếu và thấy dấu đỏ "ĐÃ THANH TOÁN" cùng mã PIN. Điều kiện đúng: trạng thái này phải đến từ CSDL server, không đến từ trình duyệt.',
+    db:'approved', slip:'paid', gaps:['G2','G5'] },
+  { t:'10. Check-in Smart-Lock', actor:'Khách', lane:'guest',
+    desc:'Khách nhập PIN tại cửa phòng trong khung 14:00 ngày nhận → 12:00 ngày trả. Nếu chọn cọc 50%, khách thanh toán phần còn lại tại quầy.',
+    db:'approved', slip:'paid', gaps:[] },
+];
+
+const laneStyle = { guest:'bg-sky-500/15 text-sky-500', sys:'bg-violet-500/15 text-violet-500', staff:'bg-emerald-500/15 text-emerald-500' };
+
+function renderInputs(){
+  const sel = document.getElementById('room');
+  sel.innerHTML = Object.keys(ROOMS).map(r=>`<option ${r===state.room?'selected':''}>${r}</option>`).join('');
+  document.querySelectorAll('.opt').forEach(b=>{
+    const on = b.dataset.opt===state.opt;
+    b.className = 'opt flex-1 border rounded-lg px-2 py-1.5 ' + (on ? 'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)] font-semibold' : 'border-[var(--border)]');
+  });
+  const c = calc();
+  const cell = (k,v,hl)=>`<div class="rounded-lg border border-[var(--border)] p-2"><div class="text-xs text-[var(--muted-foreground)]">${k}</div><div class="font-semibold ${hl||''}">${v}</div></div>`;
+  document.getElementById('calc').innerHTML =
+    cell('Tổng gốc', vnd(c.total)) +
+    cell('Giảm giá', c.discount? '−'+vnd(c.discount):'0 ₫', c.discount?'text-emerald-500':'') +
+    cell('Chuyển VietQR ngay', vnd(c.pay), 'text-amber-500') +
+    cell('Còn lại khi check-in', vnd(c.remain));
+}
+
+function renderStepper(){
+  document.getElementById('stepper').innerHTML = STEPS.map((s,i)=>{
+    const on=i===state.step, done=i<state.step, warn=s.gaps.length>0;
+    return `<button data-i="${i}" class="step-dot text-xs rounded-full px-3 py-1.5 border ${on?'border-[var(--primary)] bg-[var(--primary)] text-[var(--primary-foreground)]':done?'border-[var(--border)] text-[var(--foreground)]':'border-[var(--border)] text-[var(--muted-foreground)]'}">${s.t}${warn?' ⚠':''}</button>`;
+  }).join('');
+}
+
+function dbFor(s){
+  const c = calc();
+  if (s.db==='approved'){
+    return { payment:'paid', booking:'confirmed', paid: c.total, pin:'482917', option:'(không lưu) ⚠', bug: state.opt==='deposit_50' };
+  }
+  return s.db;
+}
+
+function renderStage(){
+  const s = STEPS[state.step];
+  const c = calc();
+  const gapChips = s.gaps.map(g=>{
+    const G = GAPS.find(x=>x.id===g);
+    return `<div class="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm"><div class="font-semibold text-amber-500">⚠ ${G.id}: ${G.title}</div><div class="text-[var(--muted-foreground)] mt-1">${G.body}</div></div>`;
+  }).join('');
+  document.getElementById('stage').innerHTML = `
+    <div class="fade space-y-3">
+      <div class="flex items-center gap-2">
+        <span class="text-xs rounded-full px-2 py-0.5 ${laneStyle[s.lane]}">${s.actor}</span>
+        <span class="text-xs text-[var(--muted-foreground)]">Bước ${state.step+1}/${STEPS.length}</span>
+      </div>
+      <h2 class="text-lg font-semibold">${s.t}</h2>
+      <p class="text-sm leading-relaxed">${s.desc}</p>
+      ${state.step===3 ? `<div class="rounded-lg border border-[var(--border)] p-3 text-sm">QR: <b>${vnd(c.pay)}</b> · Nội dung: <code>BANLA_BLX7Q2</code> · ${state.opt==='pay_100'?'Trả 100% (đã giảm 10%)':'Cọc 50%'}</div>`:''}
+      ${state.step===7 && state.opt==='deposit_50' ? `<div class="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm"><b class="text-red-500">Sai số ngay tại bước này:</b> khách chỉ chuyển ${vnd(c.pay)}, nhưng hàm duyệt ghi paid_amount = ${vnd(c.total)}.</div>`:''}
+      ${gapChips}
+    </div>`;
+}
+
+function renderDB(){
+  const d = dbFor(STEPS[state.step]);
+  const el = document.getElementById('db');
+  if(!d){ el.innerHTML = `<div class="text-[var(--muted-foreground)]">Chưa có bản ghi</div>`; return; }
+  const row=(k,v,cls)=>`<div class="flex justify-between gap-2"><span class="text-[var(--muted-foreground)]">${k}</span><span class="${cls||''}">${v}</span></div>`;
+  el.innerHTML =
+    row('payment_status', d.payment, d.payment==='paid'?'text-emerald-500':'text-amber-500') +
+    row('booking_status', d.booking) +
+    row('paid_amount', vnd(d.paid), d.bug?'text-red-500 font-semibold':'') +
+    row('smartlock_pin', d.pin) +
+    row('payment_option', d.option, 'text-amber-500') +
+    (d.bug?`<div class="text-xs text-red-500 pt-1">Đơn chọn cọc 50% nhưng CSDL ghi đã trả 100% (G4)</div>`:'');
+}
+
+function renderSlip(){
+  const s = STEPS[state.step];
+  const el = document.getElementById('slip');
+  if (s.slip==='none'){ el.innerHTML = `<div class="text-sm text-[var(--muted-foreground)]">Chưa có phiếu</div>`; return; }
+  const paid = s.slip==='paid';
+  el.innerHTML = `
+    <div class="fade relative rounded-lg border border-[var(--border)] p-3 text-sm overflow-hidden">
+      <div class="font-semibold">${paid?'PHIẾU XÁC NHẬN DỊCH VỤ':'PHIẾU YÊU CẦU ĐẶT PHÒNG'}</div>
+      <div class="text-xs text-[var(--muted-foreground)]">#BLX7Q2 · ${state.room}</div>
+      <div class="mt-2 text-xs inline-block rounded px-2 py-0.5 ${paid?'bg-emerald-500/15 text-emerald-500':'bg-amber-500/15 text-amber-500'}">${paid?'✓ ĐÃ THANH TOÁN':'⏳ CHỜ THANH TOÁN & ĐỐI SOÁT'}</div>
+      <div class="mt-2 text-xs">PIN: <b>${paid?'482917':'Chưa kích hoạt'}</b></div>
+      <div class="seal absolute right-2 bottom-2 w-20 h-20 rounded-full border-2 ${paid?'border-red-500 text-red-500':'border-dashed border-amber-500 text-amber-500'} flex items-center justify-center text-center text-xs font-bold leading-tight">${paid?'BANLA<br>ĐÃ THANH<br>TOÁN':'CHƯA<br>THANH<br>TOÁN'}</div>
+    </div>`;
+}
+
+function renderGaps(){
+  document.getElementById('gaps').innerHTML = GAPS.map(g=>`
+    <div class="rounded-lg border border-[var(--border)] p-3 space-y-1">
+      <div class="font-semibold">${g.id}. ${g.title}</div>
+      <div class="text-xs font-mono text-[var(--muted-foreground)]">${g.file}</div>
+      <div>${g.body}</div>
+      <div class="text-emerald-500"><b>Hướng sửa:</b> ${g.fix}</div>
+    </div>`).join('');
+}
+
+function render(){ renderInputs(); renderStepper(); renderStage(); renderDB(); renderSlip(); }
+
+document.getElementById('room').addEventListener('change',e=>{state.room=e.target.value;render();});
+document.getElementById('nights').addEventListener('input',e=>{state.nights=Math.max(1,Math.min(30,Number(e.target.value)||1));render();});
+document.addEventListener('click',e=>{
+  const o=e.target.closest('.opt'); if(o){state.opt=o.dataset.opt;render();}
+  const d=e.target.closest('[data-i]'); if(d){state.step=Number(d.dataset.i);render();}
+});
+document.getElementById('next').onclick=()=>{state.step=Math.min(STEPS.length-1,state.step+1);render();};
+document.getElementById('prev').onclick=()=>{state.step=Math.max(0,state.step-1);render();};
+
+renderGaps(); render();
+</script>
+</body>
+</html>
