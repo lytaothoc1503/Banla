@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "node --test test/api.test.js",
+    "test": "node --test test/*.test.js",
+    "backup": "node scripts/backup_db.js",
     "cross-review": "node .agents/scripts/cross_review.js"
   },
   "dependencies": {

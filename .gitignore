@@ -1,5 +1,7 @@
 node_modules/
 data/bookings.json
+data/backups/
 banla_payment_module/data/
 .env
 .env*.local
+*.log

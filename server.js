@@ -1,18 +1,31 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const crypto = require('crypto');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+
+const {
+  hashPassword,
+  verifyPassword,
+  safeTimingCompare,
+  generateExpiringToken,
+  verifyExpiringToken,
+  getSecureCookieDirectives,
+  maskPhoneNumber,
+  maskEmailAddress,
+  validateUploadPayload
+} = require('./utils/security');
+
+const { logger, sanitizeClientError } = require('./utils/logger');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ============================================================================
-// SECURITY CHECKLIST (QUY TRÌNH BẢO MẬT 19 TIÊU CHUẨN)
+// SECURITY CHECKLIST (QUY TRÌNH BẢO MẬT 7 BƯỚC — 19 TIÊU CHUẨN VÀNG)
 // ============================================================================
 
-// 1. Khóa phía trình duyệt & Headers bảo mật (Rules 12, 13)
+// BƯỚC 4: Khóa phía trình duyệt & Headers bảo mật (Rules 12, 13)
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
@@ -35,7 +48,7 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// Basic DDoS / abuse protection (Rules 02, 06)
+// BƯỚC 1: Rate limit chung chống DDoS / abuse (Rule 02)
 const isTestEnv = process.env.NODE_ENV === 'test';
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -55,43 +68,7 @@ const adminLoginLimiter = isTestEnv ? (req, res, next) => next() : rateLimit({
   message: { success: false, message: 'Quá nhiều lần đăng nhập quản trị thất bại. Vui lòng thử lại sau 15 phút.' }
 });
 
-// Rule 01 & 04: So sánh thời gian an toàn (Safe Timing Comparison chống Timing Attacks)
-function safeCompare(a, b) {
-  if (typeof a !== 'string' || typeof b !== 'string') return false;
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  if (bufA.length !== bufB.length) return false;
-  return crypto.timingSafeEqual(bufA, bufB);
-}
-
-// Rule 01 & 03: Hash và cơ chế phiên hết hạn (Admin Expiring Session Tokens)
-const ADMIN_SECRET_KEY = process.env.ADMIN_KEY || 'BANLA8888';
-const ADMIN_SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || (ADMIN_SECRET_KEY + '_SESSION_SALT_2026');
-
-function generateAdminSessionToken() {
-  const expiresAt = Date.now() + 8 * 60 * 60 * 1000; // 8 tiếng hết hạn (Rule 03)
-  const payload = `admin:${expiresAt}`;
-  const signature = crypto.createHmac('sha256', ADMIN_SESSION_SECRET).update(payload).digest('hex');
-  return Buffer.from(`${payload}:${signature}`).toString('base64url');
-}
-
-function verifyAdminSessionToken(token) {
-  if (!token || typeof token !== 'string') return false;
-  try {
-    const decoded = Buffer.from(token, 'base64url').toString('utf8');
-    const parts = decoded.split(':');
-    if (parts.length !== 3 || parts[0] !== 'admin') return false;
-    const expiresAt = Number(parts[1]);
-    const signature = parts[2];
-    if (isNaN(expiresAt) || Date.now() > expiresAt) return false; // Hết hạn phiên
-    const expectedSig = crypto.createHmac('sha256', ADMIN_SESSION_SECRET).update(`admin:${expiresAt}`).digest('hex');
-    return safeCompare(signature, expectedSig);
-  } catch {
-    return false;
-  }
-}
-
-// Rule 15: CORS chỉ cho phép domain cần thiết
+// BƯỚC 5: Rule 15 — CORS chỉ cho phép domain cần thiết (whitelist)
 app.use((req, res, next) => {
   const allowed = process.env.OTA_ALLOWED_ORIGINS || '*';
   const origins = allowed.split(',').map((s) => s.trim()).filter(Boolean);
@@ -124,17 +101,17 @@ const bookingLimiter = isTestEnv ? (req, res, next) => next() : rateLimit({
   message: { success: false, message: 'Bạn đã gửi quá nhiều yêu cầu đặt phòng. Vui lòng thử lại sau.' }
 });
 
-// Rule 10: Rate limit for booking lookup (chống quét brute-force IDOR)
+// BƯỚC 3: Rule 10 — Rate limit tra cứu đơn chống quét brute-force IDOR
 const lookupLimiter = isTestEnv ? (req, res, next) => next() : rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 30,
   message: { success: false, message: 'Bạn đã thực hiện quá nhiều lượt tra cứu. Vui lòng thử lại sau.' }
 });
 
-// Rules 07 & 08: Giới hạn dung lượng tải lên và loại file (Max 10kb JSON, không mở toang upload)
+// BƯỚC 3: Rules 07 & 08 — Giới hạn dung lượng tải lên (10KB JSON max)
 app.use(express.json({ limit: '10kb' }));
 
-// Rule 05 & 08: Chặn tải lên file nguy hiểm và chặn truy cập file mã nguồn / nội bộ
+// BƯỚC 2: Rule 05 & 08 — Chặn truy cập file mã nguồn và nội bộ nhạy cảm
 app.use((req, res, next) => (
   /^\/(data|node_modules|test|docs|scripts|utils|banla_payment_module\/(backend|database)|\.)|^\/(server\.js|package(-lock)?\.json|skills-lock\.json|supabase_schema\.sql|skill\.md)$/i.test(req.path)
     ? res.status(404).end()
@@ -142,6 +119,16 @@ app.use((req, res, next) => (
 ));
 
 app.use(express.static(path.join(__dirname), { dotfiles: 'deny' }));
+
+// BƯỚC 7: Rule 19 — Endpoint kiểm tra sức khỏe hệ thống (Health Check)
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+    service: 'banla-boutique-hotel'
+  });
+});
 
 // In-memory cache for rooms.json to avoid blocking synchronous disk I/O
 let roomsCache = null;
@@ -171,7 +158,7 @@ function readBookingsSafe() {
       return Array.isArray(parsed) ? parsed : [];
     }
   } catch (err) {
-    console.error('[Bookings] Lỗi đọc dữ liệu an toàn:', err.message);
+    logger.error('Lỗi đọc dữ liệu an toàn:', err);
   }
   return [];
 }
@@ -183,7 +170,7 @@ function writeBookingsSafe(list) {
   fs.renameSync(tmpFile, BOOKINGS_FILE);
 }
 
-// Rule 09: Validate nghiêm ngặt toàn bộ dữ liệu User gửi lên ở Server
+// BƯỚC 3: Rule 09 — Validate nghiêm ngặt toàn bộ dữ liệu User gửi lên ở Server
 function validateBooking(b) {
   const errors = [];
   const body = (b && typeof b === 'object') ? b : {};
@@ -258,10 +245,10 @@ app.post('/api/booking', bookingLimiter, async (req, res) => {
   const reqApiKey = req.headers['x-api-key'];
   const rawSource = typeof req.body?.source === 'string' ? req.body.source.trim().toLowerCase() : '';
 
-  // Rule 01 & 04: So sánh an toàn thời gian (timing-safe)
+  // BƯỚC 1: Rule 01 & 04 — So sánh an toàn thời gian (timing-safe)
   if (otaApiKey) {
     const isOta = rawSource === 'ota' || Boolean(reqApiKey);
-    if (isOta && (!reqApiKey || !safeCompare(reqApiKey, otaApiKey))) {
+    if (isOta && (!reqApiKey || !safeTimingCompare(reqApiKey, otaApiKey))) {
       return res.status(401).json({ success: false, message: 'API key không hợp lệ hoặc thiếu (x-api-key).' });
     }
   }
@@ -281,15 +268,15 @@ app.post('/api/booking', bookingLimiter, async (req, res) => {
     list.push(record);
     writeBookingsSafe(list);
   } catch (err) {
-    console.error('Lưu booking lỗi:', err.message);
+    logger.error('Lưu booking lỗi', err);
     return res.status(500).json({ success: false, message: 'Có lỗi khi lưu yêu cầu. Vui lòng gọi điện/Zalo cho Banla.' });
   }
 
-  maybeSendEmail(record).catch((err) => console.error('Gửi email lỗi:', err.message));
+  maybeSendEmail(record).catch((err) => logger.error('Gửi email lỗi', err));
   res.json({ success: true, id: record.id, message: 'Đã nhận yêu cầu. Banla sẽ liên hệ sớm.' });
 });
 
-// Rule 10: Tự thử nghiệm & Chống lộ lọt dữ liệu IDOR qua tra cứu đơn
+// BƯỚC 3: Rule 10 — Tự thử nghiệm & Chống lộ lọt dữ liệu IDOR qua tra cứu đơn
 app.get('/api/booking/lookup', lookupLimiter, (req, res) => {
   const rawId = typeof req.query.id === 'string' ? req.query.id.trim() : '';
   const id = rawId.replace(/^#+/, '').trim();
@@ -335,10 +322,6 @@ app.get('/api/booking/lookup', lookupLimiter, (req, res) => {
     });
   }
 
-  // Masking thông tin cá nhân nhạy cảm
-  const maskPhone = (p) => (p && p.length >= 7 ? p.slice(0, 3) + '****' + p.slice(-3) : p ? '***' : '');
-  const maskEmail = (e) => (e ? e.replace(/^(.)(.*)(@.*)$/, (_, a, b, c) => a + '***' + c) : '');
-
   res.json({
     success: true,
     booking: {
@@ -353,8 +336,8 @@ app.get('/api/booking/lookup', lookupLimiter, (req, res) => {
       smartLockPin: found.smartLockPin || null,
       createdAt: found.createdAt,
       source: found.source || 'direct',
-      phoneMasked: maskPhone(found.phone),
-      emailMasked: maskEmail(found.email)
+      phoneMasked: maskPhoneNumber(found.phone),
+      emailMasked: maskEmailAddress(found.email)
     }
   });
 });
@@ -367,7 +350,10 @@ app.get('/api/booking/detail', lookupLimiter, (req, res) => {
   const contact = rawContact.toLowerCase();
   const adminKey = req.headers['x-admin-key'] || req.query.key;
   const adminToken = req.headers['x-admin-token'];
-  const isAdmin = (adminKey && safeCompare(String(adminKey), ADMIN_SECRET_KEY)) || (adminToken && verifyAdminSessionToken(adminToken));
+
+  const isKeyValid = adminKey && safeTimingCompare(String(adminKey), ADMIN_SECRET_KEY);
+  const isTokenValid = adminToken && verifyExpiringToken(adminToken, ADMIN_SESSION_SECRET).valid;
+  const isAdmin = isKeyValid || isTokenValid;
 
   if (!id) {
     return res.status(400).json({ success: false, message: 'Thiếu mã đặt phòng (id).' });
@@ -399,16 +385,13 @@ app.get('/api/booking/detail', lookupLimiter, (req, res) => {
     }
   }
 
-  const maskPhone = (p) => (!isAdmin && p && p.length >= 7 ? p.slice(0, 3) + '****' + p.slice(-3) : (p || ''));
-  const maskEmail = (e) => (!isAdmin && e ? e.replace(/^(.)(.*)(@.*)$/, (_, a, b, c) => a + '***' + c) : (e || ''));
-
   res.json({
     success: true,
     booking: {
       id: found.id,
       name: found.name,
-      phone: maskPhone(found.phone),
-      email: maskEmail(found.email),
+      phone: !isAdmin ? maskPhoneNumber(found.phone) : (found.phone || ''),
+      email: !isAdmin ? maskEmailAddress(found.email) : (found.email || ''),
       room: found.room || 'Banla Deluxe Room',
       checkin: found.checkin,
       checkout: found.checkout,
@@ -428,13 +411,15 @@ app.get('/api/booking/detail', lookupLimiter, (req, res) => {
 // ==========================================
 // ADMIN DASHBOARD & RECONCILIATION APIS
 // ==========================================
+const ADMIN_SECRET_KEY = process.env.ADMIN_KEY || 'BANLA8888';
+const ADMIN_SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || (ADMIN_SECRET_KEY + '_BANLA_SESSION_2026');
 
 function requireAdminAuth(req, res, next) {
   const reqKey = req.headers['x-admin-key'] || req.query.key || (req.body && req.body.key);
   const reqToken = req.headers['x-admin-token'];
 
-  const isKeyValid = reqKey && safeCompare(String(reqKey), ADMIN_SECRET_KEY);
-  const isTokenValid = reqToken && verifyAdminSessionToken(reqToken);
+  const isKeyValid = reqKey && safeTimingCompare(String(reqKey), ADMIN_SECRET_KEY);
+  const isTokenValid = reqToken && verifyExpiringToken(reqToken, ADMIN_SESSION_SECRET).valid;
 
   if (!isKeyValid && !isTokenValid) {
     return res.status(401).json({
@@ -445,19 +430,14 @@ function requireAdminAuth(req, res, next) {
   next();
 }
 
-// 1. Kiểm tra mã khóa đăng nhập Admin & Cấp Session Token (Rules 01, 02, 03, 14)
+// BƯỚC 1: Rules 01, 02, 03 & BƯỚC 4: Rule 14 — Kiểm tra mã khóa đăng nhập Admin & Cấp Session Token 8h
 app.post('/api/admin/login', adminLoginLimiter, (req, res) => {
   const { key } = req.body || {};
-  if (key && safeCompare(String(key).trim(), ADMIN_SECRET_KEY)) {
-    const sessionToken = generateAdminSessionToken();
+  if (key && verifyPassword(String(key).trim(), ADMIN_SECRET_KEY)) {
+    const sessionToken = generateExpiringToken('admin', ADMIN_SESSION_SECRET, 8);
 
     // Rule 14: Cookie HttpOnly + Secure + SameSite=Strict
-    res.cookie('banla_admin_session', sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 8 * 60 * 60 * 1000 // 8 giờ
-    });
+    res.cookie('banla_admin_session', sessionToken, getSecureCookieDirectives(8 * 3600 * 1000));
 
     return res.json({
       success: true,
@@ -467,6 +447,12 @@ app.post('/api/admin/login', adminLoginLimiter, (req, res) => {
     });
   }
   return res.status(401).json({ success: false, message: 'Mã PIN quản trị không chính xác.' });
+});
+
+// BƯỚC 1: Rule 03 — Thu hồi phiên và đăng xuất Admin
+app.post('/api/admin/logout', (req, res) => {
+  res.clearCookie('banla_admin_session', { path: '/' });
+  res.json({ success: true, message: 'Đã đăng xuất phiên quản trị an toàn.' });
 });
 
 // Helper: tính toán chuẩn hóa tài chính cho 1 đơn
@@ -499,7 +485,7 @@ app.get('/api/admin/bookings', requireAdminAuth, (req, res) => {
     normalized.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
     res.json({ success: true, bookings: normalized });
   } catch (err) {
-    console.error('[Admin] Lỗi lấy danh sách:', err.message);
+    logger.error('Admin lỗi lấy danh sách', err);
     res.status(500).json({ success: false, message: 'Không thể tải danh sách đơn đặt phòng.' });
   }
 });
@@ -545,7 +531,7 @@ app.get('/api/admin/stats', requireAdminAuth, (req, res) => {
       }
     });
   } catch (err) {
-    console.error('[Admin] Lỗi thống kê:', err.message);
+    logger.error('Admin lỗi thống kê', err);
     res.status(500).json({ success: false, message: 'Lỗi tính toán số liệu thống kê.' });
   }
 });
@@ -574,7 +560,7 @@ app.post('/api/admin/booking/update', requireAdminAuth, (req, res) => {
 
     res.json({ success: true, message: 'Cập nhật đơn thành công!', booking: list[idx] });
   } catch (err) {
-    console.error('[Admin] Lỗi cập nhật đơn:', err.message);
+    logger.error('Admin lỗi cập nhật đơn', err);
     res.status(500).json({ success: false, message: 'Lỗi máy chủ khi cập nhật đơn.' });
   }
 });
@@ -591,6 +577,7 @@ app.post('/api/admin/booking/smartlock', requireAdminAuth, (req, res) => {
       return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt phòng.' });
     }
 
+    // Sinh mã PIN dạng *xxxx# hoặc lấy mã custom nếu hợp lệ
     let pin = '';
     if (customPin && /^\*?[0-9]{4,6}#?$/.test(customPin.trim())) {
       pin = customPin.trim();
@@ -615,7 +602,7 @@ app.post('/api/admin/booking/smartlock', requireAdminAuth, (req, res) => {
       booking: list[idx]
     });
   } catch (err) {
-    console.error('[Admin] Lỗi cấp PIN Smart-lock:', err.message);
+    logger.error('Admin lỗi cấp PIN Smart-lock', err);
     res.status(500).json({ success: false, message: 'Lỗi máy chủ khi cấp mã PIN Smart-Lock.' });
   }
 });
@@ -624,23 +611,20 @@ app.post('/api/admin/booking/smartlock', requireAdminAuth, (req, res) => {
 const banlaPaymentRouter = require('./banla_payment_module/backend/banla_payment_router');
 app.use('/api/banla', banlaPaymentRouter);
 
-// Rule 06: Bắt lỗi 404 cho tài nguyên không tồn tại
+// BƯỚC 2: Rule 06 — Bắt lỗi 404 cho tài nguyên không tồn tại
 app.use((req, res) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') return res.status(404).end();
   res.status(404).sendFile(path.join(__dirname, '404.html'));
 });
 
-// Rule 06: Trình bắt lỗi hệ thống toàn cục không để lộ stack trace ra ngoài
+// BƯỚC 2: Rule 06 — Trình bắt lỗi hệ thống toàn cục không để lộ stack trace ra ngoài
 app.use((err, req, res, next) => {
-  res.status(err.status || 500).json({
-    success: false,
-    message: 'Yêu cầu không hợp lệ hoặc đã xảy ra lỗi xử lý trên máy chủ.'
-  });
+  res.status(err.status || 500).json(sanitizeClientError(err, 'Yêu cầu không hợp lệ hoặc đã xảy ra lỗi xử lý trên máy chủ.'));
 });
 
 if (require.main === module) {
   app.listen(PORT, () => {
-    console.log(`Banla server running at http://localhost:${PORT}`);
+    logger.info(`Banla server running at http://localhost:${PORT}`);
   });
 }
 
