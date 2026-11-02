@@ -77,7 +77,7 @@ app.use(express.json({ limit: '10kb' }));
 
 // Block sensitive paths (prevent source code and sensitive data leaks)
 app.use((req, res, next) => (
-  /^\/(data|node_modules|test|docs|scripts|utils|banla_payment_module\/(backend|database)|\.)|^\/(server\.js|package(-lock)?\.json|skills-lock\.json)$/i.test(req.path)
+  /^\/(data|node_modules|test|docs|scripts|utils|banla_payment_module\/(backend|database)|\.)|^\/(server\.js|package(-lock)?\.json|skills-lock\.json|supabase_schema\.sql|skill\.md)$/i.test(req.path)
     ? res.status(404).end()
     : next()
 ));

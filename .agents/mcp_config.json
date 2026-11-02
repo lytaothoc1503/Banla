@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "skillry": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "--yes",
+        "skillry-cli@latest",
+        "mcp"
+      ]
+    }
+  }
+}
