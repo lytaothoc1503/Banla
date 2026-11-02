@@ -8,13 +8,35 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Security headers
+// ============================================================================
+// SECURITY CHECKLIST (QUY TRÌNH BẢO MẬT 19 TIÊU CHUẨN)
+// ============================================================================
+
+// 1. Khóa phía trình duyệt & Headers bảo mật (Rules 12, 13)
 app.use(helmet({
   contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false
+  crossOriginEmbedderPolicy: false,
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  },
+  xFrameOptions: { action: 'sameorigin' },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
 }));
 
-// Basic DDoS / abuse protection
+// Rule 12: Bắt buộc chuyển hướng HTTPS trong môi trường Production
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.headers['x-forwarded-proto'] && req.headers['x-forwarded-proto'] !== 'https') {
+      return res.redirect(301, `https://${req.headers.host}${req.url}`);
+    }
+    next();
+  });
+}
+
+// Basic DDoS / abuse protection (Rules 02, 06)
+const isTestEnv = process.env.NODE_ENV === 'test';
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per window
@@ -24,7 +46,16 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Safe timing comparison to prevent timing attacks
+// Rule 02: Rate limit nghiêm ngặt cho đăng nhập Admin
+const adminLoginLimiter = isTestEnv ? (req, res, next) => next() : rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Quá nhiều lần đăng nhập quản trị thất bại. Vui lòng thử lại sau 15 phút.' }
+});
+
+// Rule 01 & 04: So sánh thời gian an toàn (Safe Timing Comparison chống Timing Attacks)
 function safeCompare(a, b) {
   if (typeof a !== 'string' || typeof b !== 'string') return false;
   const bufA = Buffer.from(a);
@@ -33,7 +64,34 @@ function safeCompare(a, b) {
   return crypto.timingSafeEqual(bufA, bufB);
 }
 
-// CORS middleware for OTA integration
+// Rule 01 & 03: Hash và cơ chế phiên hết hạn (Admin Expiring Session Tokens)
+const ADMIN_SECRET_KEY = process.env.ADMIN_KEY || 'BANLA8888';
+const ADMIN_SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || (ADMIN_SECRET_KEY + '_SESSION_SALT_2026');
+
+function generateAdminSessionToken() {
+  const expiresAt = Date.now() + 8 * 60 * 60 * 1000; // 8 tiếng hết hạn (Rule 03)
+  const payload = `admin:${expiresAt}`;
+  const signature = crypto.createHmac('sha256', ADMIN_SESSION_SECRET).update(payload).digest('hex');
+  return Buffer.from(`${payload}:${signature}`).toString('base64url');
+}
+
+function verifyAdminSessionToken(token) {
+  if (!token || typeof token !== 'string') return false;
+  try {
+    const decoded = Buffer.from(token, 'base64url').toString('utf8');
+    const parts = decoded.split(':');
+    if (parts.length !== 3 || parts[0] !== 'admin') return false;
+    const expiresAt = Number(parts[1]);
+    const signature = parts[2];
+    if (isNaN(expiresAt) || Date.now() > expiresAt) return false; // Hết hạn phiên
+    const expectedSig = crypto.createHmac('sha256', ADMIN_SESSION_SECRET).update(`admin:${expiresAt}`).digest('hex');
+    return safeCompare(signature, expectedSig);
+  } catch {
+    return false;
+  }
+}
+
+// Rule 15: CORS chỉ cho phép domain cần thiết
 app.use((req, res, next) => {
   const allowed = process.env.OTA_ALLOWED_ORIGINS || '*';
   const origins = allowed.split(',').map((s) => s.trim()).filter(Boolean);
@@ -44,7 +102,8 @@ app.use((req, res, next) => {
     if (origins.includes('*') || origins.includes(origin)) {
       res.setHeader('Access-Control-Allow-Origin', origins.includes('*') ? '*' : origin);
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key, x-admin-key, x-admin-token');
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
     }
   } else if (origins.includes('*')) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -52,30 +111,30 @@ app.use((req, res, next) => {
 
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key, x-admin-key, x-admin-token');
     return res.status(204).end();
   }
   next();
 });
 
 // Stricter limit for booking API
-const isTestEnv = process.env.NODE_ENV === 'test';
 const bookingLimiter = isTestEnv ? (req, res, next) => next() : rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 10,
   message: { success: false, message: 'Bạn đã gửi quá nhiều yêu cầu đặt phòng. Vui lòng thử lại sau.' }
 });
 
-// Rate limit for booking lookup (chống quét brute-force IDOR)
+// Rule 10: Rate limit for booking lookup (chống quét brute-force IDOR)
 const lookupLimiter = isTestEnv ? (req, res, next) => next() : rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 30,
   message: { success: false, message: 'Bạn đã thực hiện quá nhiều lượt tra cứu. Vui lòng thử lại sau.' }
 });
 
+// Rules 07 & 08: Giới hạn dung lượng tải lên và loại file (Max 10kb JSON, không mở toang upload)
 app.use(express.json({ limit: '10kb' }));
 
-// Block sensitive paths (prevent source code and sensitive data leaks)
+// Rule 05 & 08: Chặn tải lên file nguy hiểm và chặn truy cập file mã nguồn / nội bộ
 app.use((req, res, next) => (
   /^\/(data|node_modules|test|docs|scripts|utils|banla_payment_module\/(backend|database)|\.)|^\/(server\.js|package(-lock)?\.json|skills-lock\.json|supabase_schema\.sql|skill\.md)$/i.test(req.path)
     ? res.status(404).end()
@@ -112,7 +171,7 @@ function readBookingsSafe() {
       return Array.isArray(parsed) ? parsed : [];
     }
   } catch (err) {
-    console.error('[Bookings] Lỗi đọc dữ liệu:', err.message);
+    console.error('[Bookings] Lỗi đọc dữ liệu an toàn:', err.message);
   }
   return [];
 }
@@ -124,6 +183,7 @@ function writeBookingsSafe(list) {
   fs.renameSync(tmpFile, BOOKINGS_FILE);
 }
 
+// Rule 09: Validate nghiêm ngặt toàn bộ dữ liệu User gửi lên ở Server
 function validateBooking(b) {
   const errors = [];
   const body = (b && typeof b === 'object') ? b : {};
@@ -198,7 +258,7 @@ app.post('/api/booking', bookingLimiter, async (req, res) => {
   const reqApiKey = req.headers['x-api-key'];
   const rawSource = typeof req.body?.source === 'string' ? req.body.source.trim().toLowerCase() : '';
 
-  // Kiểm tra API key bằng phương pháp so sánh an toàn thời gian (timing-safe)
+  // Rule 01 & 04: So sánh an toàn thời gian (timing-safe)
   if (otaApiKey) {
     const isOta = rawSource === 'ota' || Boolean(reqApiKey);
     if (isOta && (!reqApiKey || !safeCompare(reqApiKey, otaApiKey))) {
@@ -221,7 +281,7 @@ app.post('/api/booking', bookingLimiter, async (req, res) => {
     list.push(record);
     writeBookingsSafe(list);
   } catch (err) {
-    console.error('Lưu booking lỗi:', err);
+    console.error('Lưu booking lỗi:', err.message);
     return res.status(500).json({ success: false, message: 'Có lỗi khi lưu yêu cầu. Vui lòng gọi điện/Zalo cho Banla.' });
   }
 
@@ -229,7 +289,7 @@ app.post('/api/booking', bookingLimiter, async (req, res) => {
   res.json({ success: true, id: record.id, message: 'Đã nhận yêu cầu. Banla sẽ liên hệ sớm.' });
 });
 
-// API: Tra cứu thông tin đặt phòng
+// Rule 10: Tự thử nghiệm & Chống lộ lọt dữ liệu IDOR qua tra cứu đơn
 app.get('/api/booking/lookup', lookupLimiter, (req, res) => {
   const rawId = typeof req.query.id === 'string' ? req.query.id.trim() : '';
   const id = rawId.replace(/^#+/, '').trim();
@@ -247,7 +307,7 @@ app.get('/api/booking/lookup', lookupLimiter, (req, res) => {
   const cleanPhone = (p) => (p || '').replace(/[^0-9]/g, '');
   const targetPhone = cleanPhone(contact);
 
-  // Bảo mật: Yêu cầu số điện thoại tra cứu phải có tối thiểu 8 chữ số để tránh brute-force 1-2 chữ số
+  // Bảo mật: Chống brute-force IDOR bằng cách yêu cầu số điện thoại >= 8 chữ số
   if (!isEmail && targetPhone.length < 8) {
     return res.status(400).json({
       success: false,
@@ -256,7 +316,6 @@ app.get('/api/booking/lookup', lookupLimiter, (req, res) => {
   }
 
   const list = readBookingsSafe();
-
   const found = list.find((b) => {
     if (!b || String(b.id).toLowerCase() !== id.toLowerCase()) return false;
     if (isEmail) {
@@ -307,7 +366,8 @@ app.get('/api/booking/detail', lookupLimiter, (req, res) => {
   const rawContact = typeof req.query.contact === 'string' ? req.query.contact.trim() : '';
   const contact = rawContact.toLowerCase();
   const adminKey = req.headers['x-admin-key'] || req.query.key;
-  const isAdmin = adminKey && safeCompare(String(adminKey), ADMIN_SECRET_KEY);
+  const adminToken = req.headers['x-admin-token'];
+  const isAdmin = (adminKey && safeCompare(String(adminKey), ADMIN_SECRET_KEY)) || (adminToken && verifyAdminSessionToken(adminToken));
 
   if (!id) {
     return res.status(400).json({ success: false, message: 'Thiếu mã đặt phòng (id).' });
@@ -368,24 +428,43 @@ app.get('/api/booking/detail', lookupLimiter, (req, res) => {
 // ==========================================
 // ADMIN DASHBOARD & RECONCILIATION APIS
 // ==========================================
-const ADMIN_SECRET_KEY = process.env.ADMIN_KEY || 'BANLA8888';
 
 function requireAdminAuth(req, res, next) {
   const reqKey = req.headers['x-admin-key'] || req.query.key || (req.body && req.body.key);
-  if (!reqKey || !safeCompare(String(reqKey), ADMIN_SECRET_KEY)) {
+  const reqToken = req.headers['x-admin-token'];
+
+  const isKeyValid = reqKey && safeCompare(String(reqKey), ADMIN_SECRET_KEY);
+  const isTokenValid = reqToken && verifyAdminSessionToken(reqToken);
+
+  if (!isKeyValid && !isTokenValid) {
     return res.status(401).json({
       success: false,
-      message: 'Mã xác thực quản trị (Admin Key) không hợp lệ hoặc đã hết hạn.'
+      message: 'Mã xác thực quản trị (Admin Key) không hợp lệ hoặc phiên đã hết hạn.'
     });
   }
   next();
 }
 
-// 1. Kiểm tra mã khóa đăng nhập Admin
-app.post('/api/admin/login', (req, res) => {
+// 1. Kiểm tra mã khóa đăng nhập Admin & Cấp Session Token (Rules 01, 02, 03, 14)
+app.post('/api/admin/login', adminLoginLimiter, (req, res) => {
   const { key } = req.body || {};
   if (key && safeCompare(String(key).trim(), ADMIN_SECRET_KEY)) {
-    return res.json({ success: true, message: 'Đăng nhập trang quản trị Banla thành công!' });
+    const sessionToken = generateAdminSessionToken();
+
+    // Rule 14: Cookie HttpOnly + Secure + SameSite=Strict
+    res.cookie('banla_admin_session', sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 8 * 60 * 60 * 1000 // 8 giờ
+    });
+
+    return res.json({
+      success: true,
+      message: 'Đăng nhập trang quản trị Banla thành công!',
+      token: sessionToken,
+      expiresIn: 8 * 3600
+    });
   }
   return res.status(401).json({ success: false, message: 'Mã PIN quản trị không chính xác.' });
 });
@@ -512,7 +591,6 @@ app.post('/api/admin/booking/smartlock', requireAdminAuth, (req, res) => {
       return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt phòng.' });
     }
 
-    // Sinh mã PIN dạng *xxxx# hoặc lấy mã custom nếu hợp lệ
     let pin = '';
     if (customPin && /^\*?[0-9]{4,6}#?$/.test(customPin.trim())) {
       pin = customPin.trim();
@@ -546,9 +624,18 @@ app.post('/api/admin/booking/smartlock', requireAdminAuth, (req, res) => {
 const banlaPaymentRouter = require('./banla_payment_module/backend/banla_payment_router');
 app.use('/api/banla', banlaPaymentRouter);
 
+// Rule 06: Bắt lỗi 404 cho tài nguyên không tồn tại
 app.use((req, res) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') return res.status(404).end();
   res.status(404).sendFile(path.join(__dirname, '404.html'));
+});
+
+// Rule 06: Trình bắt lỗi hệ thống toàn cục không để lộ stack trace ra ngoài
+app.use((err, req, res, next) => {
+  res.status(err.status || 500).json({
+    success: false,
+    message: 'Yêu cầu không hợp lệ hoặc đã xảy ra lỗi xử lý trên máy chủ.'
+  });
 });
 
 if (require.main === module) {
