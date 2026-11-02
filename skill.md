@@ -37,3 +37,4 @@ Tài liệu này quy định các nguyên tắc kiến trúc, cơ sở dữ li�
 4. **Phiếu Xác Nhận Dịch Vụ Có Dấu Đỏ (Modal Preview & A4 PDF/PNG):**
    - Hỗ trợ xem trước trực tiếp trong Modal tại `admin.html` và trang độc lập `phieu.html`.
    - Con dấu mộc tròn vector SVG màu đỏ có dòng chữ **"BANLA BOUTIQUE HOTEL - ĐÃ THANH TOÁN"** xoay góc nghiêng 12 độ chân thực, hỗ trợ in PDF khổ A4 và tải ảnh PNG.
+
