@@ -20,7 +20,7 @@ OTA / form Banla ──POST /api/booking (x-api-key)──▶ validate (source) 
 ```
 
 ## Fallback tĩnh
-Trên GitHub Pages không có API: form hiển thị thông báo liên hệ qua điện thoại tel:0965999999 hoặc Zalo https://zalo.me/0965999999.
+Trên GitHub Pages không có API: form hiển thị thông báo liên hệ qua điện thoại hotline 0296.9996.999 - 0352554863 hoặc Facebook https://www.facebook.com/profile.php?id=61550577645853.
 
 ## Việc tiếp theo (đề xuất)
 - Chuyển lưu trữ booking từ JSON sang Database (PostgreSQL / SQLite) khi lưu lượng tăng cao.

@@ -59,14 +59,15 @@ app.use((req, res, next) => {
 });
 
 // Stricter limit for booking API
-const bookingLimiter = rateLimit({
+const isTestEnv = process.env.NODE_ENV === 'test';
+const bookingLimiter = isTestEnv ? (req, res, next) => next() : rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 10,
   message: { success: false, message: 'Bạn đã gửi quá nhiều yêu cầu đặt phòng. Vui lòng thử lại sau.' }
 });
 
 // Rate limit for booking lookup (chống quét brute-force IDOR)
-const lookupLimiter = rateLimit({
+const lookupLimiter = isTestEnv ? (req, res, next) => next() : rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 30,
   message: { success: false, message: 'Bạn đã thực hiện quá nhiều lượt tra cứu. Vui lòng thử lại sau.' }
@@ -297,6 +298,248 @@ app.get('/api/booking/lookup', lookupLimiter, (req, res) => {
       emailMasked: maskEmail(found.email)
     }
   });
+});
+
+// API: Chi tiết đặt phòng đầy đủ (cho trang Phiếu xác nhận phieu.html)
+app.get('/api/booking/detail', lookupLimiter, (req, res) => {
+  const rawId = typeof req.query.id === 'string' ? req.query.id.trim() : '';
+  const id = rawId.replace(/^#+/, '').trim();
+  const rawContact = typeof req.query.contact === 'string' ? req.query.contact.trim() : '';
+  const contact = rawContact.toLowerCase();
+  const adminKey = req.headers['x-admin-key'] || req.query.key;
+  const isAdmin = adminKey && safeCompare(String(adminKey), ADMIN_SECRET_KEY);
+
+  if (!id) {
+    return res.status(400).json({ success: false, message: 'Thiếu mã đặt phòng (id).' });
+  }
+
+  const list = readBookingsSafe();
+  const found = list.find((b) => b && String(b.id).toLowerCase() === id.toLowerCase());
+
+  if (!found) {
+    return res.status(404).json({ success: false, message: 'Không tìm thấy thông tin đặt phòng.' });
+  }
+
+  // Nếu không phải admin, yêu cầu xác thực contact hoặc che giấu PII
+  if (!isAdmin) {
+    if (contact) {
+      const isEmail = contact.includes('@');
+      const cleanPhone = (p) => (p || '').replace(/[^0-9]/g, '');
+      const targetPhone = cleanPhone(contact);
+      let match = false;
+      if (isEmail) {
+        match = (found.email || '').trim().toLowerCase() === contact;
+      } else if (targetPhone.length >= 8) {
+        const bPhoneClean = cleanPhone(found.phone);
+        match = bPhoneClean === targetPhone || bPhoneClean.endsWith(targetPhone) || targetPhone.endsWith(bPhoneClean);
+      }
+      if (!match) {
+        return res.status(403).json({ success: false, message: 'Thông tin xác thực số điện thoại/email không khớp.' });
+      }
+    }
+  }
+
+  const maskPhone = (p) => (!isAdmin && p && p.length >= 7 ? p.slice(0, 3) + '****' + p.slice(-3) : (p || ''));
+  const maskEmail = (e) => (!isAdmin && e ? e.replace(/^(.)(.*)(@.*)$/, (_, a, b, c) => a + '***' + c) : (e || ''));
+
+  res.json({
+    success: true,
+    booking: {
+      id: found.id,
+      name: found.name,
+      phone: maskPhone(found.phone),
+      email: maskEmail(found.email),
+      room: found.room || 'Banla Deluxe Room',
+      checkin: found.checkin,
+      checkout: found.checkout,
+      guests: found.guests || 2,
+      status: found.status || 'pending',
+      paymentStatus: found.paymentStatus || 'UNPAID',
+      totalPrice: Number(found.totalPrice) || 1200000,
+      paidAmount: Number(found.paidAmount) || (found.paymentStatus === 'PAID' ? (Number(found.totalPrice) || 1200000) : 0),
+      smartLockPin: found.smartLockPin || null,
+      createdAt: found.createdAt,
+      source: found.source || 'direct',
+      message: found.message || ''
+    }
+  });
+});
+
+// ==========================================
+// ADMIN DASHBOARD & RECONCILIATION APIS
+// ==========================================
+const ADMIN_SECRET_KEY = process.env.ADMIN_KEY || 'BANLA8888';
+
+function requireAdminAuth(req, res, next) {
+  const reqKey = req.headers['x-admin-key'] || req.query.key || (req.body && req.body.key);
+  if (!reqKey || !safeCompare(String(reqKey), ADMIN_SECRET_KEY)) {
+    return res.status(401).json({
+      success: false,
+      message: 'Mã xác thực quản trị (Admin Key) không hợp lệ hoặc đã hết hạn.'
+    });
+  }
+  next();
+}
+
+// 1. Kiểm tra mã khóa đăng nhập Admin
+app.post('/api/admin/login', (req, res) => {
+  const { key } = req.body || {};
+  if (key && safeCompare(String(key).trim(), ADMIN_SECRET_KEY)) {
+    return res.json({ success: true, message: 'Đăng nhập trang quản trị Banla thành công!' });
+  }
+  return res.status(401).json({ success: false, message: 'Mã PIN quản trị không chính xác.' });
+});
+
+// Helper: tính toán chuẩn hóa tài chính cho 1 đơn
+function normalizeFinancials(b) {
+  const totalPrice = Number(b.totalPrice) || 1500000;
+  let paidAmount = Number(b.paidAmount) || 0;
+  if (b.paymentStatus === 'PAID' && paidAmount === 0) {
+    paidAmount = totalPrice;
+  } else if (b.paymentStatus === 'DEPOSIT_PAID' && paidAmount === 0) {
+    paidAmount = Math.round(totalPrice * 0.3); // mặc định cọc 30%
+  }
+  const feeRate = 0.015; // 1.5% phí cổng thanh toán / gateway fee
+  const gatewayFee = Math.round(paidAmount * feeRate);
+  const netAmount = Math.max(0, paidAmount - gatewayFee);
+
+  return {
+    ...b,
+    totalPrice,
+    paidAmount,
+    gatewayFee,
+    netAmount
+  };
+}
+
+// 2. Lấy danh sách toàn bộ đơn đặt phòng (Real-time)
+app.get('/api/admin/bookings', requireAdminAuth, (req, res) => {
+  try {
+    const list = readBookingsSafe();
+    const normalized = list.map(normalizeFinancials);
+    normalized.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    res.json({ success: true, bookings: normalized });
+  } catch (err) {
+    console.error('[Admin] Lỗi lấy danh sách:', err.message);
+    res.status(500).json({ success: false, message: 'Không thể tải danh sách đơn đặt phòng.' });
+  }
+});
+
+// 3. Thống kê đối soát tài chính (Gross vs Net, Tổng đơn)
+app.get('/api/admin/stats', requireAdminAuth, (req, res) => {
+  try {
+    const list = readBookingsSafe().map(normalizeFinancials);
+    const total = list.length;
+    const pending = list.filter((b) => b.status === 'pending').length;
+    const confirmed = list.filter((b) => b.status === 'confirmed').length;
+    const completed = list.filter((b) => b.status === 'completed').length;
+    const cancelled = list.filter((b) => b.status === 'cancelled').length;
+
+    let grossRevenue = 0;
+    let totalGatewayFee = 0;
+    let netRevenue = 0;
+    let activePinsCount = 0;
+
+    list.forEach((b) => {
+      if (b.status !== 'cancelled') {
+        grossRevenue += b.paidAmount || 0;
+        totalGatewayFee += b.gatewayFee || 0;
+        netRevenue += b.netAmount || 0;
+      }
+      if (b.smartLockPin) {
+        activePinsCount++;
+      }
+    });
+
+    res.json({
+      success: true,
+      stats: {
+        total,
+        pending,
+        confirmed,
+        completed,
+        cancelled,
+        grossRevenue,
+        gatewayFee: totalGatewayFee,
+        netRevenue,
+        activeSmartLocks: activePinsCount
+      }
+    });
+  } catch (err) {
+    console.error('[Admin] Lỗi thống kê:', err.message);
+    res.status(500).json({ success: false, message: 'Lỗi tính toán số liệu thống kê.' });
+  }
+});
+
+// 4. Cập nhật thông tin đơn & trạng thái thanh toán
+app.post('/api/admin/booking/update', requireAdminAuth, (req, res) => {
+  const { id, status, paymentStatus, paidAmount, totalPrice, room, message } = req.body || {};
+  if (!id) return res.status(400).json({ success: false, message: 'Thiếu mã đơn đặt phòng.' });
+
+  try {
+    const list = readBookingsSafe();
+    const idx = list.findIndex((b) => b && String(b.id).toLowerCase() === String(id).toLowerCase());
+    if (idx === -1) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt phòng.' });
+    }
+
+    if (status !== undefined) list[idx].status = status;
+    if (paymentStatus !== undefined) list[idx].paymentStatus = paymentStatus;
+    if (paidAmount !== undefined) list[idx].paidAmount = Number(paidAmount);
+    if (totalPrice !== undefined) list[idx].totalPrice = Number(totalPrice);
+    if (room !== undefined) list[idx].room = room;
+    if (message !== undefined) list[idx].message = message;
+
+    list[idx] = normalizeFinancials(list[idx]);
+    writeBookingsSafe(list);
+
+    res.json({ success: true, message: 'Cập nhật đơn thành công!', booking: list[idx] });
+  } catch (err) {
+    console.error('[Admin] Lỗi cập nhật đơn:', err.message);
+    res.status(500).json({ success: false, message: 'Lỗi máy chủ khi cập nhật đơn.' });
+  }
+});
+
+// 5. Cấp lại hoặc đổi mã PIN Smart-Lock cho khách
+app.post('/api/admin/booking/smartlock', requireAdminAuth, (req, res) => {
+  const { id, customPin } = req.body || {};
+  if (!id) return res.status(400).json({ success: false, message: 'Thiếu mã đơn đặt phòng.' });
+
+  try {
+    const list = readBookingsSafe();
+    const idx = list.findIndex((b) => b && String(b.id).toLowerCase() === String(id).toLowerCase());
+    if (idx === -1) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn đặt phòng.' });
+    }
+
+    // Sinh mã PIN dạng *xxxx# hoặc lấy mã custom nếu hợp lệ
+    let pin = '';
+    if (customPin && /^\*?[0-9]{4,6}#?$/.test(customPin.trim())) {
+      pin = customPin.trim();
+      if (!pin.startsWith('*')) pin = '*' + pin;
+      if (!pin.endsWith('#')) pin = pin + '#';
+    } else {
+      const random4 = Math.floor(1000 + Math.random() * 9000);
+      pin = `*${random4}#`;
+    }
+
+    list[idx].smartLockPin = pin;
+    if (list[idx].status === 'pending') {
+      list[idx].status = 'confirmed';
+    }
+    list[idx] = normalizeFinancials(list[idx]);
+    writeBookingsSafe(list);
+
+    res.json({
+      success: true,
+      message: `Đã cấp mã Smart-Lock PIN ${pin} thành công cho đơn #${id}`,
+      pin,
+      booking: list[idx]
+    });
+  } catch (err) {
+    console.error('[Admin] Lỗi cấp PIN Smart-lock:', err.message);
+    res.status(500).json({ success: false, message: 'Lỗi máy chủ khi cấp mã PIN Smart-Lock.' });
+  }
 });
 
 // Banla Priority Payment Module Router

@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Trang Quản Trị & Đối Soát | Banla Boutique Hotel Đà Lạt</title>
+  <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --pine: #2a3f38;
+      --pine-dark: #192622;
+      --ember: #b8612e;
+      --ember-light: #fef4ee;
+      --brass: #d4af37;
+      --fog: #f2f5f6;
+      --mist: #dfe6e8;
+      --ink: #192622;
+      --muted: #64748b;
+      --card-bg: #ffffff;
+      --success: #15803d;
+      --success-bg: #f0fdf4;
+      --warning: #b45309;
+      --warning-bg: #fffbeb;
+      --danger: #b91c1c;
+      --danger-bg: #fef2f2;
+      --blue: #1d4ed8;
+      --blue-bg: #eff6ff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #f8fafc;
+      font-family: 'Figtree', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--ink);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* Modal Đăng nhập Admin */
+    #authOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(25, 38, 34, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .auth-card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 420px;
+      border-radius: 12px;
+      padding: 32px 28px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+      border-top: 4px solid var(--ember);
+      text-align: center;
+    }
+    .auth-brand {
+      font-family: 'Fraunces', serif;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--pine);
+      margin-bottom: 4px;
+    }
+    .auth-desc {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .auth-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid var(--mist);
+      border-radius: 8px;
+      font-size: 15px;
+      letter-spacing: 2px;
+      text-align: center;
+      margin-bottom: 16px;
+      font-family: inherit;
+    }
+    .auth-input:focus {
+      outline: none;
+      border-color: var(--ember);
+      box-shadow: 0 0 0 3px rgba(184, 97, 46, 0.15);
+    }
+    .auth-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--pine);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .auth-btn:hover {
+      background: var(--pine-dark);
+    }
+    .auth-hint {
+      font-size: 11.5px;
+      color: var(--muted);
+      margin-top: 14px;
+    }
+
+    /* Layout Admin */
+    .admin-container {
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 24px 20px 40px;
+    }
+
+    /* Topbar */
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      background: #ffffff;
+      padding: 16px 24px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .topbar-title {
+      font-family: 'Fraunces', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--pine);
+      letter-spacing: 0.5px;
+    }
+    .topbar-badge {
+      background: var(--fog);
+      color: var(--pine);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--mist);
+    }
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .btn-pine { background: var(--pine); color: #fff; }
+    .btn-pine:hover { background: var(--pine-dark); }
+    .btn-ember { background: var(--ember); color: #fff; }
+    .btn-ember:hover { background: #9c4f24; }
+    .btn-outline { background: #fff; color: var(--ink); border-color: #cbd5e1; }
+    .btn-outline:hover { background: #f1f5f9; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 4px; }
+
+    /* Thẻ thống kê tài chính & đối soát */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 18px 20px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .stat-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .stat-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .stat-val {
+      font-family: 'Fraunces', serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+    .stat-sub {
+      font-size: 11.5px;
+      color: var(--muted);
+    }
+
+    /* Bảng dữ liệu và Bộ lọc */
+    .table-card {
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+      overflow: hidden;
+    }
+
+    .table-toolbar {
+      padding: 16px 20px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .search-box {
+      position: relative;
+      flex: 1;
+      max-width: 380px;
+    }
+    .search-input {
+      width: 100%;
+      padding: 8px 12px 8px 36px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--ember);
+    }
+    .search-icon {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+    }
+
+    .filters-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--fog);
+      color: var(--muted);
+      border: 1px solid var(--mist);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-btn.active {
+      background: var(--pine);
+      color: #ffffff;
+      border-color: var(--pine);
+      font-weight: 600;
+    }
+
+    /* Table styles */
+    .table-responsive {
+      overflow-x: auto;
+    }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+    table.data-table th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 600;
+      padding: 12px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      white-space: nowrap;
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    table.data-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+    table.data-table tr:hover {
+      background-color: #f8fafc;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge-pending { background: var(--warning-bg); color: var(--warning); border: 1px solid #fde68a; }
+    .badge-confirmed { background: var(--success-bg); color: var(--success); border: 1px solid #bbf7d0; }
+    .badge-completed { background: var(--blue-bg); color: var(--blue); border: 1px solid #bfdbfe; }
+    .badge-cancelled { background: var(--danger-bg); color: var(--danger); border: 1px solid #fecaca; }
+
+    .badge-paid { background: #ecfdf5; color: #047857; font-weight: 700; border: 1px solid #a7f3d0; }
+    .badge-deposit { background: #fff7ed; color: #c2410c; font-weight: 600; border: 1px solid #ffedd5; }
+    .badge-unpaid { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+
+    .pin-badge {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-family: monospace;
+      font-size: 13px;
+      letter-spacing: 1px;
+    }
+
+    .btn-action-group {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    /* Toast Notification */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e293b;
+      color: #ffffff;
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 10000;
+    }
+    #toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Modal Sửa Đơn */
+    .edit-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      z-index: 9998;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .edit-card {
+      background: #fff;
+      width: 100%;
+      max-width: 500px;
+      border-radius: 10px;
+      padding: 24px;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+    }
+    .edit-title {
+      font-family: 'Fraunces', serif;
+      font-size: 18px;
+      color: var(--pine);
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 5px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Overlay Đăng nhập Admin -->
+  <div id="authOverlay">
+    <div class="auth-card">
+      <div class="auth-brand">BANLA</div>
+      <p style="font-size: 11px; letter-spacing: 1.5px; color: var(--ember); font-weight: 700; margin-bottom: 8px;">BOUTIQUE HOTEL · ĐÀ LẠT</p>
+      <p class="auth-desc">Cổng quản trị nội bộ dành cho Lễ tân & Quản lý khách sạn</p>
+      <form id="authForm">
+        <input type="password" id="authPin" class="auth-input" placeholder="Nhập mã PIN Quản trị" autofocus required autocomplete="off">
+        <button type="submit" class="auth-btn">Mở Trang Quản Trị</button>
+      </form>
+      <p class="auth-hint">* Mã mặc định: <strong>BANLA8888</strong>. Vui lòng bảo mật thông tin nội bộ.</p>
+    </div>
+  </div>
+
+  <!-- Giao diện Chính Admin -->
+  <div class="admin-container" id="adminApp" style="display: none;">
+    
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title">Hệ Thống Quản Trị & Đối Soát</div>
+        <span class="topbar-badge" id="liveIndicator">● Real-time (15s)</span>
+      </div>
+      <div class="topbar-right">
+        <button type="button" class="btn btn-outline" id="btnRefresh">
+          <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>
+          Làm mới
+        </button>
+        <a href="phieu.html" target="_blank" class="btn btn-outline">
+          <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/></svg>
+          Phiếu Dấu Đỏ
+        </a>
+        <a href="https://www.facebook.com/profile.php?id=61550577645853" target="_blank" rel="noopener" class="btn btn-outline" style="color: #1877F2;">
+          <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z"/></svg>
+          Fanpage Banla
+        </a>
+        <button type="button" class="btn btn-outline" id="btnLogout" style="color: #b91c1c;">
+          Đăng xuất
+        </button>
+      </div>
+    </header>
+
+    <!-- Thống kê Tài chính (Gross vs Net) -->
+    <section class="stats-grid">
+      <!-- Doanh thu Gross -->
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-title">Doanh Thu Gross (Đã thu)</span>
+          <div class="stat-icon" style="background:#e0f2fe;color:#0284c7;">💰</div>
+        </div>
+        <div class="stat-val" id="statGross">0 đ</div>
+        <div class="stat-sub">Tổng tiền cọc và thanh toán từ khách</div>
+      </div>
+
+      <!-- Phí cổng thanh toán (Gateway Fee 1.5%) -->
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-title">Phí Cổng Thanh Toán (1.5%)</span>
+          <div class="stat-icon" style="background:#fef2f2;color:#b91c1c;">💳</div>
+        </div>
+        <div class="stat-val" id="statFee" style="color:#b91c1c;">0 đ</div>
+        <div class="stat-sub">Chi phí cổng đối soát thanh toán trực tuyến</div>
+      </div>
+
+      <!-- Doanh thu Net (Thực nhận) -->
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-title">Doanh Thu Net (Thực Nhận)</span>
+          <div class="stat-icon" style="background:#ecfdf5;color:#059669;">🏦</div>
+        </div>
+        <div class="stat-val" id="statNet" style="color:#059669;">0 đ</div>
+        <div class="stat-sub">Số tiền thực chuyển về tài khoản Banla</div>
+      </div>
+
+      <!-- Tổng số đơn & Trạng thái -->
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-title">Tình Trạng Đơn Phòng</span>
+          <div class="stat-icon" style="background:#fef3c7;color:#d97706;">📋</div>
+        </div>
+        <div class="stat-val" id="statBookings">0</div>
+        <div class="stat-sub" id="statBookingSub">0 chờ xử lý · 0 đã xác nhận</div>
+      </div>
+
+      <!-- Smart-Lock PINs -->
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-title">Mã Smart-Lock PIN</span>
+          <div class="stat-icon" style="background:#f3e8ff;color:#7e22ce;">🔑</div>
+        </div>
+        <div class="stat-val" id="statPins" style="color:#7e22ce;">0</div>
+        <div class="stat-sub">Phòng đang có mã PIN hoạt động</div>
+      </div>
+    </section>
+
+    <!-- Bảng danh sách đơn đặt phòng -->
+    <section class="table-card">
+      <div class="table-toolbar">
+        <div class="search-box">
+          <svg class="search-icon" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>
+          <input type="text" id="searchInput" class="search-input" placeholder="Tìm theo tên khách, SĐT, email, mã đơn...">
+        </div>
+
+        <div class="filters-group" id="filterGroup">
+          <button type="button" class="filter-btn active" data-filter="all">Tất cả</button>
+          <button type="button" class="filter-btn" data-filter="pending">Chờ xử lý</button>
+          <button type="button" class="filter-btn" data-filter="confirmed">Đã xác nhận</button>
+          <button type="button" class="filter-btn" data-filter="paid">Đã thanh toán đủ</button>
+          <button type="button" class="filter-btn" data-filter="completed">Hoàn thành</button>
+          <button type="button" class="filter-btn" data-filter="cancelled">Đã hủy</button>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Mã đơn</th>
+              <th>Khách hàng</th>
+              <th>Hạng phòng</th>
+              <th>Lưu trú (Checkin/out)</th>
+              <th>Tài chính (Gross / Net)</th>
+              <th>Smart-Lock PIN</th>
+              <th>Trạng thái</th>
+              <th style="text-align: right;">Thao tác quản lý</th>
+            </tr>
+          </thead>
+          <tbody id="bookingsTableBody">
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 40px; color: var(--muted);">
+                Đang nạp danh sách đặt phòng...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Modal Chỉnh Sửa Đơn -->
+  <div class="edit-modal" id="editModal">
+    <div class="edit-card">
+      <div class="edit-title">
+        <span>Cập Nhật Đơn Đặt Phòng</span>
+        <button type="button" id="closeEditBtn" style="background:none;border:none;font-size:20px;cursor:pointer;">&times;</button>
+      </div>
+      <form id="editForm">
+        <input type="hidden" id="editBookingId">
+        <div class="form-group">
+          <label>Trạng thái đơn:</label>
+          <select id="editStatus" class="form-control">
+            <option value="pending">Chờ xử lý (Pending)</option>
+            <option value="confirmed">Đã xác nhận (Confirmed)</option>
+            <option value="completed">Đã hoàn thành lưu trú (Completed)</option>
+            <option value="cancelled">Đã hủy đơn (Cancelled)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tình trạng thanh toán:</label>
+          <select id="editPaymentStatus" class="form-control">
+            <option value="UNPAID">Chưa thanh toán (0đ)</option>
+            <option value="DEPOSIT_PAID">Đã đặt cọc</option>
+            <option value="PAID">Đã thanh toán đủ (100%)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Số tiền đã thu thực tế (VND):</label>
+          <input type="number" id="editPaidAmount" class="form-control" placeholder="Ví dụ: 1000000">
+        </div>
+        <div class="form-group">
+          <label>Tổng giá trị đơn phòng (VND):</label>
+          <input type="number" id="editTotalPrice" class="form-control" placeholder="Ví dụ: 2400000">
+        </div>
+        <div class="form-group">
+          <label>Ghi chú lễ tân:</label>
+          <textarea id="editMessage" class="form-control" rows="2"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" id="cancelEditBtn">Hủy</button>
+          <button type="submit" class="btn btn-pine">Lưu thay đổi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div id="toast">Thông báo</div>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = 'BANLA_ADMIN_KEY';
+      let adminKey = sessionStorage.getItem(STORAGE_KEY) || '';
+      let rawBookings = [];
+      let currentFilter = 'all';
+      let refreshTimer = null;
+
+      const authOverlay = document.getElementById('authOverlay');
+      const adminApp = document.getElementById('adminApp');
+      const authForm = document.getElementById('authForm');
+      const authPin = document.getElementById('authPin');
+      const tableBody = document.getElementById('bookingsTableBody');
+      const searchInput = document.getElementById('searchInput');
+      const toastEl = document.getElementById('toast');
+
+      function showToast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add('show');
+        setTimeout(() => toastEl.classList.remove('show'), 3500);
+      }
+
+      const vnd = (n) => (Number(n) > 0 ? new Intl.NumberFormat('vi-VN').format(Number(n)) + ' đ' : '0 đ');
+      const vd = (s) => (/^\d{4}-\d{2}-\d{2}$/.test(s || '') ? s.split('-').reverse().join('/') : (s || ''));
+      const esc = (x) => String(x ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+      // Kiểm tra đăng nhập
+      if (adminKey) {
+        verifyAndInit(adminKey);
+      } else {
+        authOverlay.style.display = 'flex';
+      }
+
+      authForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const pin = authPin.value.trim();
+        if (!pin) return;
+
+        try {
+          const res = await fetch('/api/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: pin })
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            adminKey = pin;
+            sessionStorage.setItem(STORAGE_KEY, adminKey);
+            authOverlay.style.display = 'none';
+            adminApp.style.display = 'block';
+            loadData();
+            startPolling();
+          } else {
+            alert(data.message || 'Mã PIN không đúng.');
+          }
+        } catch (err) {
+          alert('Không thể kết nối đến máy chủ.');
+        }
+      });
+
+      async function verifyAndInit(key) {
+        try {
+          const res = await fetch('/api/admin/stats', {
+            headers: { 'x-admin-key': key }
+          });
+          if (res.ok) {
+            authOverlay.style.display = 'none';
+            adminApp.style.display = 'block';
+            loadData();
+            startPolling();
+          } else {
+            sessionStorage.removeItem(STORAGE_KEY);
+            authOverlay.style.display = 'flex';
+          }
+        } catch {
+          authOverlay.style.display = 'flex';
+        }
+      }
+
+      document.getElementById('btnLogout').addEventListener('click', function () {
+        sessionStorage.removeItem(STORAGE_KEY);
+        location.reload();
+      });
+
+      document.getElementById('btnRefresh').addEventListener('click', function () {
+        loadData();
+        showToast('Đã làm mới dữ liệu thời gian thực');
+      });
+
+      // Tự động polling 15s/lần
+      function startPolling() {
+        if (refreshTimer) clearInterval(refreshTimer);
+        refreshTimer = setInterval(() => {
+          loadData(true);
+        }, 15000);
+      }
+
+      async function loadData(isSilent) {
+        if (!adminKey) return;
+        try {
+          const [statsRes, bookingsRes] = await Promise.all([
+            fetch('/api/admin/stats', { headers: { 'x-admin-key': adminKey } }),
+            fetch('/api/admin/bookings', { headers: { 'x-admin-key': adminKey } })
+          ]);
+
+          if (statsRes.status === 401 || bookingsRes.status === 401) {
+            sessionStorage.removeItem(STORAGE_KEY);
+            location.reload();
+            return;
+          }
+
+          const statsData = await statsRes.json();
+          const bookingsData = await bookingsRes.json();
+
+          if (statsData.success && statsData.stats) {
+            renderStats(statsData.stats);
+          }
+
+          if (bookingsData.success && bookingsData.bookings) {
+            rawBookings = bookingsData.bookings;
+            renderBookings();
+          }
+        } catch (err) {
+          if (!isSilent) console.error('Error loading admin data:', err);
+        }
+      }
+
+      function renderStats(s) {
+        document.getElementById('statGross').textContent = vnd(s.grossRevenue);
+        document.getElementById('statFee').textContent = '-' + vnd(s.gatewayFee);
+        document.getElementById('statNet').textContent = vnd(s.netRevenue);
+        document.getElementById('statBookings').textContent = s.total;
+        document.getElementById('statBookingSub').textContent = `${s.pending} chờ xử lý · ${s.confirmed} đã xác nhận`;
+        document.getElementById('statPins').textContent = s.activeSmartLocks;
+      }
+
+      function renderBookings() {
+        const query = searchInput.value.trim().toLowerCase();
+        let list = rawBookings;
+
+        // Lọc trạng thái
+        if (currentFilter !== 'all') {
+          if (currentFilter === 'paid') {
+            list = list.filter(b => b.paymentStatus === 'PAID');
+          } else {
+            list = list.filter(b => b.status === currentFilter);
+          }
+        }
+
+        // Lọc tìm kiếm
+        if (query) {
+          list = list.filter(b => 
+            (b.id && b.id.toLowerCase().includes(query)) ||
+            (b.name && b.name.toLowerCase().includes(query)) ||
+            (b.phone && b.phone.includes(query)) ||
+            (b.email && b.email.toLowerCase().includes(query)) ||
+            (b.room && b.room.toLowerCase().includes(query))
+          );
+        }
+
+        if (list.length === 0) {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 40px; color: var(--muted);">
+                Không có đơn đặt phòng nào khớp với điều kiện lọc.
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tableBody.innerHTML = list.map(b => {
+          const isPaid = b.paymentStatus === 'PAID';
+          const isDeposit = b.paymentStatus === 'DEPOSIT_PAID';
+          let payBadge = '<span class="badge badge-unpaid">Chưa cọc</span>';
+          if (isPaid) payBadge = '<span class="badge badge-paid">Đã thanh toán đủ</span>';
+          else if (isDeposit) payBadge = `<span class="badge badge-deposit">Đã cọc (${vnd(b.paidAmount)})</span>`;
+
+          let statusBadge = '<span class="badge badge-pending">Chờ xử lý</span>';
+          if (b.status === 'confirmed') statusBadge = '<span class="badge badge-confirmed">Đã duyệt phòng</span>';
+          else if (b.status === 'completed') statusBadge = '<span class="badge badge-completed">Hoàn thành</span>';
+          else if (b.status === 'cancelled') statusBadge = '<span class="badge badge-cancelled">Đã hủy</span>';
+
+          const pinDisplay = b.smartLockPin
+            ? `<span class="pin-badge">${esc(b.smartLockPin)}</span>`
+            : `<span style="font-size: 11.5px; color: #94a3b8;">Chưa cấp PIN</span>`;
+
+          const slipUrl = `phieu.html?ma=${encodeURIComponent(b.id)}&key=${encodeURIComponent(adminKey)}`;
+
+          return `
+            <tr data-id="${esc(b.id)}">
+              <td>
+                <strong style="color:var(--ember);font-family:monospace;font-size:13.5px;">#${esc(b.id)}</strong>
+                <div style="font-size:11px;color:var(--muted);">${new Date(b.createdAt || Date.now()).toLocaleDateString('vi-VN')}</div>
+              </td>
+              <td>
+                <div style="font-weight:600;color:var(--pine);">${esc(b.name || 'Khách vãng lai')}</div>
+                <div style="font-size:12px;color:var(--muted);">${esc(b.phone || '')}</div>
+                ${b.email ? `<div style="font-size:11px;color:#94a3b8;">${esc(b.email)}</div>` : ''}
+              </td>
+              <td>
+                <strong style="color:var(--pine);">${esc(b.room || 'Deluxe')}</strong>
+                <div style="font-size:11.5px;color:var(--muted);">${b.guests || 2} khách</div>
+              </td>
+              <td>
+                <div>${vd(b.checkin)} → ${vd(b.checkout)}</div>
+                <div style="font-size:11px;color:var(--muted);">Checkin 14:00 · Checkout 12:00</div>
+              </td>
+              <td>
+                <div><strong>${vnd(b.totalPrice)}</strong></div>
+                <div style="margin: 2px 0;">${payBadge}</div>
+                <div style="font-size:11px;color:#059669;">Net: ${vnd(b.netAmount)}</div>
+              </td>
+              <td>
+                ${pinDisplay}
+              </td>
+              <td>
+                ${statusBadge}
+              </td>
+              <td style="text-align: right;">
+                <div class="btn-action-group" style="justify-content: flex-end;">
+                  <button type="button" class="btn btn-sm btn-pine" onclick="issuePin('${esc(b.id)}')">
+                    ${b.smartLockPin ? 'Đổi PIN' : 'Cấp PIN'}
+                  </button>
+                  <a href="${slipUrl}" target="_blank" class="btn btn-sm btn-ember">
+                    Phiếu dấu đỏ
+                  </a>
+                  <button type="button" class="btn btn-sm btn-outline" onclick="copyFbMessage('${esc(b.id)}')">
+                    Copy FB
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline" onclick="openEditModal('${esc(b.id)}')">
+                    Sửa
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Bộ lọc
+      document.getElementById('filterGroup').addEventListener('click', function (e) {
+        if (!e.target.classList.contains('filter-btn')) return;
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+        currentFilter = e.target.getAttribute('data-filter');
+        renderBookings();
+      });
+
+      searchInput.addEventListener('input', function () {
+        renderBookings();
+      });
+
+      // Cấp hoặc đổi mã Smart-Lock PIN
+      window.issuePin = async function (id) {
+        const custom = prompt(`Nhập mã PIN Smart-Lock mới cho đơn #${id} (để trống để hệ thống tự sinh ngẫu nhiên):`);
+        if (custom === null) return; // bấm cancel
+
+        try {
+          const res = await fetch('/api/admin/booking/smartlock', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-admin-key': adminKey
+            },
+            body: JSON.stringify({ id, customPin: custom })
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            showToast(data.message || 'Cấp mã Smart-Lock PIN thành công!');
+            loadData(true);
+          } else {
+            alert(data.message || 'Lỗi khi cấp mã Smart-Lock.');
+          }
+        } catch (err) {
+          alert('Không thể kết nối máy chủ.');
+        }
+      };
+
+      // Sao chép tin nhắn chuẩn hóa gửi khách qua Facebook Fanpage
+      window.copyFbMessage = function (id) {
+        const b = rawBookings.find(x => x.id === id);
+        if (!b) return;
+
+        const pinText = b.smartLockPin ? `\n🔑 Mã Smart-Lock cửa phòng: ${b.smartLockPin} (bấm mã và nhấn phím # tại cửa)` : '';
+        const slipFullUrl = window.location.origin + `/phieu.html?ma=${encodeURIComponent(b.id)}`;
+
+        const msg = 
+`Dạ Banla Boutique Hotel Đà Lạt kính chào Quý khách ${b.name || ''}!
+Khách sạn đã xác nhận thành công đơn đặt phòng #${b.id} của Quý khách:
+- Hạng phòng: ${b.room || 'Phòng nghỉ'}
+- Thời gian: ${vd(b.checkin)} đến ${vd(b.checkout)} (Check-in 14:00, Check-out 12:00)${pinText}
+
+📄 Banla xin gửi Quý khách PHIẾU XÁC NHẬN DỊCH VỤ CÓ DẤU ĐỎ CHÍNH THỨC của khách sạn tại liên kết:
+${slipFullUrl}
+
+Banla rất hân hạnh được đón tiếp Quý khách giữa xứ sở ngàn hoa Đà Lạt!
+Hotline 24/7: 0296.9996.999 - 0352554863`;
+
+        navigator.clipboard.writeText(msg).then(() => {
+          showToast(`Đã sao chép tin nhắn Facebook cho đơn #${b.id}!`);
+        }).catch(() => {
+          prompt('Sao chép nội dung tin nhắn gửi khách:', msg);
+        });
+      };
+
+      // Modal Sửa Đơn
+      const editModal = document.getElementById('editModal');
+      const editForm = document.getElementById('editForm');
+      const closeEditBtn = document.getElementById('closeEditBtn');
+      const cancelEditBtn = document.getElementById('cancelEditBtn');
+
+      window.openEditModal = function (id) {
+        const b = rawBookings.find(x => x.id === id);
+        if (!b) return;
+
+        document.getElementById('editBookingId').value = b.id;
+        document.getElementById('editStatus').value = b.status || 'pending';
+        document.getElementById('editPaymentStatus').value = b.paymentStatus || 'UNPAID';
+        document.getElementById('editPaidAmount').value = b.paidAmount || 0;
+        document.getElementById('editTotalPrice').value = b.totalPrice || 1200000;
+        document.getElementById('editMessage').value = b.message || '';
+
+        editModal.style.display = 'flex';
+      };
+
+      function closeEdit() {
+        editModal.style.display = 'none';
+      }
+      closeEditBtn.addEventListener('click', closeEdit);
+      cancelEditBtn.addEventListener('click', closeEdit);
+
+      editForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const id = document.getElementById('editBookingId').value;
+        const status = document.getElementById('editStatus').value;
+        const paymentStatus = document.getElementById('editPaymentStatus').value;
+        const paidAmount = document.getElementById('editPaidAmount').value;
+        const totalPrice = document.getElementById('editTotalPrice').value;
+        const message = document.getElementById('editMessage').value;
+
+        try {
+          const res = await fetch('/api/admin/booking/update', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-admin-key': adminKey
+            },
+            body: JSON.stringify({ id, status, paymentStatus, paidAmount, totalPrice, message })
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            showToast('Cập nhật đơn thành công!');
+            closeEdit();
+            loadData(true);
+          } else {
+            alert(data.message || 'Lỗi khi cập nhật đơn.');
+          }
+        } catch {
+          alert('Không thể kết nối máy chủ.');
+        }
+      });
+
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Phiếu xác nhận đặt phòng | Banla Boutique Hotel Đà Lạt</title>
+  <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Figtree:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --fog: #f2f5f6;
+      --mist: #dfe6e8;
+      --pine: #2a3f38;
+      --pine-dark: #192622;
+      --ember: #b8612e;
+      --ink: #192622;
+      --cream: #FAF7F2;
+      --seal-red: #cf222e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #EAE6DF;
+      font-family: 'Figtree', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--ink);
+      line-height: 1.5;
+      padding: 20px 10px;
+    }
+
+    .action-bar {
+      max-width: 1040px;
+      margin: 0 auto 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .btn-act {
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--pine);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: var(--pine-dark);
+    }
+
+    .btn-outline {
+      background: #fff;
+      color: var(--pine);
+      border-color: var(--pine);
+    }
+    .btn-outline:hover {
+      background: var(--fog);
+    }
+
+    .btn-fb {
+      background: #1877F2;
+      color: #fff;
+    }
+    .btn-fb:hover {
+      background: #166fe5;
+    }
+
+    /* Khung phiếu */
+    .slip-wrapper {
+      max-width: 1040px;
+      margin: 0 auto;
+      overflow-x: auto;
+      padding-bottom: 20px;
+    }
+
+    .banla-slip-container {
+      background: #fff;
+      min-width: 980px;
+      max-width: 1020px;
+      margin: 0 auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      border-radius: 6px;
+      padding: 14px;
+      background-color: var(--cream);
+    }
+
+    .banla-slip-inner {
+      border: 2px solid var(--pine);
+      outline: 1px solid #D4AF37;
+      outline-offset: -5px;
+      padding: 24px 30px 20px;
+      background: #FFFFFF;
+      position: relative;
+    }
+
+    .slip-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+    }
+
+    .slip-brand {
+      flex: 1;
+    }
+
+    .slip-logo-badge {
+      display: inline-block;
+      border-bottom: 2px solid var(--ember);
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+    }
+    .logo-text {
+      font-family: 'Fraunces', serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--pine);
+      display: block;
+      line-height: 1;
+    }
+    .logo-sub {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--ember);
+      font-weight: 700;
+      display: block;
+      margin-top: 3px;
+    }
+
+    .slip-hotel-meta {
+      font-size: 11.5px;
+      color: #4A5568;
+      line-height: 1.5;
+      margin-top: 6px;
+    }
+
+    .slip-title-box {
+      text-align: right;
+    }
+    .slip-title {
+      font-family: 'Fraunces', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--pine);
+      letter-spacing: 1px;
+      margin-bottom: 2px;
+    }
+    .slip-title-en {
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      color: #718096;
+      margin-bottom: 8px;
+    }
+
+    .slip-code-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--fog);
+      border: 1px solid var(--mist);
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .slip-code-pill strong {
+      color: var(--ember);
+      font-size: 14px;
+      letter-spacing: 1px;
+    }
+
+    .slip-status-pill {
+      display: inline-block;
+      margin-top: 6px;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    .slip-divider {
+      border: 0;
+      height: 1px;
+      background: #E2E8F0;
+      margin: 16px 0;
+    }
+
+    .slip-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .slip-box {
+      background: var(--cream);
+      border: 1px solid #E2D9CC;
+      border-radius: 6px;
+      padding: 14px 16px;
+    }
+
+    .slip-box-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--pine);
+      letter-spacing: 1px;
+      border-bottom: 1px solid #E2D9CC;
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+    }
+
+    .slip-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+    .slip-table td {
+      padding: 5px 4px;
+      vertical-align: top;
+    }
+    .col-label {
+      width: 36%;
+      color: #4A5568;
+    }
+    .col-val {
+      color: var(--ink);
+    }
+
+    .finance-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      text-align: center;
+    }
+    .finance-item {
+      background: #fff;
+      border: 1px dashed #CBD5E0;
+      border-radius: 6px;
+      padding: 10px 8px;
+    }
+    .f-label {
+      display: block;
+      font-size: 11px;
+      color: #718096;
+      margin-bottom: 4px;
+    }
+    .f-val {
+      font-size: 14px;
+    }
+
+    /* Footer chữ ký & Dấu đỏ */
+    .slip-footer-sign {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 18px;
+      gap: 30px;
+    }
+
+    .sign-note {
+      flex: 1.2;
+      font-size: 11px;
+      color: #4A5568;
+      background: #F8FAFC;
+      border-left: 3px solid var(--pine);
+      padding: 10px 14px;
+      border-radius: 0 4px 4px 0;
+    }
+    .sign-note ul {
+      margin-left: 16px;
+      margin-top: 4px;
+    }
+    .sign-note li {
+      margin-bottom: 3px;
+    }
+
+    .sign-seal-box {
+      flex: 0.9;
+      text-align: center;
+      position: relative;
+    }
+    .sign-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--pine);
+      letter-spacing: 0.5px;
+    }
+    .sign-role {
+      font-size: 10.5px;
+      color: #718096;
+      margin-top: 2px;
+    }
+
+    .seal-and-sig-area {
+      position: relative;
+      height: 105px;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .signature-img {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+    }
+    .signer-name {
+      font-size: 11px;
+      font-style: italic;
+      color: #2D3748;
+      margin-top: -6px;
+    }
+
+    /* Con dấu đỏ */
+    .seal-overlay {
+      position: absolute;
+      top: -15px;
+      right: 15px;
+      z-index: 2;
+      transform: rotate(-12deg);
+      pointer-events: none;
+      filter: drop-shadow(0 2px 4px rgba(207, 34, 46, 0.15));
+    }
+
+    .slip-bottom-bar {
+      margin-top: 16px;
+      padding-top: 10px;
+      border-top: 1px solid #E2E8F0;
+      display: flex;
+      justify-content: space-between;
+      font-size: 10.5px;
+      color: #718096;
+    }
+
+    .loading-state, .error-state {
+      text-align: center;
+      padding: 60px 20px;
+      background: #fff;
+      border-radius: 8px;
+      max-width: 600px;
+      margin: 40px auto;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    @media print {
+      body {
+        background: #fff !important;
+        padding: 0 !important;
+      }
+      .action-bar, .hint-print {
+        display: none !important;
+      }
+      .slip-wrapper {
+        padding: 0 !important;
+        max-width: none !important;
+      }
+      .banla-slip-container {
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+        min-width: 100% !important;
+      }
+      @page {
+        size: A4 landscape;
+        margin: 8mm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Thanh công cụ -->
+  <div class="action-bar" id="actionBar" style="display: none;">
+    <button type="button" class="btn-act btn-primary" id="btnPrint">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/><path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/></svg>
+      In / Lưu PDF (A4)
+    </button>
+    <button type="button" class="btn-act btn-outline" id="btnPng">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+      Tải ảnh phiếu PNG
+    </button>
+    <a href="https://www.facebook.com/profile.php?id=61550577645853" target="_blank" rel="noopener" class="btn-act btn-fb">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z"/></svg>
+      Nhắn Facebook Banla (Hỗ trợ 24/7)
+    </a>
+    <a href="tel:02969996999" class="btn-act btn-outline">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.885.511a1.745 1.745 0 0 1 2.61.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.678.678 0 0 0 .178.643l2.457 2.457a.678.678 0 0 0 .644.178l2.189-.547a1.745 1.745 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.634 18.634 0 0 1-7.01-4.42 18.634 18.634 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877L1.885.511z"/></svg>
+      Hotline: 0296.9996.999
+    </a>
+  </div>
+
+  <div class="slip-wrapper">
+    <div id="slipContent">
+      <div class="loading-state">
+        <h3 style="color: var(--pine); margin-bottom: 8px;">Đang tải phiếu xác nhận...</h3>
+        <p style="color: #718096; font-size: 13px;">Hệ thống đang kết nối và nạp con dấu chính thức của Banla.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="vendor/html2canvas.min.js"></script>
+  <script src="phieu.js"></script>
+  <script>
+    (async function () {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = (urlParams.get('ma') || urlParams.get('id') || '').trim();
+      const contact = (urlParams.get('contact') || '').trim();
+      const key = (urlParams.get('key') || '').trim();
+      const contentEl = document.getElementById('slipContent');
+      const actionEl = document.getElementById('actionBar');
+
+      if (!code) {
+        contentEl.innerHTML = `
+          <div class="error-state">
+            <h3 style="color: #d92d20; margin-bottom: 10px;">Chưa có mã đặt phòng</h3>
+            <p style="color: #4A5568; font-size: 14px; margin-bottom: 14px;">Đường dẫn mở phiếu cần kèm mã đơn hợp lệ (Ví dụ: phieu.html?ma=bl9821).</p>
+            <p style="font-size: 13px; color: #718096;">Quý khách vui lòng kiểm tra lại liên kết hoặc nhắn <a href="https://www.facebook.com/profile.php?id=61550577645853" target="_blank" style="color:#1877F2;font-weight:600;">Fanpage Facebook Banla</a> để được cung cấp phiếu.</p>
+          </div>
+        `;
+        return;
+      }
+
+      try {
+        let apiUrl = '/api/booking/detail?id=' + encodeURIComponent(code);
+        if (contact) apiUrl += '&contact=' + encodeURIComponent(contact);
+        if (key) apiUrl += '&key=' + encodeURIComponent(key);
+
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+
+        if (!res.ok || !data.success || !data.booking) {
+          contentEl.innerHTML = `
+            <div class="error-state">
+              <h3 style="color: #d92d20; margin-bottom: 10px;">Không thể nạp phiếu xác nhận</h3>
+              <p style="color: #4A5568; font-size: 14px; margin-bottom: 12px;">${data.message || 'Không tìm thấy dữ liệu đặt phòng khớp với mã đã cung cấp.'}</p>
+              <p style="font-size: 13px; color: #718096;">Vui lòng liên hệ Hotline <strong>0296.9996.999 - 0352554863</strong> hoặc nhắn Fanpage Facebook để được hỗ trợ kiểm tra.</p>
+            </div>
+          `;
+          return;
+        }
+
+        const b = data.booking;
+        contentEl.innerHTML = window.BanlaSlip(b);
+        actionEl.style.display = 'flex';
+        document.title = 'Phiếu xác nhận #' + b.id + ' | Banla Boutique Hotel Đà Lạt';
+
+        // Xử lý In / Lưu PDF
+        document.getElementById('btnPrint').addEventListener('click', function () {
+          window.print();
+        });
+
+        // Xử lý Tải ảnh PNG bằng html2canvas
+        document.getElementById('btnPng').addEventListener('click', function () {
+          const target = document.getElementById('banlaSlipPrint');
+          if (!target || !window.html2canvas) {
+            alert('Chưa sẵn sàng tạo ảnh, quý khách có thể dùng nút In / Lưu PDF.');
+            return;
+          }
+          const origText = this.innerHTML;
+          this.innerHTML = 'Đang xuất ảnh...';
+          this.disabled = true;
+
+          window.html2canvas(target, {
+            scale: 2,
+            backgroundColor: '#FAF7F2',
+            useCORS: true
+          }).then(function (canvas) {
+            const link = document.createElement('a');
+            link.download = 'Phieu-Xac-Nhan-Banla-' + b.id + '.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+          }).catch(function (err) {
+            console.error('Lỗi xuất ảnh:', err);
+            alert('Không thể tạo file ảnh. Quý khách vui lòng chọn chức năng In / Lưu PDF.');
+          }).finally(() => {
+            this.innerHTML = origText;
+            this.disabled = false;
+          });
+        });
+
+      } catch (err) {
+        console.error('Fetch slip error:', err);
+        contentEl.innerHTML = `
+          <div class="error-state">
+            <h3 style="color: #d92d20; margin-bottom: 10px;">Lỗi kết nối máy chủ</h3>
+            <p style="color: #4A5568; font-size: 14px;">Không thể tải dữ liệu phiếu lúc này. Quý khách vui lòng thử lại sau ít phút hoặc nhắn tin Fanpage Banla.</p>
+          </div>
+        `;
+      }
+    })();
+  </script>
+</body>
+</html>

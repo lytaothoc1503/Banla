@@ -72,7 +72,7 @@ document.querySelectorAll('form.booking-form').forEach((form) => {
         alert(result.message || 'Có lỗi xảy ra khi gửi yêu cầu.');
       }
     } catch {
-      alert('Hiện chưa gửi được yêu cầu trực tuyến. Vui lòng liên hệ Banla qua điện thoại tel:0965999999 hoặc Zalo https://zalo.me/0965999999 để đặt phòng.');
+      alert('Hiện chưa gửi được yêu cầu trực tuyến. Vui lòng liên hệ hotline 0296.9996.999 - 0352554863 hoặc nhắn Fanpage Facebook: https://www.facebook.com/profile.php?id=61550577645853 để được hỗ trợ 24/7.');
     }
 
     btn.textContent = originalText;
@@ -445,7 +445,7 @@ if ('serviceWorker' in navigator) {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        resultDiv.innerHTML = '<p style="color: var(--ember); margin-bottom: 8px;">' + escapeHtml(data.message || 'Không tìm thấy dữ liệu đặt phòng.') + '</p><p style="font-size: 0.85rem; color: var(--muted);">Nếu quý khách vừa đặt phòng hoặc cần hỗ trợ gấp, vui lòng liên hệ hotline/Zalo: <a href="tel:0965999999" style="color: var(--brass); font-weight: 500;">0965.999.999</a>.</p>';
+        resultDiv.innerHTML = '<p style="color: var(--ember); margin-bottom: 8px;">' + escapeHtml(data.message || 'Không tìm thấy dữ liệu đặt phòng.') + '</p><p style="font-size: 0.85rem; color: var(--muted);">Nếu quý khách vừa đặt phòng hoặc cần hỗ trợ gấp, vui lòng gọi hotline <a href="tel:02969996999" style="color: var(--brass); font-weight: 500;">0296.9996.999</a> / <a href="tel:0352554863" style="color: var(--brass); font-weight: 500;">0352554863</a> hoặc nhắn <a href="https://www.facebook.com/profile.php?id=61550577645853" target="_blank" rel="noopener" style="color: var(--brass); text-decoration: underline;">Facebook Fanpage Banla 24/7</a>.</p>';
       } else {
         const b = data.booking;
         const isConfirmed = b.status === 'confirmed';
@@ -475,7 +475,7 @@ if ('serviceWorker' in navigator) {
         resultDiv.innerHTML = html;
       }
     } catch {
-      resultDiv.innerHTML = '<p style="color: var(--ember);">Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng hoặc liên hệ qua Zalo 0965.999.999.</p>';
+      resultDiv.innerHTML = '<p style="color: var(--ember);">Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng hoặc gọi hotline 0296.9996.999 - 0352554863 / nhắn Facebook Banla.</p>';
     } finally {
       submitBtn.textContent = origText;
       submitBtn.disabled = false;

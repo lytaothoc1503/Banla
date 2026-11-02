@@ -248,7 +248,7 @@
 
   function triggerSuccess(data = {}) {
     const pin = data.smartLockPin || '*9821#';
-    alert(`THANH TOÁN THÀNH CÔNG!\n\nĐơn đặt phòng ${currentSession.bookingId} đã được xác nhận.\nMã Smart-Lock mở cửa phòng: ${pin}\n\nBanla rất hân hạnh được đón tiếp quý khách!`);
+    alert(`THANH TOÁN THÀNH CÔNG!\n\nĐơn đặt phòng ${currentSession.bookingId} đã được xác nhận.\nMã Smart-Lock mở cửa phòng: ${pin}\n\nQuý khách vui lòng liên hệ Fanpage Facebook Banla (https://www.facebook.com/profile.php?id=61550577645853) để được cung cấp PHIẾU XÁC NHẬN DỊCH VỤ CHÍNH THỨC CÓ DẤU ĐỎ của Banla.\n\nHotline hỗ trợ 24/7: 0296.9996.999 - 0352554863`);
     if (currentSession && typeof currentSession.onSuccess === 'function') {
       currentSession.onSuccess(data);
     }
