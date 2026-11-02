@@ -3,11 +3,13 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const crypto = require('crypto');
 
 const tmp = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'banla-')), 'bookings.json');
 process.env.BOOKINGS_FILE = tmp;
 process.env.OTA_ALLOWED_ORIGINS = 'http://localhost:3001,https://ota.banla.vn';
 process.env.OTA_API_KEY = 'secret-ota-token-123';
+process.env.BANLA_WEBHOOK_SECRET = 'test_webhook_secret_2026';
 
 const { app } = require('../server');
 let server, base;
@@ -66,6 +68,7 @@ test('POST /api/booking hợp lệ mặc định source là direct -> lưu file'
   const saved = bookings.find((b) => b.id === json.id);
   assert.ok(saved);
   assert.strictEqual(saved.source, 'direct');
+  assert.strictEqual(saved.paymentStatus, 'UNPAID');
 });
 
 test('POST /api/booking source không hợp lệ -> 400', async () => {
@@ -144,10 +147,16 @@ test('OTA Auth: POST /api/booking với source ota và đúng x-api-key -> 200 v
   assert.strictEqual(saved.source, 'ota');
 });
 
-
 test('Tra cứu booking: thiếu id hoặc contact -> 400', async () => {
   const res = await fetch(`${base}/api/booking/lookup?id=test123`);
   assert.strictEqual(res.status, 400);
+});
+
+test('Tra cứu booking: số điện thoại dưới 8 chữ số -> 400 (chống brute force IDOR)', async () => {
+  const res = await fetch(`${base}/api/booking/lookup?id=test123&contact=9`);
+  assert.strictEqual(res.status, 400);
+  const json = await res.json();
+  assert.ok(json.message.includes('8 chữ số'));
 });
 
 test('Tra cứu booking: sai mã hoặc sai số điện thoại -> 404', async () => {
@@ -176,6 +185,83 @@ test('Tra cứu booking: đúng mã + đúng số điện thoại -> 200 và che
   assert.strictEqual(data.success, true);
   assert.strictEqual(data.booking.name, 'Nguyễn Văn Tra Cứu');
   assert.strictEqual(data.booking.status, 'pending');
+  assert.strictEqual(data.booking.paymentStatus, 'UNPAID');
   assert.strictEqual(data.booking.phoneMasked, '090****567');
   assert.ok(!data.booking.phone); // Không trả raw phone
+});
+
+test('Bảo mật tĩnh: Chặn truy cập file nhạy cảm và backend internals -> 404', async () => {
+  const res1 = await fetch(`${base}/server.js`);
+  assert.strictEqual(res1.status, 404);
+
+  const res2 = await fetch(`${base}/package.json`);
+  assert.strictEqual(res2.status, 404);
+
+  const res3 = await fetch(`${base}/banla_payment_module/database/banla_migration.sql`);
+  assert.strictEqual(res3.status, 404);
+
+  const res4 = await fetch(`${base}/banla_payment_module/backend/banla_payment_router.js`);
+  assert.strictEqual(res4.status, 404);
+});
+
+test('Webhook Banla Payment: thiếu chữ ký -> 401', async () => {
+  const res = await fetch(`${base}/api/banla/webhook`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount: 200000 })
+  });
+  assert.strictEqual(res.status, 401);
+});
+
+test('Webhook Banla Payment: chữ ký sai -> 401', async () => {
+  const res = await fetch(`${base}/api/banla/webhook`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-banla-signature': 'invalid_signature_hex'
+    },
+    body: JSON.stringify({ amount: 200000 })
+  });
+  assert.strictEqual(res.status, 401);
+});
+
+test('Webhook Banla Payment: chữ ký đúng -> 200 và đồng bộ trạng thái booking', async () => {
+  // Tạo booking để test đồng bộ
+  const postRes = await post({
+    name: 'Khách Đặt Ưu Tiên',
+    phone: '0965999999',
+    room: 'Élite Room'
+  });
+  const { id: bookingId } = await postRes.json();
+
+  const payload = JSON.stringify({
+    bookingId,
+    amount: 200000,
+    memo: 'BALA9821'
+  });
+
+  const secret = process.env.BANLA_WEBHOOK_SECRET;
+  const signature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+
+  const res = await fetch(`${base}/api/banla/webhook`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-banla-signature': signature
+    },
+    body: payload
+  });
+
+  assert.strictEqual(res.status, 200);
+  const data = await res.json();
+  assert.strictEqual(data.success, true);
+  assert.ok(data.smartLockPin);
+
+  // Xác nhận file booking đã được cập nhật thành PAID và confirmed
+  const bookings = JSON.parse(fs.readFileSync(tmp, 'utf8'));
+  const updated = bookings.find((b) => b.id === bookingId);
+  assert.ok(updated);
+  assert.strictEqual(updated.paymentStatus, 'PAID');
+  assert.strictEqual(updated.status, 'confirmed');
+  assert.strictEqual(updated.smartLockPin, data.smartLockPin);
 });

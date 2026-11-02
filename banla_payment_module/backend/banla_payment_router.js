@@ -13,31 +13,46 @@ const router = express.Router();
 const WEBHOOK_SECRET = process.env.BANLA_WEBHOOK_SECRET || 'banla_secret_priority_2026';
 const BOOKINGS_FILE = process.env.BOOKINGS_FILE || path.join(__dirname, '..', '..', 'data', 'bookings.json');
 
-// Bộ nhớ đệm lưu kết nối thời gian thực SSE
+// Bộ nhớ đệm lưu kết nối thời gian thực SSE (kèm timer keepalive)
 const sseSubscribers = new Map();
 
+function safeCompare(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
 function broadcastPaymentSuccess(sessionId, data) {
-  const client = sseSubscribers.get(sessionId);
-  if (client) {
+  const sub = sseSubscribers.get(sessionId);
+  if (sub && sub.res) {
     try {
-      client.write(`data: ${JSON.stringify(data)}\n\n`);
+      sub.res.write(`data: ${JSON.stringify(data)}\n\n`);
     } catch {
+      if (sub.timer) clearInterval(sub.timer);
       sseSubscribers.delete(sessionId);
     }
   }
 }
 
-// Cập nhật booking gốc trong data/bookings.json nếu có
+// Cập nhật booking gốc trong data/bookings.json an toàn
 function syncBookingPayment(bookingId, paymentData) {
   try {
     if (fs.existsSync(BOOKINGS_FILE)) {
-      const bookings = JSON.parse(fs.readFileSync(BOOKINGS_FILE, 'utf8'));
-      const idx = bookings.findIndex((b) => b.id === bookingId);
+      const content = fs.readFileSync(BOOKINGS_FILE, 'utf8').trim();
+      if (!content) return;
+      const bookings = JSON.parse(content);
+      const idx = bookings.findIndex((b) => String(b.id).toLowerCase() === String(bookingId).toLowerCase());
       if (idx !== -1) {
+        bookings[idx].status = 'confirmed';
         bookings[idx].paymentStatus = 'PAID';
         bookings[idx].smartLockPin = paymentData.smartLockPin;
         bookings[idx].paidAt = new Date().toISOString();
-        fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(bookings, null, 2), 'utf8');
+
+        const tmpFile = `${BOOKINGS_FILE}.${Date.now()}.tmp`;
+        fs.writeFileSync(tmpFile, JSON.stringify(bookings, null, 2), 'utf8');
+        fs.renameSync(tmpFile, BOOKINGS_FILE);
       }
     }
   } catch (err) {
@@ -54,11 +69,28 @@ function handleStream(req, res) {
   res.setHeader('Connection', 'keep-alive');
   res.flushHeaders?.();
 
-  sseSubscribers.set(sessionId, res);
+  // Đóng kết nối cũ nếu có để tránh rò rỉ socket
+  const prevClient = sseSubscribers.get(sessionId);
+  if (prevClient && prevClient.res) {
+    try { prevClient.res.end(); } catch {}
+    if (prevClient.timer) clearInterval(prevClient.timer);
+  }
 
+  // Gửi heartbeat keepalive mỗi 20 giây để tránh timeout từ proxy/browser
+  const timer = setInterval(() => {
+    try {
+      res.write(': keepalive\n\n');
+    } catch {
+      clearInterval(timer);
+      sseSubscribers.delete(sessionId);
+    }
+  }, 20000);
+
+  sseSubscribers.set(sessionId, { res, timer });
   res.write(`: connected to session ${sessionId}\n\n`);
 
   req.on('close', () => {
+    clearInterval(timer);
     sseSubscribers.delete(sessionId);
   });
 }
@@ -76,7 +108,7 @@ async function handleCreateSession(req, res) {
     const feeAmount = Math.round(grossAmount * feeRate);
     const netAmount = grossAmount - feeAmount;
 
-    const sessionId = `SESS_${Date.now()}`;
+    const sessionId = `SESS_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const memo = `BALA${Math.floor(1000 + Math.random() * 9000)}`;
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
 
@@ -87,7 +119,7 @@ async function handleCreateSession(req, res) {
       sessionId,
       bookingId: bookingId || 'BALA-9821',
       roomId: roomId || 'attic',
-      roomName: roomName || 'Attic Room Banla',
+      roomName: roomName || 'Phòng Banla Boutique',
       customerName: customerName || 'Quý khách Banla',
       customerContact: customerContact || '',
       amount: grossAmount,
@@ -136,7 +168,7 @@ router.get('/session/:sessionId', (req, res) => {
   });
 });
 
-// 3. Webhook nhận tiền tự động (Có kiểm tra HMAC-SHA256 & Idempotency)
+// 3. Webhook nhận tiền tự động (Có kiểm tra HMAC-SHA256 an toàn & Idempotency)
 router.post('/webhook', async (req, res) => {
   try {
     const signature = req.headers['x-banla-signature'] || req.headers['x-signature'];
@@ -155,15 +187,20 @@ router.post('/webhook', async (req, res) => {
       payload = JSON.parse(rawBody);
     }
 
-    // Xác thực chữ ký số HMAC-SHA256
-    const hash = crypto.createHmac('sha256', WEBHOOK_SECRET).update(rawBody).digest('hex');
-    if (signature && signature !== hash && process.env.NODE_ENV === 'production') {
-      return res.status(401).json({ error: 'Chữ ký không hợp lệ' });
+    // Xác thực chữ ký số HMAC-SHA256 (bắt buộc khi có cấu hình WEBHOOK_SECRET)
+    if (WEBHOOK_SECRET) {
+      if (!signature) {
+        return res.status(401).json({ success: false, message: 'Thiếu chữ ký xác thực (x-banla-signature).' });
+      }
+      const hash = crypto.createHmac('sha256', WEBHOOK_SECRET).update(rawBody).digest('hex');
+      if (!safeCompare(signature, hash)) {
+        return res.status(401).json({ success: false, message: 'Chữ ký số không hợp lệ.' });
+      }
     }
 
-    const { transactionId, memo, amount, gatewayFee = 0, sessionId, bookingId } = payload;
+    const { transactionId, memo, amount, sessionId, bookingId } = payload;
 
-    // Sinh mã PIN Smart-lock theo format gói
+    // Sinh mã PIN Smart-lock theo định dạng chuẩn
     const smartLockPin = `*${Math.floor(1000 + Math.random() * 9000)}#`;
 
     const eventData = {
@@ -177,7 +214,7 @@ router.post('/webhook', async (req, res) => {
     // Đẩy tín hiệu Real-time ngay lập tức về UI
     broadcastPaymentSuccess(sessionId || 'SESS_DEFAULT', eventData);
 
-    // Đồng bộ vào database file bookings
+    // Đồng bộ vào cơ sở dữ liệu bookings
     if (bookingId) {
       syncBookingPayment(bookingId, { smartLockPin });
     }

@@ -412,6 +412,16 @@ if ('serviceWorker' in navigator) {
     if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
   });
 
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const rawId = (document.getElementById('lookupBookingId')?.value || '').trim();
@@ -435,21 +445,34 @@ if ('serviceWorker' in navigator) {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        resultDiv.innerHTML = '<p style="color: var(--ember); margin-bottom: 8px;">' + (data.message || 'Không tìm thấy dữ liệu đặt phòng.') + '</p><p style="font-size: 0.85rem; color: var(--muted);">Nếu quý khách vừa đặt phòng hoặc cần hỗ trợ gấp, vui lòng liên hệ hotline/Zalo: <a href="tel:0965999999" style="color: var(--brass); font-weight: 500;">0965.999.999</a>.</p>';
+        resultDiv.innerHTML = '<p style="color: var(--ember); margin-bottom: 8px;">' + escapeHtml(data.message || 'Không tìm thấy dữ liệu đặt phòng.') + '</p><p style="font-size: 0.85rem; color: var(--muted);">Nếu quý khách vừa đặt phòng hoặc cần hỗ trợ gấp, vui lòng liên hệ hotline/Zalo: <a href="tel:0965999999" style="color: var(--brass); font-weight: 500;">0965.999.999</a>.</p>';
       } else {
         const b = data.booking;
         const isConfirmed = b.status === 'confirmed';
         const badgeClass = isConfirmed ? 'badge-confirmed' : 'badge-pending';
         const statusText = isConfirmed ? 'Đã xác nhận' : 'Đang xử lý (Chờ xác nhận)';
+        const isPaid = b.paymentStatus === 'PAID';
+        const paymentBadge = isPaid
+          ? '<span class="lookup-badge badge-confirmed" style="margin-left: 6px;">Đã thanh toán</span>'
+          : '<span class="lookup-badge badge-pending" style="margin-left: 6px;">Chờ thanh toán</span>';
 
-        resultDiv.innerHTML =
-          '<div class="lookup-badge ' + badgeClass + '">' + statusText + '</div>' +
-          '<div class="lookup-detail-row"><span class="lookup-detail-label">Mã đặt phòng:</span><span class="lookup-detail-val">#' + b.id + '</span></div>' +
-          '<div class="lookup-detail-row"><span class="lookup-detail-label">Khách hàng:</span><span class="lookup-detail-val">' + b.name + '</span></div>' +
-          '<div class="lookup-detail-row"><span class="lookup-detail-label">Hạng phòng:</span><span class="lookup-detail-val">' + (b.room || 'Tư vấn khi check-in') + '</span></div>' +
-          (b.checkin ? '<div class="lookup-detail-row"><span class="lookup-detail-label">Thời gian:</span><span class="lookup-detail-val">' + b.checkin + ' → ' + b.checkout + '</span></div>' : '') +
-          (b.guests ? '<div class="lookup-detail-row"><span class="lookup-detail-label">Số khách:</span><span class="lookup-detail-val">' + b.guests + ' khách</span></div>' : '') +
-          '<div class="lookup-detail-row"><span class="lookup-detail-label">Liên hệ xác thực:</span><span class="lookup-detail-val">' + (b.phoneMasked || b.emailMasked) + '</span></div>';
+        let html =
+          '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:8px;">' +
+            '<span class="lookup-badge ' + badgeClass + '">' + statusText + '</span>' +
+            paymentBadge +
+          '</div>' +
+          '<div class="lookup-detail-row"><span class="lookup-detail-label">Mã đặt phòng:</span><span class="lookup-detail-val">#' + escapeHtml(b.id) + '</span></div>' +
+          '<div class="lookup-detail-row"><span class="lookup-detail-label">Khách hàng:</span><span class="lookup-detail-val">' + escapeHtml(b.name) + '</span></div>' +
+          '<div class="lookup-detail-row"><span class="lookup-detail-label">Hạng phòng:</span><span class="lookup-detail-val">' + escapeHtml(b.room || 'Tư vấn khi check-in') + '</span></div>' +
+          (b.checkin ? '<div class="lookup-detail-row"><span class="lookup-detail-label">Thời gian:</span><span class="lookup-detail-val">' + escapeHtml(b.checkin) + ' → ' + escapeHtml(b.checkout) + '</span></div>' : '') +
+          (b.guests ? '<div class="lookup-detail-row"><span class="lookup-detail-label">Số khách:</span><span class="lookup-detail-val">' + escapeHtml(b.guests) + ' khách</span></div>' : '') +
+          '<div class="lookup-detail-row"><span class="lookup-detail-label">Liên hệ xác thực:</span><span class="lookup-detail-val">' + escapeHtml(b.phoneMasked || b.emailMasked) + '</span></div>';
+
+        if (b.smartLockPin) {
+          html += '<div class="lookup-detail-row" style="background:rgba(212,175,55,0.12);padding:8px 10px;border-radius:6px;margin-top:8px;"><span class="lookup-detail-label" style="color:var(--ink);font-weight:600;">Mã Smart-Lock phòng:</span><span class="lookup-detail-val" style="color:var(--ember);font-size:1.05rem;">' + escapeHtml(b.smartLockPin) + '</span></div>';
+        }
+
+        resultDiv.innerHTML = html;
       }
     } catch {
       resultDiv.innerHTML = '<p style="color: var(--ember);">Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng hoặc liên hệ qua Zalo 0965.999.999.</p>';
