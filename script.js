@@ -472,6 +472,7 @@ if ('serviceWorker' in navigator) {
           html += '<div class="lookup-detail-row" style="background:rgba(212,175,55,0.12);padding:8px 10px;border-radius:6px;margin-top:8px;"><span class="lookup-detail-label" style="color:var(--ink);font-weight:600;">Mã Smart-Lock phòng:</span><span class="lookup-detail-val" style="color:var(--ember);font-size:1.05rem;">' + escapeHtml(b.smartLockPin) + '</span></div>';
         }
 
+        html += '<div style="margin-top: 14px; text-align: center;"><a href="phieu.html?ma=' + encodeURIComponent(b.id) + '" target="_blank" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; font-size: 13px; text-decoration: none;">📄 Xem Phiếu xác nhận có dấu đỏ</a></div>';
         resultDiv.innerHTML = html;
       }
     } catch {
