@@ -370,7 +370,7 @@
               </div>
               <div class="slip-hotel-meta">
                 <p><strong>Địa chỉ:</strong> 47 Nguyễn Đình Chiểu, Phường 9, Đà Lạt, Lâm Đồng</p>
-                <p><strong>Hotline 24/7:</strong> 0296.9996.999 - 0352554863 · <strong>Fanpage:</strong> Banla Boutique Hotel</p>
+                <p><strong>Hotline 24/7:</strong> 0296.9996.999 - 0352554863 · <strong>Email:</strong> concact@banlaboutiquedalat.com · <strong>Fanpage:</strong> Banla Boutique Hotel</p>
               </div>
             </div>
 

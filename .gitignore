@@ -5,3 +5,6 @@ banla_payment_module/data/
 .env
 .env*.local
 *.log
+.tgcloud/
+**/credentials
+

@@ -239,7 +239,8 @@ document.querySelectorAll('form.booking-form').forEach((form) => {
   }
 
   updateSummaryUI();
-  [checkinInput, checkoutInput, roomSelect, guestsInput].forEach((el) => {
+  const paymentRadios = form.querySelectorAll('[name="payment_option"]');
+  [...paymentRadios, checkinInput, checkoutInput, roomSelect, guestsInput].forEach((el) => {
     if (el) {
       el.addEventListener('change', updateSummaryUI);
       el.addEventListener('input', updateSummaryUI);
@@ -275,7 +276,11 @@ document.querySelectorAll('form.booking-form').forEach((form) => {
       return;
     }
 
-    const { nights, totalAmount, depositAmount } = calculateStaySummary(data.room, data.checkin, data.checkout);
+    const paymentOption = form.querySelector('[name="payment_option"]:checked')?.value || 'deposit_50';
+    const summary = calculateStaySummary(data.room, data.checkin, data.checkout, paymentOption);
+    const nights = summary.nights;
+    const totalAmount = summary.totalAmount;
+    const depositAmount = summary.payAmount;
     const generatedCode = 'BL' + Math.random().toString(36).substring(2, 6).toUpperCase();
     let finalId = generatedCode;
 
@@ -320,7 +325,10 @@ document.querySelectorAll('form.booking-form').forEach((form) => {
       totalPrice: totalAmount,
       total_amount: totalAmount,
       paidAmount: 0,
-      depositAmount,
+      depositAmount: summary.payAmount,
+      paymentOption: summary.paymentOption,
+      discountAmount: summary.discountAmount,
+      remainingAmount: summary.remainingAmount,
       message: data.message,
       source: 'direct',
       status: 'pending',

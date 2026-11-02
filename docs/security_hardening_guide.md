@@ -83,3 +83,4 @@ Tài liệu này chuẩn hóa quy trình triển khai và vận hành an ninh ch
 19. **19. Bật Backup tự động và Theo dõi lỗi:**
     - Script sao lưu tự động [`scripts/backup_db.js`](../scripts/backup_db.js) định kỳ lưu snapshot và xoay vòng 30 ngày.
     - Endpoint `/api/health` cung cấp trạng thái uptime và tình trạng bộ nhớ cho các hệ thống giám sát (UptimeRobot, Better Uptime).
+

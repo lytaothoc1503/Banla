@@ -1164,8 +1164,10 @@
 
         tbody.innerHTML = pageItems.map(b => {
           let payBadge = `<span class="badge badge-unpaid">Chờ thanh toán</span>`;
-          if (b.payment_status === 'paid') {
-            payBadge = `<span class="badge badge-paid">✓ Đã thanh toán</span>`;
+          if (b.payment_status === 'paid' && (b.paid_amount >= b.total_amount || b.payment_option === 'pay_100')) {
+            payBadge = `<span class="badge badge-paid">✓ Đã thanh toán 100%</span>`;
+          } else if (b.payment_status === 'paid' || (Number(b.paid_amount) > 0 && Number(b.paid_amount) < Number(b.total_amount))) {
+            payBadge = `<span class="badge" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-weight:600;">Cọc 50% (${vnd(b.paid_amount)})</span>`;
           } else if (b.payment_status === 'refunded') {
             payBadge = `<span class="badge badge-refunded">Đã hoàn tiền</span>`;
           }

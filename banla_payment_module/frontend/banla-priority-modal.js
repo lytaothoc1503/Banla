@@ -110,6 +110,10 @@
     injectStyles();
     const bankCfg = getSavedBankConfig();
     const amount = Number(options.amount) || 1200000;
+    const totalAmount = Number(options.totalAmount) || amount;
+    const discountAmount = Number(options.discountAmount) || 0;
+    const remainingAmount = Number(options.remainingAmount) || 0;
+    const paymentOption = options.paymentOption || (discountAmount > 0 ? 'pay_100' : 'deposit_50');
     const rawCode = String(options.bookingId || 'BL9821').replace(/^#+/, '').toUpperCase();
     const bookingId = rawCode;
     const memo = options.memo || (`BANLA_${rawCode}`);
@@ -121,6 +125,10 @@
     const vietQrUrl = `https://img.vietqr.io/image/${encodeURIComponent(bankId)}-${encodeURIComponent(accountNo)}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(memo)}&accountName=${encodeURIComponent(accountName)}`;
 
     currentSession = {
+      totalAmount,
+      discountAmount,
+      remainingAmount,
+      paymentOption,
       bookingId,
       amount,
       memo,
