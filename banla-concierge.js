@@ -1,5 +1,5 @@
-/* Banla × Gemini — Trợ lý lễ tân AI "Bàn Là".
-   Gọi Supabase Edge Function `banla-gemini` (API key Gemini nằm ở server, KHÔNG có trong file này).
+/* Banla — Trợ lý lễ tân "Bàn Là".
+   Gọi Supabase Edge Function hiện có (khoá dịch vụ được lưu ở server, KHÔNG có trong file này).
    Cấu hình (đặt trước khi nạp file, hoặc dùng cấu hình Supabase sẵn có của site):
      window.BANLA_GEMINI_ENDPOINT   — URL đầy đủ của function (tuỳ chọn)
      window.BANLA_SUPABASE_URL      — https://<project-ref>.supabase.co
@@ -8,13 +8,13 @@
   'use strict';
 
   var HOTLINE = '0296.9996.999';
-  var FANPAGE = 'https://www.facebook.com/profile.php?id=61550577645853';
+  var FANPAGE = 'https://www.facebook.com/Banlaboutiquedalat/';
   var STORE_KEY = 'banla_concierge_history_v1';
   var SUGGESTIONS = [
-    'Phòng nào hợp cho 2 người lớn và 1 bé?',
-    'Giờ mở cửa The Roof?',
-    'Cách đặt cọc VietQR thế nào?',
-    'Từ sân bay Liên Khương về khách sạn bao xa?'
+    { label: 'Ưu đãi đặt phòng', prompt: 'Banla hiện có ưu đãi đặt phòng nào? Nếu chưa có thông tin đã xác nhận, vui lòng không suy đoán và hướng dẫn tôi hỏi nhân viên Banla.' },
+    { label: 'Đặt phòng ngay', prompt: 'Tôi muốn đặt phòng tại Banla. Vui lòng hướng dẫn tôi các bước đặt phòng.' },
+    { label: 'Tư vấn phòng theo ngày & số khách', prompt: 'Tư vấn hạng phòng theo lịch lưu trú và số khách của tôi. Vui lòng hỏi ngày nhận phòng, ngày trả phòng và số lượng khách trước khi gợi ý.' },
+    { label: 'Tham khảo The Roof', prompt: 'Cho tôi tham khảo thông tin về The Roof tại Banla.' }
   ];
 
   function readConfig(name) {
@@ -54,16 +54,17 @@
   var root = document.createElement('div');
   root.className = 'bc-root';
   root.innerHTML =
-    '<button type="button" class="bc-launcher" aria-expanded="false" aria-controls="bcPanel">' +
-      '<span class="bc-launcher-dot" aria-hidden="true"></span>' +
-      '<span class="bc-launcher-text">Hỏi lễ tân AI</span>' +
+    '<button type="button" class="bc-launcher" aria-label="Trò chuyện với lễ tân Banla" aria-expanded="false" aria-controls="bcPanel">' +
+      '<img class="bc-launcher-logo" src="images/logo.png" alt="">' +
+      '<span class="bc-chat-cue" aria-hidden="true"></span>' +
+      '<span class="bc-launcher-text">Trò chuyện</span>' +
     '</button>' +
     '<section class="bc-panel" id="bcPanel" role="dialog" aria-modal="false" aria-labelledby="bcTitle" hidden>' +
       '<header class="bc-head">' +
-        '<div class="bc-avatar" aria-hidden="true">B</div>' +
+        '<div class="bc-avatar" aria-hidden="true"><img src="images/logo.png" alt=""></div>' +
         '<div class="bc-head-copy">' +
-          '<h2 class="bc-title" id="bcTitle">Bàn Là · Lễ tân AI</h2>' +
-          '<p class="bc-sub">Gemini · Google AI Studio · trả lời 24/7</p>' +
+          '<h2 class="bc-title" id="bcTitle">Lễ tân Banla</h2>' +
+          '<p class="bc-sub">Hỗ trợ lưu trú &amp; đặt phòng</p>' +
         '</div>' +
         '<button type="button" class="bc-close" aria-label="Đóng trợ lý">&times;</button>' +
       '</header>' +
@@ -72,10 +73,10 @@
       '<div class="bc-turnstile" aria-live="polite"></div>' +
       '<form class="bc-form">' +
         '<label class="bc-sr" for="bcInput">Câu hỏi của quý khách</label>' +
-        '<textarea id="bcInput" class="bc-input" rows="1" maxlength="800" placeholder="Hỏi về phòng, giá, The Roof, đường đi..."></textarea>' +
+        '<textarea id="bcInput" class="bc-input" rows="1" maxlength="800" placeholder="Quý khách cần hỗ trợ điều gì?"></textarea>' +
         '<button type="submit" class="bc-send" aria-label="Gửi câu hỏi">➤</button>' +
       '</form>' +
-      '<p class="bc-note">AI có thể nhầm lẫn. Xác nhận giá & phòng trống qua Hotline ' + HOTLINE + '. Không gửi mã PIN, OTP hay số thẻ tại đây.</p>' +
+      '<p class="bc-note">Ưu đãi, giá và tình trạng phòng có thể thay đổi; vui lòng xác nhận với nhân viên Banla trước khi đặt. Không gửi mã PIN, OTP hoặc thông tin thẻ tại đây.</p>' +
     '</section>';
   document.body.appendChild(root);
 
@@ -183,13 +184,12 @@
 
   function renderChips() {
     chips.innerHTML = '';
-    if (history.length > 1) return;
-    SUGGESTIONS.forEach(function (q) {
+    SUGGESTIONS.forEach(function (suggestion) {
       var b = document.createElement('button');
       b.type = 'button';
       b.className = 'bc-chip';
-      b.textContent = q;
-      b.addEventListener('click', function () { ask(q); });
+      b.textContent = suggestion.label;
+      b.addEventListener('click', function () { ask(suggestion.prompt); });
       chips.appendChild(b);
     });
   }
@@ -234,7 +234,7 @@
   });
 
   function fallbackText() {
-    return 'Quý khách vui lòng gọi **Hotline ' + HOTLINE + '** hoặc nhắn Fanpage Banla 24/7: ' + FANPAGE;
+    return 'Quý khách vui lòng gọi **Hotline ' + HOTLINE + '** hoặc nhắn Fanpage Banla: ' + FANPAGE;
   }
 
   function ask(raw) {
@@ -247,7 +247,7 @@
       return;
     }
     if (!readConfig('BANLA_TURNSTILE_SITE_KEY')) {
-      addBubble('model', 'Trợ lý AI đang chờ cấu hình xác minh bảo mật. Quý khách vui lòng gọi Hotline ' + HOTLINE + ' để được hỗ trợ.', true);
+      addBubble('model', 'Kênh hỗ trợ trực tuyến hiện chưa sẵn sàng. Quý khách vui lòng gọi Hotline ' + HOTLINE + ' để được hỗ trợ.', true);
       return;
     }
 
@@ -255,8 +255,6 @@
     requestTimes.push(now);
     input.value = '';
     input.style.height = 'auto';
-    chips.innerHTML = '';
-
     var url = endpoint();
     if (!url) {
       addBubble('model', fallbackText(), true);
@@ -293,17 +291,17 @@
         });
       })
       .then(function (res) {
-        if (!res) throw new Error('Không nhận được phản hồi từ máy chủ AI.');
+        if (!res) throw new Error('Chưa nhận được phản hồi từ kênh hỗ trợ trực tuyến.');
         return res.json().catch(function () { return {}; }).then(function (data) {
           if (!res.ok) {
-            if (res.status === 404) throw new Error('Không tìm thấy Edge Function AI (404). Function chưa được triển khai hoặc địa chỉ cấu hình chưa đúng.');
-            if (res.status === 401) throw new Error('Dịch vụ AI chưa được cấu hình xác thực đúng.');
-            if (res.status === 403 && data.code === 'captcha_required') throw new Error('Xác minh bảo mật không được bật trên máy chủ. Hãy cấu hình TURNSTILE_SECRET_KEY trong Supabase.');
+            if (res.status === 404) throw new Error('Kênh hỗ trợ trực tuyến hiện chưa sẵn sàng.');
+            if (res.status === 401) throw new Error('Kênh hỗ trợ trực tuyến hiện không khả dụng.');
+            if (res.status === 403 && data.code === 'captcha_required') throw new Error('Xác minh bảo mật hiện chưa khả dụng. Quý khách vui lòng thử lại sau.');
             if (res.status === 403 && data.code === 'captcha_failed') throw new Error('Xác minh bảo mật thất bại. Vui lòng thử lại.');
-            if (res.status === 503 && data.code === 'captcha_required') throw new Error('Xác minh bảo mật chưa được cấu hình trên Supabase.');
-            if (res.status === 403) throw new Error('Tên miền website chưa được cấp quyền gọi trợ lý AI (CORS).');
+            if (res.status === 503 && data.code === 'captcha_required') throw new Error('Xác minh bảo mật hiện chưa khả dụng. Quý khách vui lòng thử lại sau.');
+            if (res.status === 403) throw new Error('Kênh hỗ trợ trực tuyến hiện không khả dụng.');
             if (res.status === 429 && data.error) throw new Error(data.error);
-            throw new Error(data.error || 'Dịch vụ AI tạm thời gián đoạn (HTTP ' + res.status + ').');
+            throw new Error(data.error || 'Kênh hỗ trợ trực tuyến hiện chưa khả dụng.');
           }
           return data;
         });
@@ -325,7 +323,7 @@
           ? 'Phản hồi hơi lâu.'
           : (err && err.message && !/failed to fetch|networkerror|load failed/i.test(err.message)
             ? err.message
-            : 'Không kết nối được với máy chủ AI. Có thể do CORS, mạng hoặc function chưa được triển khai.');
+            : 'Chưa thể kết nối với kênh hỗ trợ trực tuyến. Quý khách vui lòng thử lại sau.');
         addBubble('model', msg + ' ' + fallbackText(), true);
       })
       .then(function () {

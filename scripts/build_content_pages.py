@@ -421,7 +421,8 @@ def build():
         <div class="contact-info">
           <p><strong>Địa chỉ</strong><br>47 Nguyễn Đình Chiểu, Phường 9, Đà Lạt</p>
           <p><strong>Điện thoại</strong><br><a href="tel:02633633777">02633.633.777</a></p>
-          <p><strong>Email</strong><br><a href="mailto:sales@banlaboutiquehotel.com">sales@banlaboutiquehotel.com</a></p>
+          <p><strong>Email</strong><br><a href="mailto:Contact@banlaboutiquedalat.com">Contact@banlaboutiquedalat.com</a></p>
+          <p><strong>Facebook</strong><br><a href="https://www.facebook.com/Banlaboutiquedalat/" target="_blank" rel="noopener">BanlaBoutiqueHotel</a></p>
           <p><strong>Instagram</strong><br><a href="https://instagram.com/banla.boutiquehotel" target="_blank" rel="noopener">@banla.boutiquehotel</a></p>
           <p><strong>TikTok</strong><br><a href="https://www.tiktok.com/@banlaboutiquehotel" target="_blank" rel="noopener">@banlaboutiquehotel</a></p>
           <p>Điểm đến khác trên Banla: <a href="../nha-trang/">Nha Trang</a>, <a href="../ho-chi-minh/">TP. Hồ Chí Minh</a>. Hai trang đó chưa có khách sạn đã xác minh.</p>
@@ -448,8 +449,8 @@ def build():
       <h2>Cam kết</h2>
       <ul>
         <li>Không bịa giá đêm khi khách sạn chưa công bố.</li>
-        <li>Giữ nguyên các dữ liệu chưa khớp cho đến khi có xác nhận: email hiển thị và email trong dữ liệu cấu trúc, số phòng trên câu chuyện và trong schema, danh sách phòng trong form, hạng sao chỉ nằm trong schema.</li>
-        <li>Hotline công bố: 02633.633.777. Email hiển thị: sales@banlaboutiquehotel.com.</li>
+        <li>Email liên hệ chính thức: Contact@banlaboutiquedalat.com.</li>
+        <li>Các dữ liệu khác chưa khớp vẫn chờ xác nhận: số phòng trên câu chuyện và trong schema, danh sách phòng trong form, hạng sao chỉ nằm trong schema.</li>
       </ul>
       <h2>Đội ngũ</h2>
       <p class="placeholder-note">Thông tin nhân sự chưa được công bố — mục đội ngũ là chỗ dành sẵn, chưa có tên người thật.</p>
@@ -466,7 +467,8 @@ def build():
           <h2>Thông tin liên hệ</h2>
           <p><strong>Địa chỉ</strong><br>47 Nguyễn Đình Chiểu, Phường 9, Đà Lạt, Lâm Đồng</p>
           <p><strong>Điện thoại</strong><br><a href="tel:02633633777">02633.633.777</a></p>
-          <p><strong>Email</strong><br><a href="mailto:sales@banlaboutiquehotel.com">sales@banlaboutiquehotel.com</a></p>
+          <p><strong>Email</strong><br><a href="mailto:Contact@banlaboutiquedalat.com">Contact@banlaboutiquedalat.com</a></p>
+          <p><strong>Facebook</strong><br><a href="https://www.facebook.com/Banlaboutiquedalat/" target="_blank" rel="noopener">BanlaBoutiqueHotel</a></p>
           <p><strong>Instagram</strong><br><a href="https://instagram.com/banla.boutiquehotel" target="_blank" rel="noopener">@banla.boutiquehotel</a></p>
           <p><strong>TikTok</strong><br><a href="https://www.tiktok.com/@banlaboutiquehotel" target="_blank" rel="noopener">@banlaboutiquehotel</a></p>
           <p>The Roof: Café 8:00–16:00 · Bar 16:00–00:00.</p>
@@ -483,7 +485,7 @@ def build():
       </div>
     </div></section></main>"""
     write_page("lien-he/index.html", "Liên hệ & hỗ trợ đặt phòng | Banla",
-               "Cần hỗ trợ đặt phòng? Gọi 02633.633.777, email sales@banlaboutiquehotel.com hoặc gửi form. Banla phản hồi để xác nhận.",
+               "Cần hỗ trợ đặt phòng? Gọi 02633.633.777, email Contact@banlaboutiquedalat.com hoặc gửi form. Banla phản hồi để xác nhận.",
                f"{ORIGIN}/lien-he/", contact, p, "")
 
     blog = """<main id="main">""" + hero(p, [("Trang chủ", p+"index.html"), ("Cẩm nang", None)], "Cẩm nang du lịch", "Kinh nghiệm đi Đà Lạt và cách gửi yêu cầu đặt phòng khi giá chưa được niêm yết.") + f"""
@@ -570,7 +572,7 @@ def build():
     <section class="section"><div class="container prose">
       <h2>Đặt phòng</h2>
       <p>Form là yêu cầu, chưa phải xác nhận giữ phòng. Banla liên hệ qua số điện thoại hoặc email bạn để lại. Check-in 14:00, check-out 12:00 tại 47 Nguyễn Đình Chiểu, Đà Lạt.</p>
-      <p>Trên bản GitHub Pages, máy chủ đặt phòng không chạy. Trang sẽ báo bạn gọi 02633.633.777 hoặc email sales@banlaboutiquehotel.com.</p>
+      <p>Trên bản GitHub Pages, máy chủ đặt phòng không chạy. Trang sẽ báo bạn gọi 02633.633.777 hoặc email Contact@banlaboutiquedalat.com.</p>
       <h2>Thanh toán</h2>
       <p>Dữ liệu khách sạn ghi nhận tiền mặt, thẻ và chuyển khoản, đơn vị VND. Trang không thu tiền trực tuyến. Số tiền và thời điểm thanh toán do Banla xác nhận riêng — chưa có biểu phí trên website.</p>
       <h2>Hủy và hoàn tiền</h2>

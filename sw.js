@@ -1,4 +1,4 @@
-const CACHE = 'banla-v3';
+const CACHE = 'banla-v4';
 const ASSETS = [
   '/',
   '/index.html',
