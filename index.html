@@ -369,7 +369,7 @@
     </section>
 
     <!-- 4C. KHÔNG GIAN THỰC TẾ (#gallery) -->
-    <section id="gallery" class="section">
+    <section id="gallery" class="section section-mist">
       <div class="container">
         <div class="section-header center reveal">
           <p class="section-kicker">Không gian thực tế</p>
@@ -394,7 +394,7 @@
     </section>
 
     <!-- 4D. VỊ TRÍ THUẬN TIỆN (#location) -->
-    <section id="location" class="section section-mist">
+    <section id="location" class="section">
       <div class="container">
         <div class="section-header reveal">
           <p class="section-kicker">Vị trí thuận tiện</p>
@@ -412,7 +412,7 @@
     </section>
 
     <!-- 4E. ƯU ĐÃI ĐẶC QUYỀN (#deals) -->
-    <section id="deals" class="section">
+    <section id="deals" class="section section-mist">
       <div class="container">
         <div class="section-header center reveal">
           <p class="section-kicker">Ưu đãi trực tiếp</p>
@@ -451,7 +451,7 @@
     </section>
 
     <!-- 4F. TÌM PHÒNG & ĐIỂM ĐẾN LIÊN KẾT (#tim-phong & #destinations) -->
-    <section id="tim-phong" class="section section-mist">
+    <section id="tim-phong" class="section">
       <div class="container">
         <div class="section-header reveal">
           <p class="section-kicker">Tìm kiếm nhanh</p>
@@ -479,6 +479,45 @@
           </label>
           <button class="btn btn-primary" type="submit">Tìm phòng ngay</button>
         </form>
+      </div>
+    </section>
+
+    <!-- 4F-2. KHÁCH SẠN NỔI BẬT (#featured — khôi phục) -->
+    <section id="featured" class="section section-mist">
+      <div class="container">
+        <div class="section-header reveal">
+          <p class="section-kicker">Lựa chọn</p>
+          <h2>Khách sạn nổi bật</h2>
+          <p class="section-lead">Banla Boutique Hotel là khách sạn đã xác minh. Các thẻ khác là bố cục minh họa.</p>
+        </div>
+        <div class="card-grid">
+          <article class="hotel-card reveal">
+            <a href="khach-san/banla-boutique-hotel/"><img src="images/elite.webp" width="1500" height="2000" alt="Banla Boutique Hotel – Élite Room tại Đà Lạt" loading="lazy" decoding="async"></a>
+            <div class="hotel-card-body">
+              <p class="card-kicker">Đà Lạt · Đã xác minh</p>
+              <h3>Banla Boutique Hotel</h3>
+              <p>47 Nguyễn Đình Chiểu, Phường 9. The Roof và phòng gác mái. Ngoài lạnh. Trong ấm.</p>
+              <p class="card-price">Giá từ: <strong>950.000 ₫ – 1.850.000 ₫ / đêm</strong></p>
+              <div class="card-actions"><a class="btn btn-primary" href="khach-san/banla-boutique-hotel/">Xem khách sạn</a></div>
+            </div>
+          </article>
+          <article class="hotel-card is-placeholder reveal">
+            <div class="hotel-card-body">
+              <p class="placeholder-note">Nội dung minh họa — chưa có trong dữ liệu đã xác minh.</p>
+              <h3>Khách sạn minh họa Nha Trang</h3>
+              <p>Chưa có giá hay hạng phòng để đặt.</p>
+              <a class="btn btn-secondary" href="khach-san/nha-trang/">Xem điểm đến</a>
+            </div>
+          </article>
+          <article class="hotel-card is-placeholder reveal">
+            <div class="hotel-card-body">
+              <p class="placeholder-note">Nội dung minh họa — chưa có trong dữ liệu đã xác minh.</p>
+              <h3>Khách sạn minh họa Quận 1</h3>
+              <p>Chưa gắn với một cơ sở lưu trú thật.</p>
+              <a class="btn btn-secondary" href="khach-san/ho-chi-minh/">Xem điểm đến</a>
+            </div>
+          </article>
+        </div>
       </div>
     </section>
 
@@ -533,8 +572,36 @@
       </div>
     </section>
 
+    <!-- 4G. CẨM NANG DU LỊCH (#blog-home — khôi phục) -->
+    <section id="blog-home" class="section section-mist">
+      <div class="container">
+        <div class="section-header reveal">
+          <p class="section-kicker">Đọc thêm</p>
+          <h2>Cẩm nang du lịch</h2>
+        </div>
+        <div class="post-grid">
+          <article class="post-card reveal">
+            <a href="blog/kinh-nghiem-du-lich-da-lat-theo-mua/"><img src="images/elite.webp" width="1500" height="2000" alt="Sương và phố núi Đà Lạt nhìn từ Banla Boutique Hotel" loading="lazy" decoding="async"></a>
+            <div class="post-copy">
+              <h3>Kinh nghiệm du lịch Đà Lạt theo mùa</h3>
+              <p>Tháng nào trời trong, tháng nào nên hỏi phòng sớm.</p>
+              <a href="blog/kinh-nghiem-du-lich-da-lat-theo-mua/">Đọc kinh nghiệm du lịch Đà Lạt theo mùa</a>
+            </div>
+          </article>
+          <article class="post-card reveal">
+            <a href="blog/meo-dat-phong-khach-san-gia-tot/"><img src="images/suite.webp" width="1500" height="2000" alt="Góc phòng Original Suite tại Banla Boutique Hotel, Đà Lạt" loading="lazy" decoding="async"></a>
+            <div class="post-copy">
+              <h3>Mẹo đặt phòng khách sạn giá tốt</h3>
+              <p>Ngày thường, cuối tuần và câu hỏi trước khi chuyển khoản.</p>
+              <a href="blog/meo-dat-phong-khach-san-gia-tot/">Đọc mẹo đặt phòng khách sạn giá tốt</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <!-- 5. ĐÁNH GIÁ THỰC TẾ (#reviews — KHỐI NÂNG CẤP CARD GRID & AVATAR) -->
-    <section id="reviews" class="section section-mist">
+    <section id="reviews" class="section">
       <div class="container">
         <div class="section-header center reveal">
           <p class="section-kicker">Đánh giá thực tế</p>
@@ -597,6 +664,22 @@
             </div>
             <p class="review-quote">“Beautiful boutique hotel with great staff! The decor is very tasteful and the hotel smells amazing from the lobby to the room.”</p>
           </blockquote>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5B. VÌ SAO CHỌN BANLA (#why — khôi phục, cập nhật VietQR) -->
+    <section id="why" class="section section-mist">
+      <div class="container">
+        <div class="section-header reveal">
+          <p class="section-kicker">Banla</p>
+          <h2>Vì sao chọn Banla</h2>
+        </div>
+        <div class="features-list">
+          <article class="feature reveal"><div class="feature-index">01</div><h3>Đặt trực tiếp, thanh toán VietQR</h3><p>Đặt phòng ngay trên website: cọc 50% hoặc thanh toán 100% giảm 10% qua VietQR, nhận Phiếu xác nhận có dấu đỏ.</p></article>
+          <article class="feature reveal"><div class="feature-index">02</div><h3>Phòng có mô tả thật</h3><p>Bảy hạng phòng: diện tích, sức chứa và ảnh phòng.</p></article>
+          <article class="feature reveal"><div class="feature-index">03</div><h3>Hỗ trợ 24/7</h3><p>Hotline 0296.9996.999 - 0352554863. Hỗ trợ Facebook Fanpage 24/7.</p></article>
+          <article class="feature reveal"><div class="feature-index">04</div><h3>Đọc trước khi gửi</h3><p><a href="faq/">Câu hỏi thường gặp</a> và <a href="chinh-sach/">chính sách</a>.</p></article>
         </div>
       </div>
     </section>
