@@ -201,7 +201,7 @@ async function saveBookingToSupabase(bookingObj) {
 }
 
 // 2. BOOKING FORMS — Instant Booking + VietQR Payment Modal + Red Stamp Voucher
-document.querySelectorAll('form.booking-form').forEach((form) => {
+document.querySelectorAll('form.booking-form:not([data-contact-form])').forEach((form) => {
   // Set default dates if empty
   const checkinInput = form.querySelector('[name="checkin"]');
   const checkoutInput = form.querySelector('[name="checkout"]');

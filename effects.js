@@ -363,7 +363,7 @@
     /* Build Skillry.dev Floating Control Dock */
     var dock = document.createElement('div');
     dock.className = 'fx-skillry-dock';
-    dock.setAttribute('aria-label', 'Bộ điều khiển cảnh nền & hiệu ứng Nexus-Omni');
+    dock.setAttribute('aria-label', 'Chọn cảnh nền');
 
     var pillsWrap = document.createElement('div');
     pillsWrap.className = 'fx-scene-pills';
@@ -422,25 +422,7 @@
       buttons.push(btn);
     });
 
-    /* Interactive Nexus-Omni Intensity Range Slider (Skillry.dev UI/UX pattern) */
-    var omniCtrl = document.createElement('div');
-    omniCtrl.className = 'fx-omni-control';
-    omniCtrl.innerHTML =
-      '<span class="fx-omni-title">Nexus · Omni</span>' +
-      '<input type="range" class="fx-omni-slider" min="0" max="150" value="100" aria-label="Điều chỉnh cường độ nền Canvas Nexus-Omni">' +
-      '<span class="fx-omni-val">100%</span>';
-
-    var rangeInput = omniCtrl.querySelector('.fx-omni-slider');
-    var rangeVal = omniCtrl.querySelector('.fx-omni-val');
-
-    rangeInput.addEventListener('input', function () {
-      var val = parseInt(rangeInput.value, 10) || 0;
-      omniState.intensity = val / 100;
-      rangeVal.textContent = val + '%';
-    });
-
     dock.appendChild(pillsWrap);
-    dock.appendChild(omniCtrl);
     hero.appendChild(dock);
 
     startAutoCycle();
