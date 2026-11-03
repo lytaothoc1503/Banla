@@ -176,7 +176,7 @@
     var typing = addBubble('model', '…');
     typing.classList.add('bc-typing');
 
-    var key = readConfig('BANLA_SUPABASE_ANON_KEY');
+    var key = readConfig('BANLA_GEMINI_KEY') || readConfig('BANLA_SUPABASE_ANON_KEY');
     var headers = { 'Content-Type': 'application/json' };
     if (key) { headers.apikey = key; headers.Authorization = 'Bearer ' + key; }
 
@@ -191,7 +191,7 @@
     })
       .then(function (res) {
         return res.json().catch(function () { return {}; }).then(function (data) {
-          if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+          if (!res.ok) throw new Error(res.status === 429 && data.error ? data.error : 'Trợ lý AI tạm thời chưa sẵn sàng.');
           return data;
         });
       })
@@ -206,7 +206,7 @@
         typing.remove();
         history.pop();
         saveHistory();
-        var msg = err && err.name === 'AbortError' ? 'Phản hồi hơi lâu.' : (err && err.message ? err.message : 'Không kết nối được.');
+        var msg = err && err.name === 'AbortError' ? 'Phản hồi hơi lâu.' : (err && err.message && err.message.indexOf('Failed to fetch') === -1 ? err.message : 'Trợ lý AI tạm thời chưa sẵn sàng.');
         addBubble('model', msg + ' ' + fallbackText(), true);
       })
       .then(function () {
