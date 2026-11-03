@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Banla AI Studio — Tạo nội dung & ảnh bằng Gemini (Nội bộ)</title>
+  <link rel="icon" href="favicon.ico" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --ink:#1A2428; --ember:#B8612E; --brass:#D4A574; --fog:#F6F1EA; --muted:#6B6A65; --line:rgba(26,36,40,.12); }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:'Figtree',sans-serif; background:linear-gradient(160deg,#F6F1EA,#EDE6DA); color:var(--ink); min-height:100vh; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 40px 20px 60px; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:24px; }
+    h1 { margin:0; font-size:1.6rem; letter-spacing:.02em; }
+    h1 span { color:var(--ember); }
+    .kicker { margin:4px 0 0; color:var(--muted); font-size:.92rem; }
+    a.back { color:var(--ember); font-weight:600; text-decoration:none; }
+    .card { background:rgba(255,255,255,.86); border:1px solid var(--line); border-radius:16px; padding:22px; margin-bottom:18px; box-shadow:0 12px 30px rgba(26,36,40,.06); }
+    label { display:block; font-weight:600; font-size:.88rem; margin-bottom:6px; }
+    input, select, textarea { width:100%; font:inherit; padding:11px 13px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--ink); }
+    input:focus, select:focus, textarea:focus { outline:none; border-color:var(--ember); }
+    textarea { min-height:120px; resize:vertical; }
+    .row { display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-bottom:14px; }
+    .tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+    .tab { border:1px solid var(--line); background:#fff; padding:9px 14px; border-radius:999px; font:600 .86rem 'Figtree',sans-serif; cursor:pointer; color:var(--ink); }
+    .tab.active { background:var(--ember); color:#fff; border-color:var(--ember); }
+    .btn { border:0; background:var(--ember); color:#fff; padding:12px 22px; border-radius:10px; font:600 .95rem 'Figtree',sans-serif; cursor:pointer; }
+    .btn:disabled { opacity:.55; cursor:wait; }
+    .btn-ghost { background:transparent; color:var(--ember); border:1px solid var(--ember); }
+    .actions { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; align-items:center; }
+    .status { font-size:.86rem; color:var(--muted); }
+    .status.err { color:#B42318; }
+    pre.out { white-space:pre-wrap; word-wrap:break-word; background:#FFFDF9; border:1px dashed rgba(184,97,46,.35); border-radius:12px; padding:16px; min-height:80px; font:400 .92rem/1.6 'Figtree',sans-serif; margin:0; }
+    .gallery { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; margin-top:12px; }
+    .gallery figure { margin:0; background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+    .gallery img { width:100%; display:block; }
+    .gallery figcaption { padding:8px 10px; font-size:.82rem; }
+    .gallery a { color:var(--ember); font-weight:600; }
+    .note { font-size:.8rem; color:var(--muted); margin:10px 0 0; }
+    [hidden] { display:none !important; }
+    @media (max-width:640px) { .row { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <div>
+        <h1>Banla <span>AI Studio</span></h1>
+        <p class="kicker">Công cụ nội bộ: tạo bài Cẩm nang, mô tả phòng, caption và ảnh marketing bằng Gemini (Google AI Studio).</p>
+      </div>
+      <a class="back" href="index.html">← Về trang chủ</a>
+    </header>
+
+    <section class="card" aria-labelledby="cfgTitle">
+      <h2 id="cfgTitle" style="margin-top:0;font-size:1.1rem;">Kết nối</h2>
+      <div class="row">
+        <div>
+          <label for="sbUrl">Supabase URL</label>
+          <input id="sbUrl" type="url" placeholder="https://xxxx.supabase.co" autocomplete="off">
+        </div>
+        <div>
+          <label for="sbKey">Supabase publishable / anon key</label>
+          <input id="sbKey" type="text" placeholder="sb_publishable_... hoặc eyJ..." autocomplete="off">
+        </div>
+      </div>
+      <label for="adminToken">Mã quản trị (BANLA_ADMIN_TOKEN)</label>
+      <input id="adminToken" type="password" placeholder="Chỉ lưu trong phiên trình duyệt này" autocomplete="off">
+      <p class="note">API key Gemini KHÔNG nhập ở đây — key nằm an toàn trong Supabase Secrets. Mã quản trị chỉ lưu ở sessionStorage và tự xoá khi đóng tab.</p>
+    </section>
+
+    <section class="card" aria-labelledby="genTitle">
+      <h2 id="genTitle" style="margin-top:0;font-size:1.1rem;">Tạo nội dung</h2>
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab active" data-task="blog" role="tab" aria-selected="true">Bài Cẩm nang</button>
+        <button type="button" class="tab" data-task="room" role="tab" aria-selected="false">Mô tả phòng</button>
+        <button type="button" class="tab" data-task="social" role="tab" aria-selected="false">Caption mạng xã hội</button>
+        <button type="button" class="tab" data-task="image" role="tab" aria-selected="false">Ảnh marketing</button>
+      </div>
+      <label for="prompt">Yêu cầu</label>
+      <textarea id="prompt" maxlength="4000"></textarea>
+      <div class="actions">
+        <button type="button" class="btn" id="runBtn">Tạo bằng Gemini</button>
+        <button type="button" class="btn btn-ghost" id="copyBtn" hidden>Sao chép kết quả</button>
+        <span class="status" id="status" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="outTitle">
+      <h2 id="outTitle" style="margin-top:0;font-size:1.1rem;">Kết quả</h2>
+      <pre class="out" id="out">Kết quả sẽ hiển thị tại đây.</pre>
+      <div class="gallery" id="gallery"></div>
+      <p class="note">Luôn kiểm tra lại giá, chính sách và hình ảnh do AI tạo trước khi đăng. Ảnh AI chỉ dùng minh hoạ, không thay thế ảnh thật của khách sạn.</p>
+    </section>
+  </main>
+
+  <script>
+  (function () {
+    'use strict';
+    var PRESETS = {
+      blog: 'Viết bài "Lịch trình 3 ngày 2 đêm Đà Lạt mùa sương" cho cặp đôi, gợi ý lưu trú tại Banla và hoàng hôn ở The Roof.',
+      room: 'Viết mô tả cho hạng phòng Élite Room (gác mái).',
+      social: 'Caption giới thiệu Cocktail & Wine Bar tại The Roof by Banla vào tối cuối tuần.',
+      image: 'Ảnh ngang 16:9: ly vang đỏ trên bàn gỗ tầng thượng, nhìn ra rừng thông Đà Lạt lúc hoàng hôn mờ sương, ánh đèn vàng ấm.'
+    };
+    var $ = function (id) { return document.getElementById(id); };
+    var task = 'blog';
+    var lastText = '';
+
+    var sbUrl = $('sbUrl'), sbKey = $('sbKey'), adminToken = $('adminToken');
+    try {
+      sbUrl.value = window.BANLA_SUPABASE_URL || localStorage.getItem('BANLA_SUPABASE_URL') || '';
+      sbKey.value = window.BANLA_SUPABASE_ANON_KEY || localStorage.getItem('BANLA_SUPABASE_ANON_KEY') || '';
+      adminToken.value = sessionStorage.getItem('BANLA_ADMIN_TOKEN') || '';
+    } catch (e) {}
+    $('prompt').value = PRESETS.blog;
+
+    sbUrl.addEventListener('change', function () { try { localStorage.setItem('BANLA_SUPABASE_URL', sbUrl.value.trim()); } catch (e) {} });
+    sbKey.addEventListener('change', function () { try { localStorage.setItem('BANLA_SUPABASE_ANON_KEY', sbKey.value.trim()); } catch (e) {} });
+    adminToken.addEventListener('change', function () { try { sessionStorage.setItem('BANLA_ADMIN_TOKEN', adminToken.value); } catch (e) {} });
+
+    Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (btn) {
+      btn.addEventListener('click', function () {
+        task = btn.getAttribute('data-task');
+        Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (b) {
+          var on = b === btn;
+          b.classList.toggle('active', on);
+          b.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        $('prompt').value = PRESETS[task];
+      });
+    });
+
+    function setStatus(msg, isErr) {
+      $('status').textContent = msg;
+      $('status').className = 'status' + (isErr ? ' err' : '');
+    }
+
+    $('copyBtn').addEventListener('click', function () {
+      if (!lastText || !navigator.clipboard) return;
+      navigator.clipboard.writeText(lastText).then(function () { setStatus('Đã sao chép.'); });
+    });
+
+    $('runBtn').addEventListener('click', function () {
+      var url = sbUrl.value.trim().replace(/\/+$/, '');
+      var key = sbKey.value.trim();
+      var token = adminToken.value;
+      var prompt = $('prompt').value.trim();
+      if (!url || !key || !token) { setStatus('Vui lòng nhập Supabase URL, publishable key và mã quản trị.', true); return; }
+      if (!prompt) { setStatus('Vui lòng nhập yêu cầu.', true); return; }
+
+      var body = task === 'image' ? { mode: 'image', prompt: prompt } : { mode: 'content', task: task, prompt: prompt };
+      $('runBtn').disabled = true;
+      $('copyBtn').hidden = true;
+      $('gallery').innerHTML = '';
+      $('out').textContent = 'Gemini đang xử lý…';
+      setStatus('');
+
+      fetch(url + '/functions/v1/banla-gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: key, Authorization: 'Bearer ' + key, 'x-banla-admin': token },
+        body: JSON.stringify(body)
+      })
+        .then(function (res) {
+          return res.json().catch(function () { return {}; }).then(function (data) {
+            if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+            return data;
+          });
+        })
+        .then(function (data) {
+          lastText = String(data.text || '').trim();
+          $('out').textContent = lastText || (task === 'image' ? 'Đã tạo ảnh bên dưới.' : 'Không có nội dung trả về.');
+          $('copyBtn').hidden = !lastText;
+          (data.images || []).forEach(function (img, i) {
+            if (!/^image\/(png|jpeg|webp)$/.test(img.mimeType || '')) return;
+            var src = 'data:' + img.mimeType + ';base64,' + img.data;
+            var fig = document.createElement('figure');
+            var el = document.createElement('img');
+            el.src = src;
+            el.alt = 'Ảnh minh hoạ Banla tạo bằng Gemini ' + (i + 1);
+            var cap = document.createElement('figcaption');
+            var a = document.createElement('a');
+            a.href = src;
+            a.download = 'banla-gemini-' + Date.now() + '-' + (i + 1) + '.' + img.mimeType.split('/')[1];
+            a.textContent = 'Tải ảnh xuống';
+            cap.appendChild(a);
+            fig.appendChild(el);
+            fig.appendChild(cap);
+            $('gallery').appendChild(fig);
+          });
+          setStatus('Hoàn tất.');
+        })
+        .catch(function (err) {
+          $('out').textContent = 'Không tạo được nội dung.';
+          setStatus(err.message || 'Lỗi kết nối.', true);
+        })
+        .then(function () { $('runBtn').disabled = false; });
+    });
+  })();
+  </script>
+</body>
+</html>
