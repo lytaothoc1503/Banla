@@ -63,7 +63,7 @@
         '<div class="bc-avatar" aria-hidden="true">B</div>' +
         '<div class="bc-head-copy">' +
           '<h2 class="bc-title" id="bcTitle">Bàn Là · Lễ tân AI</h2>' +
-          '<p class="bc-sub">Gemini · Google AI Studio · trả lời 24/7</p>' +
+          '<p class="bc-sub">Banla Boutique Hotel · Hỗ trợ 24/7</p>' +
         '</div>' +
         '<button type="button" class="bc-close" aria-label="Đóng trợ lý">&times;</button>' +
       '</header>' +
