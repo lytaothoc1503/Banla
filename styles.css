@@ -1686,3 +1686,128 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ============================================================================
+   UPGRADED REVIEW CARDS (#reviews) — Avatar + Rating + Quote
+   ============================================================================ */
+.review-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.review-avatar {
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(184, 97, 46, 0.4);
+  background: var(--mist);
+  box-shadow: 0 4px 12px rgba(26, 36, 40, 0.08);
+  flex-shrink: 0;
+}
+
+.review-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.review-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.review-card .review-author {
+  font-style: normal;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.review-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(184, 97, 46, 0.12);
+  color: var(--ember);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.review-sub {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.review-card .review-quote {
+  margin-bottom: 0;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+
+
+/* ============================================================================
+   EXPANDED GALLERY BENTO GRID (.g7 - .g12 & .gallery-badge)
+   ============================================================================ */
+.g7 { grid-column: span 5; grid-row: span 2; }
+.g8 { grid-column: span 4; grid-row: span 2; }
+.g9 { grid-column: span 3; grid-row: span 2; }
+.g10 { grid-column: span 4; grid-row: span 2; }
+.g11 { grid-column: span 5; grid-row: span 2; }
+.g12 { grid-column: span 3; grid-row: span 2; }
+
+.gallery-badge {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 2;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(20, 28, 32, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.95);
+  font-family: var(--sans);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  pointer-events: none;
+  transition: background 0.3s, transform 0.3s;
+}
+
+.gallery-item:hover .gallery-badge {
+  background: rgba(184, 97, 46, 0.88);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 960px) {
+  .g7, .g8, .g9, .g10, .g11, .g12 {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
+  .g7, .g11 {
+    grid-column: span 2;
+  }
+}
