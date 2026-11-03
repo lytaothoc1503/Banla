@@ -8,7 +8,7 @@
   'use strict';
 
   var HOTLINE = '0296.9996.999';
-  var FANPAGE = 'https://www.facebook.com/profile.php?id=61550577645853';
+  var FANPAGE = 'https://www.facebook.com/Banlaboutiquedalat/';
   var STORE_KEY = 'banla_concierge_history_v1';
   var SUGGESTIONS = [
     'Phòng nào hợp cho 2 người lớn và 1 bé?',

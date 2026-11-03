@@ -267,7 +267,7 @@
               <p style="margin:0 0 8px;font-size:12px;color:#F1F5F9;line-height:1.45;">
                 Sau khi chuyển khoản VietQR, quý khách vui lòng <strong>chụp ảnh biên lai giao dịch thành công và gửi qua Facebook Banla</strong>. Đội ngũ Lễ tân sẽ đối soát trên CSDL ngân hàng, duyệt đơn và xuất <strong>Phiếu xác nhận dịch vụ có Dấu Đỏ chính thức cùng Mã PIN Smart-Lock</strong>.
               </p>
-              <a href="https://www.facebook.com/profile.php?id=61550577645853" target="_blank" rel="noopener" class="banla-fb-btn" style="width:100%;padding:9px;font-size:12.5px;box-sizing:border-box;font-weight:700;">
+              <a href="https://www.facebook.com/Banlaboutiquedalat/" target="_blank" rel="noopener" class="banla-fb-btn" style="width:100%;padding:9px;font-size:12.5px;box-sizing:border-box;font-weight:700;">
                 👉 Gửi biên lai qua Facebook để xác nhận chính thức
               </a>
             </div>
