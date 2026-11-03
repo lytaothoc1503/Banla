@@ -653,7 +653,7 @@ a { color: inherit; }
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
-.booking-form input,
+.booking-form input:not([type="radio"]),
 .booking-form select,
 .booking-form textarea {
   width: 100%;
@@ -667,10 +667,79 @@ a { color: inherit; }
   outline: none;
   transition: border-color 0.2s;
 }
-.booking-form input:focus,
+.booking-form input:not([type="radio"]):focus,
 .booking-form select:focus,
 .booking-form textarea:focus {
   border-color: var(--ember);
+}
+.payment-option-selector {
+  margin: 14px 0 10px;
+}
+.payment-option-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--ember-deep);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.payment-option-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.payment-option-card {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+.payment-option-card:has(input[type="radio"]:checked) {
+  border-color: var(--brass);
+  background: rgba(196, 137, 74, 0.1);
+}
+.payment-option-card input[type="radio"] {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  margin: 3px 0 0;
+  padding: 0;
+  accent-color: var(--brass);
+}
+.payment-option-content {
+  min-width: 0;
+}
+.payment-option-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.payment-option-description {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.payment-option-badge {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #16a34a;
+  color: var(--white);
+  font-size: 0.62rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 .booking-form button { width: 100%; margin-top: 8px; }
 .form-note {
@@ -884,6 +953,7 @@ a { color: inherit; }
     border-color: var(--line) !important;
   }
   .features-list { grid-template-columns: 1fr; }
+  .payment-option-grid { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
   .hero-content { padding-bottom: 12vh; padding-top: 20vh; }
   .brand-mark { letter-spacing: 0.14em; font-size: clamp(2.6rem, 14vw, 4rem); }
