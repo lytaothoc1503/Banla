@@ -135,14 +135,20 @@ a { color: inherit; }
 }
 .hero-media {
   position: absolute;
-  inset: 0;
+  inset: -3%;
   z-index: 0;
+  transform: perspective(1200px) translate3d(0, var(--hero-shift-y, 0px), 0) rotateX(var(--hero-rotate-x, 0deg)) rotateY(var(--hero-rotate-y, 0deg)) scale(1.04);
+  transform-style: preserve-3d;
+  transform-origin: center;
+  transition: transform 450ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
 }
 .hero-media img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 40%;
+  object-position: center 34%;
+  display: block;
   transform: scale(1.08);
   will-change: transform;
 }
@@ -897,6 +903,7 @@ a { color: inherit; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hero-media { transform: none; transition: none; }
   .hero-media img { transform: scale(1.05); }
   [data-hero],
   .brand-mark, .hero h1, .hero-sub, .hero-cta, .scroll-cue {

@@ -2,13 +2,12 @@
 (function () {
   'use strict';
 
-  var VIDEO_SRC = 'https://cdn.coverr.co/videos/coverr-the-mountains-in-the-fog-9051/360p.mp4';
-  var KB_IMAGES = ['images/elite.jpg', 'images/highland.jpg', 'images/signature.jpg', 'images/balcony.jpg'];
+  var KB_IMAGES = ['images/banla-exterior.jpg', 'images/banla-lobby.jpg', 'images/banla-reception.jpg', 'images/banla-rooftop.jpg'];
   var reduceMq = window.matchMedia('(prefers-reduced-motion: reduce)');
   var mobileMq = window.matchMedia('(max-width: 768px)');
+  var finePointerMq = window.matchMedia('(hover: hover) and (pointer: fine)');
   var saveData = !!(navigator.connection && navigator.connection.saveData);
   var reduced = function () { return reduceMq.matches; };
-  var allowVideo = function () { return !reduced() && !saveData && !mobileMq.matches; };
 
   var bar = document.createElement('div');
   bar.className = 'fx-progress';
@@ -18,7 +17,6 @@
   var hero = document.querySelector('.hero');
   var heroMedia = document.querySelector('.hero-media');
   var parallaxNodes = document.querySelectorAll('.roof-visual, .gallery-item, .room-slide-visual, .story-aside img');
-  var video = null;
   var kbStarted = false;
   var ticking = false;
 
@@ -34,7 +32,9 @@
     var rect = hero.getBoundingClientRect();
     if (rect.bottom > 0 && rect.top < window.innerHeight) {
       var shift = Math.max(-28, Math.min(28, -rect.top * 0.12));
-      heroMedia.style.transform = 'translate3d(0, ' + shift.toFixed(2) + 'px, 0)';
+      heroMedia.style.setProperty('--hero-shift-y', shift.toFixed(2) + 'px');
+    } else {
+      heroMedia.style.removeProperty('--hero-shift-y');
     }
     var mid = window.innerHeight / 2;
     for (var i = 0; i < parallaxNodes.length; i++) {
@@ -63,7 +63,7 @@
   function mountKenBurns(media) {
     if (kbStarted || reduced() || saveData || mobileMq.matches) return;
     kbStarted = true;
-    var delays = [-5, -13, -21, -29];
+    var delays = [0, 8, 16, 24];
     KB_IMAGES.forEach(function (src, i) {
       var layer = document.createElement('div');
       layer.className = 'fx-kb';
@@ -74,81 +74,30 @@
     });
   }
 
-  function mountVideo(media) {
-    video = document.createElement('video');
-    video.className = 'fx-hero-video';
-    video.muted = true;
-    video.defaultMuted = true;
-    video.loop = true;
-    video.autoplay = false;
-    video.playsInline = true;
-    video.preload = 'none';
-    video.poster = 'images/elite.jpg';
-    video.setAttribute('muted', '');
-    video.setAttribute('playsinline', '');
-    video.setAttribute('aria-hidden', 'true');
-    video.tabIndex = -1;
-    if ('disablePictureInPicture' in video) video.disablePictureInPicture = true;
+  function mountHeroMotion(media) {
+    mountKenBurns(media);
+    if (!hero || !finePointerMq.matches || reduced() || saveData) return;
 
-    var shade = document.createElement('div');
-    shade.className = 'fx-hero-shade';
-    shade.setAttribute('aria-hidden', 'true');
-    media.appendChild(video);
-    media.appendChild(shade);
+    function resetTilt() {
+      media.style.removeProperty('--hero-rotate-x');
+      media.style.removeProperty('--hero-rotate-y');
+    }
 
-    video.addEventListener('error', function () {
-      media.classList.remove('is-video');
-      mountKenBurns(media);
+    hero.addEventListener('pointermove', function (event) {
+      if (event.pointerType === 'touch') return;
+      var rect = hero.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      var x = (event.clientX - rect.left) / rect.width - 0.5;
+      var y = (event.clientY - rect.top) / rect.height - 0.5;
+      media.style.setProperty('--hero-rotate-x', (-y * 2).toFixed(2) + 'deg');
+      media.style.setProperty('--hero-rotate-y', (x * 2).toFixed(2) + 'deg');
     });
+    hero.addEventListener('pointerleave', resetTilt);
+    hero.addEventListener('pointercancel', resetTilt);
 
-    function stopVideo() {
-      media.classList.remove('is-video');
-      video.pause();
-    }
-
-    function startVideo() {
-      if (!allowVideo()) {
-        stopVideo();
-        return;
-      }
-      if (!video.getAttribute('src')) {
-        var arm = function () {
-          if (video.getAttribute('src') || !allowVideo()) return;
-          video.preload = 'none';
-          video.src = VIDEO_SRC;
-          var play = video.play();
-          if (play && typeof play.catch === 'function') {
-            play.catch(function () { media.classList.remove('is-video'); });
-          }
-        };
-        if ('requestIdleCallback' in window) window.requestIdleCallback(arm, { timeout: 1500 });
-        else window.setTimeout(arm, 400);
-      } else {
-        var again = video.play();
-        if (again && typeof again.catch === 'function') {
-          again.catch(function () { media.classList.remove('is-video'); });
-        }
-      }
-    }
-
-    video.addEventListener('playing', function () {
-      if (allowVideo()) media.classList.add('is-video');
-    });
-
-    startVideo();
-    if (typeof mobileMq.addEventListener === 'function') {
-      mobileMq.addEventListener('change', startVideo);
-    }
     if (typeof reduceMq.addEventListener === 'function') {
       reduceMq.addEventListener('change', function () {
-        if (reduced()) {
-          stopVideo();
-          document.documentElement.classList.remove('fx-on');
-          heroMedia.style.transform = '';
-        } else {
-          document.documentElement.classList.add('fx-on');
-          startVideo();
-        }
+        if (reduced()) resetTilt();
       });
     }
   }
@@ -186,7 +135,7 @@
   updateProgress();
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll);
-  if (heroMedia) mountVideo(heroMedia);
+  if (heroMedia) mountHeroMotion(heroMedia);
   mountReveals();
   updateParallax();
 })();

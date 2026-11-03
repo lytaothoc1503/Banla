@@ -1,9 +1,16 @@
-const CACHE = 'banla-v2';
+const CACHE = 'banla-v3';
 const ASSETS = [
   '/',
   '/index.html',
   '/styles.css',
   '/script.js',
+  '/effects.css',
+  '/effects.js',
+  '/images/banla-exterior.jpg',
+  '/images/banla-lobby.jpg',
+  '/images/banla-reception.jpg',
+  '/images/banla-breakfast.jpg',
+  '/images/banla-rooftop.jpg',
   '/rooms.json'
 ];
 
