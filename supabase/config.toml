@@ -1,0 +1,4 @@
+project_id = "hcikbpvzbzottxoitujl"
+
+[functions.banla-gemini]
+verify_jwt = false
