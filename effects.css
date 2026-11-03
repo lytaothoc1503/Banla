@@ -67,6 +67,19 @@ main > .section-mist {
   -webkit-backdrop-filter: blur(2px);
 }
 
+/* Hero parallax + nghiêng 3D nhẹ (biến được effects.js cập nhật) */
+.hero { overflow: hidden; }
+.hero-media {
+  transform:
+    perspective(1400px)
+    translate3d(0, var(--hero-shift-y, 0px), 0)
+    rotateX(var(--hero-rotate-x, 0deg))
+    rotateY(var(--hero-rotate-y, 0deg))
+    scale(1.03);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
 /* ============================================================================
    2. HERO MULTI-SCENE AMBIENT SLIDER & KEN BURNS LAYERS
    ============================================================================ */
@@ -389,6 +402,10 @@ main > .section-mist {
   .fx-room-drag-hint {
     display: none;
   }
+  /* Chừa chỗ cho nút "Hỏi lễ tân AI" ở góc phải dưới */
+  .fx-skillry-dock {
+    right: 80px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -396,4 +413,5 @@ main > .section-mist {
   .fx-kb,
   .fx-nexus-omni-canvas,
   .fx-hero-nexus-canvas { display: none !important; }
+  .hero-media { transform: none !important; transition: none !important; }
 }

@@ -22,6 +22,8 @@ const TEXT_MODEL = Deno.env.get("GEMINI_MODEL") || "gemini-flash-latest";
 const IMAGE_MODEL = Deno.env.get("GEMINI_IMAGE_MODEL") || "gemini-2.5-flash-image";
 
 const DEFAULT_ORIGINS = [
+  "https://banlaboutiquedalat.com",
+  "https://www.banlaboutiquedalat.com",
   "https://lytaothoc1503.github.io",
   "http://localhost:3000",
   "http://127.0.0.1:3000",

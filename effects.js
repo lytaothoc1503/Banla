@@ -324,8 +324,10 @@
 
       if (hero && heroCanvas && hCtx) {
         var r = hero.getBoundingClientRect();
-        if (r.bottom > 0 && r.top < window.innerHeight && mult > 0.05) {
+        if (r.bottom > 0 && r.top < window.innerHeight) {
           hCtx.clearRect(0, 0, hWidth, hHeight);
+        }
+        if (r.bottom > 0 && r.top < window.innerHeight && mult > 0.05) {
           drawNexusOmniMesh(hCtx, heroParticles, hWidth, hHeight, mouse.heroX, mouse.heroY, true, mult);
         }
       }
