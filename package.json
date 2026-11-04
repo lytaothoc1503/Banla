@@ -4,10 +4,10 @@
   "description": "Banla Boutique Hotel Đà Lạt — Website cao cấp",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
+    "start": "node --env-file-if-exists=.env server.js",
+    "dev": "node --env-file-if-exists=.env --watch server.js",
     "test": "node --test test/*.test.js",
-    "backup": "node scripts/backup_db.js",
+    "backup": "node --env-file-if-exists=.env scripts/backup_db.js",
     "cross-review": "node .agents/scripts/cross_review.js"
   },
   "dependencies": {
@@ -19,5 +19,8 @@
   },
   "optionalDependencies": {
     "nodemailer": "^10.2.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.15"
   }
 }

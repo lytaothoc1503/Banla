@@ -10,7 +10,9 @@ const path = require('path');
 
 const router = express.Router();
 
-const WEBHOOK_SECRET = process.env.BANLA_WEBHOOK_SECRET || 'banla_secret_priority_2026';
+// Không có giá trị mặc định: thiếu BANLA_WEBHOOK_SECRET thì webhook bị từ chối (503),
+// tránh việc ai đọc được mã nguồn cũng ký giả được thông báo "đã thanh toán".
+const WEBHOOK_SECRET = (process.env.BANLA_WEBHOOK_SECRET || '').trim();
 const BOOKINGS_FILE = process.env.BOOKINGS_FILE || path.join(__dirname, '..', '..', 'data', 'bookings.json');
 
 // Bộ nhớ đệm lưu kết nối thời gian thực SSE (kèm timer keepalive)
@@ -187,21 +189,22 @@ router.post('/webhook', async (req, res) => {
       payload = JSON.parse(rawBody);
     }
 
-    // Xác thực chữ ký số HMAC-SHA256 (bắt buộc khi có cấu hình WEBHOOK_SECRET)
-    if (WEBHOOK_SECRET) {
-      if (!signature) {
-        return res.status(401).json({ success: false, message: 'Thiếu chữ ký xác thực (x-banla-signature).' });
-      }
-      const hash = crypto.createHmac('sha256', WEBHOOK_SECRET).update(rawBody).digest('hex');
-      if (!safeCompare(signature, hash)) {
-        return res.status(401).json({ success: false, message: 'Chữ ký số không hợp lệ.' });
-      }
+    // Xác thực chữ ký số HMAC-SHA256 — luôn bắt buộc
+    if (!WEBHOOK_SECRET) {
+      return res.status(503).json({ success: false, message: 'Webhook chưa được cấu hình trên máy chủ.' });
+    }
+    if (!signature) {
+      return res.status(401).json({ success: false, message: 'Thiếu chữ ký xác thực (x-banla-signature).' });
+    }
+    const hash = crypto.createHmac('sha256', WEBHOOK_SECRET).update(rawBody).digest('hex');
+    if (!safeCompare(signature, hash)) {
+      return res.status(401).json({ success: false, message: 'Chữ ký số không hợp lệ.' });
     }
 
     const { transactionId, memo, amount, sessionId, bookingId } = payload;
 
-    // Sinh mã PIN Smart-lock theo định dạng chuẩn
-    const smartLockPin = `*${Math.floor(1000 + Math.random() * 9000)}#`;
+    // Mã PIN Smart-Lock 6 chữ số, sinh bằng nguồn ngẫu nhiên an toàn
+    const smartLockPin = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
 
     const eventData = {
       status: 'CONFIRMED',

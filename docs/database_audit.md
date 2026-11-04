@@ -65,3 +65,19 @@ G1–G5 trong `docs/known_logic_gaps.md` (popup đọc localStorage, phiếu tin
 2. Viết lại schema (bản v2) trước khi chạy: anon chỉ được tạo đơn qua một hàm có kiểm tra dữ liệu; mọi thao tác đọc/duyệt đi qua server bằng khóa `service_role` (chỉ để trong `.env`); thêm cột D7, ràng buộc D9, chống trùng phòng D10, idempotency D8; bỏ dữ liệu mẫu.
 3. Cho server dùng Supabase làm kho chính (gộp D5), tính giá phía server (D11).
 4. Sửa G1–G5 dựa trên nền mới, kèm test tấn công cho từng lỗi.
+
+## Cập nhật tiến độ — 2026-11-04 (lần 2)
+
+| Mục | Trạng thái | Ghi chú |
+|---|---|---|
+| D4 mã admin / secret mặc định | ✅ Đã sửa | Bỏ `BANLA8888` khỏi `admin.html` và `server.js`; thiếu `ADMIN_KEY` → API quản trị trả 503; thiếu `BANLA_WEBHOOK_SECRET` → webhook trả 503 (trước đây thiếu secret thì **bỏ qua kiểm tra chữ ký**). Đã sinh `ADMIN_KEY`, `ADMIN_SESSION_SECRET`, `BANLA_WEBHOOK_SECRET` ngẫu nhiên trong `.env`. |
+| D17 (mới) `.env` không được nạp | ✅ Đã sửa | `npm start` chạy `node server.js` không đọc `.env` → SMTP, OTA key… đều bị bỏ qua. Nay dùng `node --env-file-if-exists=.env`. |
+| D15 (mới) PIN webhook yếu | ✅ Đã sửa | Webhook sinh PIN dạng `*1234#` bằng `Math.random`; nay 6 chữ số bằng `crypto.randomInt`. |
+| D2, D3, D7–D13, G4, G5 | 🟡 Có bản sửa, chưa chạy lên Supabase | `supabase/sql/banla_schema_v2.sql` + 11 test trên Postgres thật (`test/schema_v2.test.js`, PGlite). `supabase_schema.sql` cũ đã gắn cảnh báo KHÔNG CHẠY. |
+| D1, D5, G1, G2, G3 | ⏳ Chờ | Cần chạy schema v2 trước, rồi nối server/trang khách vào 2 hàm công khai mới. |
+| D16 (mới) router thanh toán là bản thử | ⏳ Chờ | `POST /api/banla/session` dùng STK `0965999999` (khác STK thật `0352554863`), memo ngẫu nhiên không gắn với đơn; webhook không so số tiền nhận với số phải trả. Sẽ thay bằng `banla.record_payment` khi nối v2. |
+| Trợ lý AI | ⏳ Chờ chủ dự án `npx supabase login` | Key Gemini hợp lệ; `BANLA_ADMIN_TOKEN` đã sinh trong `.env`. |
+
+Câu hỏi cho chủ khách sạn trước khi chạy v2: **mỗi hạng phòng có bao nhiêu phòng thực tế?** (schema đang tạm đặt 1 phòng/hạng — cột `banla.rooms.inventory`).
+
+Lưu ý nội dung: trợ lý AI đang nói "đặt sớm trước 14 ngày giảm 10%", nhưng form đặt phòng và schema chưa áp dụng ưu đãi này. Cần chọn: bỏ câu đó khỏi `HOTEL_FACTS`, hoặc thêm vào cách tính giá.

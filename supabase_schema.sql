@@ -1,4 +1,9 @@
 -- =============================================================================
+-- ⛔ KHÔNG CHẠY FILE NÀY. Bản v1 có lỗ hổng nghiêm trọng (docs/database_audit.md D2, D3):
+--    anon đọc/sửa/xóa được mọi đơn và tự gọi hàm duyệt đơn để lấy mã PIN.
+--    Dùng bản thay thế đã kiểm thử: supabase/sql/banla_schema_v2.sql
+-- =============================================================================
+-- =============================================================================
 -- BANLA BOUTIQUE HOTEL ĐÀ LẠT — SUPABASE DATABASE SCHEMA (ISOLATED)
 -- Quy tắc: Toàn bộ bảng nằm trong schema `banla` để cách ly 100% với `webmoi`.
 -- Hướng dẫn: Copy toàn bộ nội dung file này vào Supabase SQL Editor và bấm RUN.

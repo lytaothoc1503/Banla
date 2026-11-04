@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
@@ -351,7 +352,7 @@ app.get('/api/booking/detail', lookupLimiter, (req, res) => {
   const adminKey = req.headers['x-admin-key'] || req.query.key;
   const adminToken = req.headers['x-admin-token'];
 
-  const isKeyValid = adminKey && safeTimingCompare(String(adminKey), ADMIN_SECRET_KEY);
+  const isKeyValid = adminKey && ADMIN_CONFIGURED && safeTimingCompare(String(adminKey), ADMIN_SECRET_KEY);
   const isTokenValid = adminToken && verifyExpiringToken(adminToken, ADMIN_SESSION_SECRET).valid;
   const isAdmin = isKeyValid || isTokenValid;
 
@@ -411,10 +412,24 @@ app.get('/api/booking/detail', lookupLimiter, (req, res) => {
 // ==========================================
 // ADMIN DASHBOARD & RECONCILIATION APIS
 // ==========================================
-const ADMIN_SECRET_KEY = process.env.ADMIN_KEY || 'BANLA8888';
-const ADMIN_SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || (ADMIN_SECRET_KEY + '_BANLA_SESSION_2026');
+// Không còn mã mặc định: ADMIN_KEY bắt buộc đặt trong .env (tối thiểu 12 ký tự).
+// Nếu thiếu, mọi API quản trị trả 503 thay vì chấp nhận một mã công khai trong mã nguồn.
+const ADMIN_SECRET_KEY = (process.env.ADMIN_KEY || '').trim();
+const ADMIN_CONFIGURED = ADMIN_SECRET_KEY.length >= 12;
+const ADMIN_SESSION_SECRET = (process.env.ADMIN_SESSION_SECRET || '').trim() || crypto.randomBytes(32).toString('hex');
+if (!ADMIN_CONFIGURED) {
+  logger.warn('ADMIN_KEY chưa được cấu hình (hoặc ngắn hơn 12 ký tự) — API quản trị bị khóa.');
+}
+
+function adminNotConfigured(res) {
+  return res.status(503).json({
+    success: false,
+    message: 'Trang quản trị chưa được cấu hình trên máy chủ.'
+  });
+}
 
 function requireAdminAuth(req, res, next) {
+  if (!ADMIN_CONFIGURED) return adminNotConfigured(res);
   const reqKey = req.headers['x-admin-key'] || req.query.key || (req.body && req.body.key);
   const reqToken = req.headers['x-admin-token'];
 
@@ -432,6 +447,7 @@ function requireAdminAuth(req, res, next) {
 
 // BƯỚC 1: Rules 01, 02, 03 & BƯỚC 4: Rule 14 — Kiểm tra mã khóa đăng nhập Admin & Cấp Session Token 8h
 app.post('/api/admin/login', adminLoginLimiter, (req, res) => {
+  if (!ADMIN_CONFIGURED) return adminNotConfigured(res);
   const { key } = req.body || {};
   if (key && verifyPassword(String(key).trim(), ADMIN_SECRET_KEY)) {
     const sessionToken = generateExpiringToken('admin', ADMIN_SESSION_SECRET, 8);

@@ -11,6 +11,8 @@ process.env.BOOKINGS_FILE = tmp;
 process.env.OTA_ALLOWED_ORIGINS = 'http://localhost:3001,https://ota.banla.vn';
 process.env.OTA_API_KEY = 'secret-ota-token-123';
 process.env.BANLA_WEBHOOK_SECRET = 'test_webhook_secret_2026';
+process.env.ADMIN_KEY = 'TEST_ADMIN_KEY_2026_xyz';
+const ADMIN_KEY = process.env.ADMIN_KEY;
 
 const { app } = require('../server');
 let server, base;
@@ -256,7 +258,7 @@ test('Webhook Banla Payment: chữ ký đúng -> 200 và đồng bộ trạng th
   assert.strictEqual(res.status, 200);
   const data = await res.json();
   assert.strictEqual(data.success, true);
-  assert.ok(data.smartLockPin);
+  assert.match(data.smartLockPin, /^\d{6}$/, 'PIN Smart-Lock phải đúng 6 chữ số');
 
   // Xác nhận file booking đã được cập nhật thành PAID và confirmed
   const bookings = JSON.parse(fs.readFileSync(tmp, 'utf8'));
@@ -281,7 +283,7 @@ test('Admin Auth: POST /api/admin/login đúng key -> 200', async () => {
   const res = await fetch(`${base}/api/admin/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ key: 'BANLA8888' })
+    body: JSON.stringify({ key: ADMIN_KEY })
   });
   assert.strictEqual(res.status, 200);
   const data = await res.json();
@@ -290,7 +292,7 @@ test('Admin Auth: POST /api/admin/login đúng key -> 200', async () => {
 
 test('Admin: GET /api/admin/bookings & GET /api/admin/stats tính đối soát Gross vs Net', async () => {
   const resBookings = await fetch(`${base}/api/admin/bookings`, {
-    headers: { 'x-admin-key': 'BANLA8888' }
+    headers: { 'x-admin-key': ADMIN_KEY }
   });
   assert.strictEqual(resBookings.status, 200);
   const dataBookings = await resBookings.json();
@@ -303,7 +305,7 @@ test('Admin: GET /api/admin/bookings & GET /api/admin/stats tính đối soát G
   assert.ok(first.netAmount !== undefined);
 
   const resStats = await fetch(`${base}/api/admin/stats`, {
-    headers: { 'x-admin-key': 'BANLA8888' }
+    headers: { 'x-admin-key': ADMIN_KEY }
   });
   assert.strictEqual(resStats.status, 200);
   const dataStats = await resStats.json();
@@ -324,7 +326,7 @@ test('Admin: POST /api/admin/booking/smartlock cấp mã PIN thành công', asyn
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-admin-key': 'BANLA8888'
+      'x-admin-key': ADMIN_KEY
     },
     body: JSON.stringify({ id, customPin: '*9999#' })
   });
@@ -345,11 +347,33 @@ test('Booking Detail: GET /api/booking/detail hỗ trợ admin key xem toàn b�
   });
   const { id } = await postRes.json();
 
-  const res = await fetch(`${base}/api/booking/detail?id=${id}&key=BANLA8888`);
+  const res = await fetch(`${base}/api/booking/detail?id=${id}&key=${ADMIN_KEY}`);
   assert.strictEqual(res.status, 200);
   const data = await res.json();
   assert.strictEqual(data.success, true);
   assert.strictEqual(data.booking.name, 'Khách Test Detail');
   assert.strictEqual(data.booking.phone, '0988776655');
   assert.strictEqual(data.booking.email, 'khachtest@gmail.com');
+});
+
+test('Bảo mật D4: mã admin mặc định cũ BANLA8888 bị từ chối', async () => {
+  const resKey = await fetch(`${base}/api/admin/bookings`, { headers: { 'x-admin-key': 'BANLA8888' } });
+  assert.strictEqual(resKey.status, 401);
+  const resLogin = await fetch(`${base}/api/admin/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: 'BANLA8888' })
+  });
+  assert.strictEqual(resLogin.status, 401);
+});
+
+test('Bảo mật D4: webhook ký bằng secret mặc định cũ bị từ chối', async () => {
+  const payload = JSON.stringify({ bookingId: 'any', amount: 1 });
+  const forged = crypto.createHmac('sha256', 'banla_secret_priority_2026').update(payload).digest('hex');
+  const res = await fetch(`${base}/api/banla/webhook`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-banla-signature': forged },
+    body: payload
+  });
+  assert.strictEqual(res.status, 401);
 });

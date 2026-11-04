@@ -519,10 +519,10 @@
       <p style="font-size: 11px; letter-spacing: 1.5px; color: var(--ember); font-weight: 700; margin-bottom: 8px;">BOUTIQUE HOTEL · ĐÀ LẠT</p>
       <p class="auth-desc">Hệ thống Quản trị, Đối soát VietQR & Cấp khóa Smart-Lock</p>
       <form id="authForm">
-        <input type="password" id="authPin" class="auth-input" placeholder="Nhập mã PIN Quản trị" value="BANLA8888" autofocus required autocomplete="off">
+        <input type="password" id="authPin" class="auth-input" placeholder="Nhập mã quản trị (ADMIN_KEY)" autofocus required autocomplete="off">
         <button type="submit" class="auth-btn">Đăng Nhập Quản Trị</button>
       </form>
-      <p class="auth-hint">Mã mặc định: <strong>BANLA8888</strong> (Hỗ trợ cả Supabase `banla` & GitHub Pages)</p>
+      <p class="auth-hint">Mã quản trị được cấu hình trên máy chủ (biến ADMIN_KEY trong .env). Trang này cần chạy cùng server Node.</p>
     </div>
   </div>
 
@@ -826,7 +826,7 @@
       const LOCAL_BOOKINGS_KEY = 'BANLA_BOOKINGS_STORE';
       const LOCAL_TX_KEY = 'BANLA_TRANSACTIONS_STORE';
       const CONFIG_STORAGE_KEY = 'BANLA_SUPABASE_CONFIG';
-      const DEFAULT_ADMIN_PIN = 'BANLA8888';
+      // Không còn mã mặc định phía trình duyệt: chỉ server (/api/admin/login) xác nhận mã quản trị.
 
       let adminKey = sessionStorage.getItem(AUTH_STORAGE_KEY) || '';
       let allBookings = [];
@@ -1059,7 +1059,7 @@
         if (!list) {
           try {
             const res = await fetch('/api/admin/bookings', {
-              headers: { 'x-admin-key': adminKey || DEFAULT_ADMIN_PIN }
+              headers: { 'x-admin-key': adminKey || '' }
             });
             if (res.ok) {
               const data = await res.json();
@@ -1287,12 +1287,12 @@
         try {
           await fetch('/api/admin/booking/smartlock', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey || DEFAULT_ADMIN_PIN },
+            headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey || '' },
             body: JSON.stringify({ id: target.id, customPin: newPin })
           });
           await fetch('/api/admin/booking/update', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey || DEFAULT_ADMIN_PIN },
+            headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey || '' },
             body: JSON.stringify({
               id: target.id,
               status: 'confirmed',
@@ -1427,7 +1427,7 @@ Hotline 24/7: 0296.9996.999 - 0352554863`;
         const pin = document.getElementById('authPin').value.trim();
         if (!pin) return;
 
-        let valid = (pin === DEFAULT_ADMIN_PIN);
+        let valid = false;
         try {
           const res = await fetch('/api/admin/login', {
             method: 'POST',
@@ -1445,7 +1445,7 @@ Hotline 24/7: 0296.9996.999 - 0352554863`;
           sessionStorage.setItem(AUTH_STORAGE_KEY, adminKey);
           enterDashboard();
         } else {
-          alert('Mã PIN Quản trị không chính xác (Mặc định: BANLA8888).');
+          alert('Mã quản trị không chính xác, hoặc không kết nối được máy chủ.');
         }
       });
 

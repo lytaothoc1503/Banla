@@ -8,3 +8,4 @@ banla_payment_module/data/
 .tgcloud/
 **/credentials
 
+supabase/.temp/
