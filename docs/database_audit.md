@@ -40,6 +40,21 @@ Kiểm tra thực tế: đọc toàn bộ file SQL, `server.js`, `banla_payment_
 | D13 | Index `idx_banla_bookings_code` thừa (cột đã `UNIQUE`). |
 | D14 | Sao lưu chỉ chụp file JSON, không có Supabase, không chạy theo lịch. |
 
+## 🤖 Trợ lý AI (Google AI Studio / Gemini)
+
+Mã nguồn đã có (`supabase/functions/banla-gemini/index.ts`, `banla-concierge.js`, `ai-studio.html`) và thiết kế đúng: key Gemini chỉ nằm trong Supabase Secrets.
+
+| Kiểm tra | Kết quả |
+|---|---|
+| API key Gemini do chủ dự án cung cấp | Hợp lệ (HTTP 200), có sẵn `gemini-flash-latest` và `gemini-2.5-flash-image` mà function dùng mặc định |
+| `POST .../functions/v1/banla-gemini` | `404 – Requested function was not found` → **function chưa được deploy**, chưa đặt secret |
+| Supabase CLI trên máy | Chưa cài, chưa đăng nhập |
+
+Việc còn thiếu (chủ dự án tự chạy, vì cần đăng nhập tài khoản Supabase):
+`supabase link --project-ref hcikbpvzbzottxoitujl` → `supabase secrets set GEMINI_API_KEY=...` → `supabase secrets set BANLA_ADMIN_TOKEN=...` → `supabase functions deploy banla-gemini`.
+
+> ⚠ Bước 5 trong `docs/gemini-ai-studio.md` (gán `window.BANLA_SUPABASE_URL` trên mọi trang) **không nên làm** cho tới khi sửa xong D2/D3, vì lúc đó trang khách sẽ ghi thẳng vào bảng đang mở toang quyền.
+
 ## Vẫn còn mở từ lần trước
 
 G1–G5 trong `docs/known_logic_gaps.md` (popup đọc localStorage, phiếu tin dữ liệu trình duyệt, đơn mẫu có dấu đỏ, duyệt luôn ghi 100%, phiếu tải toàn bảng).
