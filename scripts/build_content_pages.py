@@ -422,8 +422,6 @@ def build():
           <p><strong>Địa chỉ</strong><br>47 Nguyễn Đình Chiểu, Phường 9, Đà Lạt</p>
           <p><strong>Điện thoại</strong><br><a href="tel:02633633777">02633.633.777</a></p>
           <p><strong>Email</strong><br><a href="mailto:sales@banlaboutiquehotel.com">sales@banlaboutiquehotel.com</a></p>
-          <p><strong>Instagram</strong><br><a href="https://instagram.com/banla.boutiquehotel" target="_blank" rel="noopener">@banla.boutiquehotel</a></p>
-          <p><strong>TikTok</strong><br><a href="https://www.tiktok.com/@banlaboutiquehotel" target="_blank" rel="noopener">@banlaboutiquehotel</a></p>
           <p>Điểm đến khác trên Banla: <a href="../nha-trang/">Nha Trang</a>, <a href="../ho-chi-minh/">TP. Hồ Chí Minh</a>. Hai trang đó chưa có khách sạn đã xác minh.</p>
         </div>
         {FORM}
@@ -467,8 +465,6 @@ def build():
           <p><strong>Địa chỉ</strong><br>47 Nguyễn Đình Chiểu, Phường 9, Đà Lạt, Lâm Đồng</p>
           <p><strong>Điện thoại</strong><br><a href="tel:02633633777">02633.633.777</a></p>
           <p><strong>Email</strong><br><a href="mailto:sales@banlaboutiquehotel.com">sales@banlaboutiquehotel.com</a></p>
-          <p><strong>Instagram</strong><br><a href="https://instagram.com/banla.boutiquehotel" target="_blank" rel="noopener">@banla.boutiquehotel</a></p>
-          <p><strong>TikTok</strong><br><a href="https://www.tiktok.com/@banlaboutiquehotel" target="_blank" rel="noopener">@banlaboutiquehotel</a></p>
           <p>The Roof: Café 8:00–16:00 · Bar 16:00–00:00.</p>
           <p>Xem <a href="../faq/">câu hỏi thường gặp</a> và <a href="../chinh-sach/">chính sách hủy</a>.</p>
         </div>

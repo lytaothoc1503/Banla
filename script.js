@@ -80,6 +80,25 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   });
 });
 
+// Khối 3D: xoay theo con trỏ, không đè animation khi người dùng giảm chuyển động
+(function () {
+  const stage = document.getElementById('stage3d');
+  const cube = stage && stage.querySelector('.cube-3d');
+  if (!stage || !cube) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  stage.addEventListener('pointermove', (event) => {
+    const box = stage.getBoundingClientRect();
+    const x = (event.clientX - box.left) / box.width - 0.5;
+    const y = (event.clientY - box.top) / box.height - 0.5;
+    cube.style.animation = 'none';
+    cube.style.transform = 'rotateX(' + (8 - y * 16) + 'deg) rotateY(' + (-18 + x * 36) + 'deg)';
+  });
+  stage.addEventListener('pointerleave', () => {
+    cube.style.transform = '';
+    cube.style.animation = '';
+  });
+})();
+
 // --- Anime.js motion (DESIGN.md) ---
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const animeApi = window.anime;
