@@ -110,17 +110,19 @@ async function handleCreateSession(req, res) {
     const feeAmount = Math.round(grossAmount * feeRate);
     const netAmount = grossAmount - feeAmount;
 
+    const cleanBookingId = String(bookingId || 'BL9821').replace(/^#+/, '').toUpperCase();
     const sessionId = `SESS_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-    const memo = `BALA${Math.floor(1000 + Math.random() * 9000)}`;
+    const memo = `BANLA_${cleanBookingId}`;
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
+    const accountNumber = process.env.BANLA_BANK_ACCOUNT || '0352554863';
 
-    const vietQrUrl = `https://img.vietqr.io/image/MB-0965999999-compact2.png?amount=${grossAmount}&addInfo=${encodeURIComponent(memo)}&accountName=${encodeURIComponent('BANLA BOUTIQUE HOTEL')}`;
+    const vietQrUrl = `https://img.vietqr.io/image/MB-${accountNumber}-compact2.png?amount=${grossAmount}&addInfo=${encodeURIComponent(memo)}&accountName=${encodeURIComponent('BANLA BOUTIQUE HOTEL')}`;
 
     const sessionData = {
       id: sessionId,
       sessionId,
-      bookingId: bookingId || 'BALA-9821',
-      roomId: roomId || 'attic',
+      bookingId: bookingId || 'BL9821',
+      roomId: roomId || 'elite',
       roomName: roomName || 'Phòng Banla Boutique',
       customerName: customerName || 'Quý khách Banla',
       customerContact: customerContact || '',
@@ -136,7 +138,7 @@ async function handleCreateSession(req, res) {
       bankDetails: {
         bankName: 'MB Bank Priority',
         bankCode: 'MB',
-        accountNumber: '0965999999',
+        accountNumber,
         accountName: 'BANLA BOUTIQUE HOTEL'
       }
     };

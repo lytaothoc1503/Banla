@@ -115,7 +115,7 @@
     }
   }
 
-  function checkRealtimeStatus(bookingCode, onSuccess) {
+  async function checkRealtimeStatus(bookingCode) {
     const clean = String(bookingCode).replace(/^#+/, '').toUpperCase();
     try {
       // 1. Kiểm tra LocalStorage
@@ -128,6 +128,34 @@
         }
       }
     } catch (e) {}
+
+    // 2. Kiểm tra Backend API (/api/booking/detail) nếu có kết nối máy chủ
+    try {
+      const res = await fetch('/api/booking/detail?id=' + encodeURIComponent(clean));
+      if (res.ok) {
+        const data = await res.json();
+        const b = data && data.booking;
+        if (b && (b.paymentStatus === 'PAID' || b.payment_status === 'paid')) {
+          try {
+            const raw = localStorage.getItem('BANLA_BOOKINGS_STORE');
+            const list = raw ? JSON.parse(raw) : [];
+            const idx = Array.isArray(list)
+              ? list.findIndex(x => String(x.id || x.booking_code).toUpperCase() === clean)
+              : -1;
+            if (idx !== -1) {
+              list[idx].payment_status = 'paid';
+              list[idx].paymentStatus = 'PAID';
+              list[idx].booking_status = 'confirmed';
+              list[idx].status = 'confirmed';
+              if (b.smartLockPin) list[idx].smartlock_pin = b.smartLockPin;
+              localStorage.setItem('BANLA_BOOKINGS_STORE', JSON.stringify(list));
+            }
+          } catch (err) {}
+          return b;
+        }
+      }
+    } catch (e) {}
+
     return null;
   }
 
@@ -306,7 +334,7 @@
 
     // Bắt đầu lắng nghe / polling CSDL thời gian thực
     pollInterval = setInterval(async () => {
-      const verified = checkRealtimeStatus(bookingId);
+      const verified = await checkRealtimeStatus(bookingId);
       if (verified) {
         stopPolling();
         currentSession.isVerifiedPaid = true;

@@ -515,3 +515,4 @@ commit;
 --    TUYỆT ĐỐI không đưa khóa này vào HTML/JS hay commit lên GitHub.
 -- 5. Chạy Supabase Advisors (Database → Advisors) và xử lý cảnh báo nếu có.
 -- =============================================================================
+

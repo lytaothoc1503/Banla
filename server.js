@@ -256,11 +256,41 @@ app.post('/api/booking', bookingLimiter, async (req, res) => {
 
   const { errors, booking } = validateBooking(req.body);
   if (errors.length) return res.status(400).json({ success: false, errors, message: errors.join(' ') });
+
+  // Server-side calculation of unitPrice, nights, totalPrice, paymentOption, discountAmount, depositAmount (D11)
+  const roomsList = (getRoomsData() && getRoomsData().rooms) || [];
+  const matchedRoom = roomsList.find((r) => {
+    const q = (booking.room || '').toLowerCase();
+    return q && (String(r.id).toLowerCase() === q || String(r.name).toLowerCase() === q || q.includes(String(r.id).toLowerCase()));
+  });
+  const unitPrice = Number(matchedRoom?.price) || 1150000;
+  let nights = 1;
+  if (booking.checkin && booking.checkout) {
+    const diffDays = Math.round((Date.parse(booking.checkout) - Date.parse(booking.checkin)) / 86400000);
+    if (diffDays >= 1) nights = diffDays;
+  }
+  const totalPrice = unitPrice * nights;
+  const rawPaymentOption = typeof req.body?.paymentOption === 'string'
+    ? req.body.paymentOption.trim()
+    : (typeof req.body?.payment_option === 'string' ? req.body.payment_option.trim() : '');
+  const paymentOption = rawPaymentOption === 'pay_100' ? 'pay_100' : 'deposit_50';
+  const discountAmount = paymentOption === 'pay_100' ? Math.round(totalPrice * 0.1) : 0;
+  const depositAmount = paymentOption === 'pay_100'
+    ? Math.max(totalPrice - discountAmount, 0)
+    : Math.round(totalPrice * 0.5);
+
   const record = {
     id: Date.now().toString(36),
     createdAt: new Date().toISOString(),
     status: 'pending',
     paymentStatus: 'UNPAID',
+    unitPrice,
+    nights,
+    totalPrice,
+    paymentOption,
+    discountAmount,
+    depositAmount,
+    paidAmount: 0,
     ...booking
   };
 
@@ -626,6 +656,159 @@ app.post('/api/admin/booking/smartlock', requireAdminAuth, (req, res) => {
 // Banla Priority Payment Module Router
 const banlaPaymentRouter = require('./banla_payment_module/backend/banla_payment_router');
 app.use('/api/banla', banlaPaymentRouter);
+
+// ==========================================
+// BANLA AI CONCIERGE ("BÀN LÀ · LỄ TÂN AI")
+// ==========================================
+const HOTEL_FACTS_PROMPT = `
+THÔNG TIN CHÍNH THỨC — BANLA BOUTIQUE HOTEL ĐÀ LẠT
+- Địa chỉ: 47 Nguyễn Đình Chiểu, Phường 9, TP. Đà Lạt. Cách Hồ Xuân Hương, Vườn Hoa Thành Phố, Chợ Đà Lạt khoảng 5–7 phút; cách sân bay Liên Khương ~30 km (~35 phút).
+- Slogan: "Ngoài lạnh. Trong ấm." — tên Banla lấy cảm hứng từ chiếc bàn là đồng xưa ủi phẳng cái se lạnh phố núi.
+- Hotline 24/7: 0296.9996.999 – 0352554863. Fanpage Facebook: https://www.facebook.com/Banlaboutiquedalat/
+- Email: concact@banlaboutiquedalat.com · Instagram @banla.boutiquehotel · TikTok @banlaboutiquehotel
+- Nhận phòng từ 14:00, trả phòng trước 12:00. Đổi lịch/nhận phòng sớm: báo trước tối thiểu 72 giờ.
+- 7 hạng phòng (giá niêm yết/đêm):
+  1. Élite Room (gác mái, trần gỗ, bồn tắm nằm) — 30m², 2 NL + 1 trẻ — 1.250.000 ₫
+  2. Banla Signature (tường xanh olive, trần gỗ) — 28m², 2 NL + 1 trẻ — 1.150.000 ₫
+  3. Highland Room (trần gỗ cao, giường King) — 28m², 2 NL + 1 trẻ — 1.100.000 ₫
+  4. Connecting Room (2 phòng thông nhau, gia đình) — 35m², 4 NL + 1–2 trẻ — 1.850.000 ₫
+  5. Deluxe Twin (2 giường đơn) — 22m², 2–3 NL — 950.000 ₫
+  6. Original Suite (rộng, bàn làm việc, khu tiếp khách) — 35m², 2 NL + 1 trẻ — 1.550.000 ₫
+  7. Deluxe Balcony (ban công riêng hướng phố) — 20m², 2 NL + 1 trẻ — 980.000 ₫
+- The Roof by Banla (tầng thượng): Café & trà 08:00–16:00; Cocktail & Wine Bar 16:00–00:00. Khách đặt trực tiếp giảm 15% đồ uống.
+- Bữa sáng: phở, bánh mì xíu mại, món Á – Âu, cà phê rang xay.
+- Đặt phòng trên website: chọn Cọc 50% (phần còn lại trả khi check-in) hoặc Thanh toán 100% (giảm ngay 10%). Thanh toán qua VietQR ngân hàng MB Bank (STK 0352554863 — BANLA BOUTIQUE HOTEL), nội dung BANLA_MÃĐƠN. Sau khi đối soát sẽ nhận Phiếu xác nhận có dấu đỏ và mã Smart-Lock PIN 6 số (hiệu lực 14:00 Check-in → 12:00 Check-out).
+`.trim();
+
+function normalizeViText(str) {
+  return String(str || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function buildSmartConciergeReply(question) {
+  const q = normalizeViText(question);
+
+  if (
+    (q.includes('2 nguoi lon') && (q.includes('1 be') || q.includes('1 tre') || q.includes('em be') || q.includes('con nho'))) ||
+    q.includes('2 nl') ||
+    q.includes('gia dinh nho')
+  ) {
+    return 'Dạ với **2 người lớn và 1 bé**, Banla có **5 hạng phòng** đúng chuẩn sức chứa **2 NL + 1 trẻ**, rất ấm áp và thoải mái ạ:\n' +
+      '- **Élite Room (30m² · 1.250.000 ₫/đêm)**: Phòng gác mái gỗ trầm đặc trưng, có **bồn tắm nằm** và góc thư giãn riêng.\n' +
+      '- **Original Suite (35m² · 1.550.000 ₫/đêm)**: Không gian rộng rãi nhất, có khu vực tiếp khách thoải mái cho bé.\n' +
+      '- **Banla Signature (28m² · 1.150.000 ₫/đêm)**: Tông xanh olive dịu mắt, trần gỗ ấm và yên tĩnh.\n' +
+      '- **Highland Room (28m² · 1.100.000 ₫/đêm)**: Trần gỗ cao thoáng, giường King êm ái đón nắng sớm.\n' +
+      '- **Deluxe Balcony (20m² · 980.000 ₫/đêm)**: Tiết kiệm, có ban công riêng thoáng sáng.\n\n' +
+      'Quý khách có thể chọn phòng và đặt ngay tại #contact (chọn **Cọc 50%** hoặc **Thanh toán 100% giảm 10%**) ạ!';
+  }
+
+  if (q.includes('4 nguoi') || q.includes('4 khach') || q.includes('nhom ban') || q.includes('connecting') || q.includes('thong nhau')) {
+    return 'Dạ với gia đình hoặc nhóm bạn **4 – 6 khách**, lựa chọn lý tưởng nhất tại Banla là:\n' +
+      '- **Connecting Room (35m² · 1.850.000 ₫/đêm)**: Thiết kế **2 không gian phòng thông nhau** tiện lợi, sức chứa **4 người lớn + 1–2 trẻ**, vừa gắn kết vừa đảm bảo sự riêng tư.\n' +
+      '- Ngoài ra nếu đi nhóm 2–3 bạn muốn nằm giường riêng, quý khách có thể chọn **Deluxe Twin (22m² · 2 giường đơn · 950.000 ₫/đêm)**.\n\n' +
+      'Quý khách bấm vào #contact để đặt giữ phòng sớm nhé ạ!';
+  }
+
+  if (q.includes('roof') || q.includes('tang thuong') || q.includes('cafe') || q.includes('ca phe') || q.includes('cocktail') || q.includes('wine') || q.includes('bar')) {
+    return 'Dạ **The Roof by Banla** nằm trên tầng thượng của khách sạn với tầm nhìn trọn phố núi mờ sương ạ:\n' +
+      '- **Café & Trà nóng**: **08:00 – 16:00** hàng ngày\n' +
+      '- **Cocktail & Wine Bar**: **16:00 – 00:00** hàng ngày\n' +
+      '- **Đặc quyền khách lưu trú**: Giảm trực tiếp **15% tổng hóa đơn đồ uống** tại The Roof khi đặt phòng trên website.\n' +
+      'Quý khách đặt phòng tại #contact để nhận ngay ưu đãi nhé!';
+  }
+
+  if (q.includes('vietqr') || q.includes('dat coc') || q.includes('coc') || q.includes('thanh toan') || q.includes('chuyen khoan') || q.includes('dau do') || q.includes('pin') || q.includes('smart lock')) {
+    return 'Dạ quy trình **Đặt phòng – VietQR – Nhận Phiếu Dấu Đỏ & Mã Smart-Lock** tại Banla rất minh bạch:\n' +
+      '- **Bước 1**: Điền thông tin tại #contact và chọn **Cọc 50% tổng đơn** hoặc **Thanh toán 100% (giảm ngay 10%)**.\n' +
+      '- **Bước 2**: Quét mã VietQR ngân hàng **MB Bank (STK 0352554863 — BANLA BOUTIQUE HOTEL)** với nội dung `BANLA_MÃĐƠN`.\n' +
+      '- **Bước 3**: Sau khi đối soát biên lai qua Fanpage Facebook Banla, hệ thống cấp **Phiếu xác nhận có Dấu Đỏ chính thức** và **Mã Smart-Lock PIN 6 số** (hiệu lực 14:00 Check-in → 12:00 Check-out).';
+  }
+
+  if (q.includes('san bay') || q.includes('lien khuong') || q.includes('dia chi') || q.includes('o dau') || q.includes('duong di') || q.includes('bao xa') || q.includes('ho xuan huong')) {
+    return 'Dạ vị trí và di chuyển đến **Banla Boutique Hotel Đà Lạt**:\n' +
+      '- **Địa chỉ**: **47 Nguyễn Đình Chiểu, Phường 9, TP. Đà Lạt**.\n' +
+      '- **Kết nối trung tâm**: Chỉ **5–7 phút** tới **Hồ Xuân Hương, Vườn Hoa Thành Phố và Chợ Đêm Đà Lạt**.\n' +
+      '- **Từ sân bay Liên Khương**: Khoảng **30 km (~35 phút đi ô tô)**. Lễ tân hỗ trợ đặt xe đưa đón sân bay và limousine tuyến **Đà Lạt – Nha Trang (135 km)** qua Hotline **0296.9996.999 – 0352554863** ạ!';
+  }
+
+  return 'Dạ **bảng giá niêm yết 7 hạng phòng** tại Banla Boutique Hotel Đà Lạt (47 Nguyễn Đình Chiểu, Phường 9):\n' +
+    '- **Deluxe Twin** (22m² · 2–3 NL · 2 giường đơn): **950.000 ₫/đêm**\n' +
+    '- **Deluxe Balcony** (20m² · 2 NL + 1 trẻ · Ban công): **980.000 ₫/đêm**\n' +
+    '- **Highland Room** (28m² · 2 NL + 1 trẻ · Trần gỗ cao): **1.100.000 ₫/đêm**\n' +
+    '- **Banla Signature** (28m² · 2 NL + 1 trẻ · Xanh olive): **1.150.000 ₫/đêm**\n' +
+    '- **Élite Room** (30m² · 2 NL + 1 trẻ · Gác mái, bồn tắm): **1.250.000 ₫/đêm**\n' +
+    '- **Original Suite** (35m² · 2 NL + 1 trẻ · Suite rộng): **1.550.000 ₫/đêm**\n' +
+    '- **Connecting Room** (35m² · 4 NL + 1–2 trẻ · 2 phòng thông nhau): **1.850.000 ₫/đêm**\n\n' +
+    'Quý khách đặt trực tiếp tại #contact được **giảm 10%** khi thanh toán 100% qua VietQR và **giảm 15%** tại **The Roof** ạ!';
+}
+
+app.post('/api/chat', async (req, res) => {
+  try {
+    const messages = Array.isArray(req.body?.messages) ? req.body.messages.slice(-12) : [];
+    const lastUserMsg = [...messages].reverse().find((m) => m && m.role !== 'model' && typeof m.text === 'string');
+    const question = lastUserMsg
+      ? lastUserMsg.text.trim().slice(0, 800)
+      : String(req.body?.question || req.body?.prompt || '').trim().slice(0, 800);
+
+    if (!question) {
+      return res.status(400).json({ success: false, error: 'Thiếu câu hỏi của khách hàng.' });
+    }
+
+    const geminiKey = (process.env.GEMINI_API_KEY || '').trim();
+    if (geminiKey) {
+      try {
+        const model = (process.env.GEMINI_MODEL || 'gemini-2.0-flash').trim();
+        const contents = messages.length > 0
+          ? messages
+              .filter((m) => m && typeof m.text === 'string' && m.text.trim())
+              .map((m) => ({
+                role: m.role === 'model' ? 'model' : 'user',
+                parts: [{ text: String(m.text).trim().slice(0, 800) }]
+              }))
+          : [{ role: 'user', parts: [{ text: question }] }];
+        const gRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: `Bạn là "Bàn Là" — trợ lý lễ tân AI của Banla Boutique Hotel Đà Lạt. Trả lời ấm áp, lịch sự, ngắn gọn, xưng "Banla" và gọi khách là "quý khách". Chỉ dùng dữ liệu sau:\n${HOTEL_FACTS_PROMPT}` }] },
+            contents,
+            generationConfig: { temperature: 0.4, maxOutputTokens: 600 }
+          })
+        });
+        if (gRes.ok) {
+          const gData = await gRes.json();
+          const text = (gData?.candidates?.[0]?.content?.parts || [])
+            .map((p) => p.text || '')
+            .join('')
+            .trim();
+          if (text) {
+            return res.json({ success: true, source: 'gemini', reply: text, answer: text });
+          }
+        }
+      } catch (err) {
+        logger.warn('Gemini API fallback sang Smart Knowledge Engine:', err.message);
+      }
+    }
+
+    const reply = buildSmartConciergeReply(question);
+    return res.json({ success: true, source: 'knowledge_engine', reply, answer: reply });
+  } catch (err) {
+    logger.error('Lỗi /api/chat:', err);
+    const fallbackReply = buildSmartConciergeReply('');
+    return res.json({
+      success: true,
+      source: 'fallback',
+      reply: fallbackReply,
+      answer: fallbackReply
+    });
+  }
+});
 
 // BƯỚC 2: Rule 06 — Bắt lỗi 404 cho tài nguyên không tồn tại
 app.use((req, res) => {

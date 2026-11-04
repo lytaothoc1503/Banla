@@ -169,3 +169,4 @@ test('v2: chạy lại file schema lần 2 không lỗi (idempotent)', async () 
   const r = await db.query('select count(*)::int as n from banla.rooms');
   assert.strictEqual(r.rows[0].n, 7);
 });
+

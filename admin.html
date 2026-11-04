@@ -701,13 +701,13 @@
           <div class="form-group">
             <label>Hạng phòng:</label>
             <select id="fRoomId" class="form-control">
-              <option value="Superior Double">Superior Double (950.000đ)</option>
-              <option value="Deluxe Double with Balcony">Deluxe Double with Balcony (1.150.000đ)</option>
-              <option value="Attic Room">Attic Room (1.200.000đ)</option>
-              <option value="Deluxe Twin">Deluxe Twin (1.350.000đ)</option>
-              <option value="Élite Room">Élite Room (1.500.000đ)</option>
-              <option value="Deluxe Family Connecting Room">Deluxe Family Connecting Room (2.400.000đ)</option>
-              <option value="Original Suite">Original Suite (1.900.000đ)</option>
+              <option value="Banla Signature">Banla Signature (1.150.000đ/đêm)</option>
+              <option value="Élite Room">Élite Room (Gác mái — 1.250.000đ/đêm)</option>
+              <option value="Highland Room">Highland Room (1.100.000đ/đêm)</option>
+              <option value="Connecting Room">Connecting Room (Gia đình — 1.850.000đ/đêm)</option>
+              <option value="Deluxe Twin">Deluxe Twin (2 giường — 950.000đ/đêm)</option>
+              <option value="Original Suite">Original Suite (1.550.000đ/đêm)</option>
+              <option value="Deluxe Balcony">Deluxe Balcony (980.000đ/đêm)</option>
             </select>
           </div>
           <div class="form-group">
@@ -972,7 +972,10 @@
         const rawStatus = String(r.booking_status || r.status || 'pending').toLowerCase();
         const booking_status = ['pending', 'confirmed', 'completed', 'cancelled'].includes(rawStatus) ? rawStatus : 'pending';
 
-        const paid = Number(r.paid_amount ?? r.paidAmount ?? (payment_status === 'paid' ? total : 0));
+        const payment_option = r.payment_option || r.paymentOption || 'deposit_50';
+        const discount_amount = Number(r.discount_amount ?? r.discountAmount ?? (payment_option === 'pay_100' ? Math.round(total * 0.1) : 0));
+        const deposit_amount = Number(r.deposit_amount ?? r.depositAmount ?? (payment_option === 'pay_100' ? (total - discount_amount) : Math.round(total * 0.5)));
+        const paid = Number(r.paid_amount ?? r.paidAmount ?? (payment_status === 'paid' ? deposit_amount : 0));
         const rawPin = String(r.smartlock_pin || r.smartLockPin || '').replace(/[^0-9]/g, '');
         const smartlock_pin = rawPin ? rawPin.slice(0, 6).padStart(6, '0') : '';
 
@@ -987,6 +990,9 @@
           check_in: String(r.check_in || r.checkin || '2026-11-10').slice(0, 10),
           check_out: String(r.check_out || r.checkout || '2026-11-12').slice(0, 10),
           total_amount: total,
+          payment_option,
+          discount_amount,
+          deposit_amount,
           paid_amount: paid,
           payment_status,
           booking_status,
@@ -1243,10 +1249,18 @@
           ? target.smartlock_pin
           : generateSecure6DigitPin();
 
+        const expectedPay = Number(target.paid_amount) > 0
+          ? Number(target.paid_amount)
+          : (Number(target.deposit_amount) > 0
+              ? Number(target.deposit_amount)
+              : (target.payment_option === 'pay_100'
+                  ? Math.round(target.total_amount * 0.9)
+                  : Math.round(target.total_amount * 0.5)));
+
         target.smartlock_pin = newPin;
         target.booking_status = 'confirmed';
         target.payment_status = 'paid';
-        target.paid_amount = target.total_amount;
+        target.paid_amount = expectedPay;
 
         const cfg = getConfig();
 
@@ -1258,7 +1272,7 @@
               .update({
                 booking_status: 'confirmed',
                 payment_status: 'paid',
-                paid_amount: target.total_amount,
+                paid_amount: target.paid_amount,
                 smartlock_pin: newPin
               })
               .eq('id', target.id);
@@ -1267,7 +1281,7 @@
               await sbClient.schema('banla').from('transactions').insert({
                 booking_id: target.id,
                 reference_code: `BANLA_${target.booking_code}`,
-                amount_paid: target.total_amount,
+                amount_paid: target.paid_amount,
                 bank_code: cfg.bankId || 'MB',
                 status: 'completed'
               });
@@ -1297,7 +1311,7 @@
               id: target.id,
               status: 'confirmed',
               paymentStatus: 'PAID',
-              paidAmount: target.total_amount
+              paidAmount: target.paid_amount
             })
           });
         } catch {}

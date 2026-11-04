@@ -37,3 +37,4 @@ test('Bảo mật D4: thiếu ADMIN_KEY và BANLA_WEBHOOK_SECRET -> API quản t
   const r = JSON.parse(line);
   assert.deepStrictEqual(r, { login: 503, list: 503, hook: 503 });
 });
+

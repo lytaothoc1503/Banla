@@ -146,23 +146,40 @@
       }
 
       let foundBooking = null;
+      let localBooking = null;
       const cleanCode = code.replace(/^#+/, '').toLowerCase();
+      const upperCode = cleanCode.toUpperCase();
+      const isDemoMode = urlParams.get('demo') === '1';
 
-      // 1. Thử đọc từ LocalStorage trước (nếu vừa tạo trên cùng trình duyệt / GitHub Pages)
+      // 1. Đọc tạm từ LocalStorage (nếu vừa tạo trên cùng trình duyệt / GitHub Pages)
       try {
         const localRaw = localStorage.getItem('BANLA_BOOKINGS_STORE');
         if (localRaw) {
           const list = JSON.parse(localRaw);
           if (Array.isArray(list)) {
-            foundBooking = list.find(b =>
+            localBooking = list.find(b =>
               String(b.id || '').toLowerCase() === cleanCode ||
               String(b.booking_code || '').toLowerCase() === cleanCode
-            );
+            ) || null;
           }
         }
       } catch (e) {}
 
-      // 2. Thử đọc từ Supabase (nếu đã cấu hình)
+      // 2. Ưu tiên kiểm tra Backend API (/api/booking/detail) để nhận trạng thái đã duyệt mới nhất (G2)
+      try {
+        let apiUrl = '/api/booking/detail?id=' + encodeURIComponent(code);
+        if (contact) apiUrl += '&contact=' + encodeURIComponent(contact);
+        if (key) apiUrl += '&key=' + encodeURIComponent(key);
+        const res = await fetch(apiUrl);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.success && data.booking) {
+            foundBooking = data.booking;
+          }
+        }
+      } catch (e) {}
+
+      // 3. Thử đọc từ Supabase theo đúng mã đơn (G5: dùng .eq('booking_code', ...) thay vì .select('*'))
       if (!foundBooking && window.supabase) {
         try {
           const sbCfg = JSON.parse(localStorage.getItem('BANLA_SUPABASE_CONFIG') || '{}');
@@ -170,54 +187,49 @@
           const sbKey = sbCfg.anonKey || window.BANLA_SUPABASE_ANON_KEY || '';
           if (sbUrl && sbKey) {
             const client = window.supabase.createClient(sbUrl, sbKey);
-            const { data } = await client.schema('banla').from('bookings').select('*');
-            if (Array.isArray(data)) {
-              foundBooking = data.find(b =>
-                String(b.id || '').toLowerCase() === cleanCode ||
-                String(b.booking_code || '').toLowerCase() === cleanCode
-              );
+            const { data } = await client
+              .schema('banla')
+              .from('bookings')
+              .select('*')
+              .eq('booking_code', upperCode)
+              .maybeSingle();
+            if (data) {
+              foundBooking = data;
             }
           }
         } catch (e) {}
       }
 
-      // 3. Thử gọi Backend API (/api/booking/detail)
-      if (!foundBooking) {
-        try {
-          let apiUrl = '/api/booking/detail?id=' + encodeURIComponent(code);
-          if (contact) apiUrl += '&contact=' + encodeURIComponent(contact);
-          if (key) apiUrl += '&key=' + encodeURIComponent(key);
-          const res = await fetch(apiUrl);
-          if (res.ok) {
-            const data = await res.json();
-            if (data && data.success && data.booking) {
-              foundBooking = data.booking;
-            }
-          }
-        } catch (e) {}
+      // 4. Nếu máy chủ / Supabase chưa trả về hoặc đang chạy tĩnh, hợp nhất với bản ghi LocalStorage
+      if (localBooking) {
+        const localPaid = String(localBooking.payment_status || localBooking.paymentStatus || '').toLowerCase() === 'paid';
+        const remotePaid = foundBooking && String(foundBooking.payment_status || foundBooking.paymentStatus || '').toLowerCase() === 'paid';
+        if (!foundBooking || (localPaid && !remotePaid)) {
+          foundBooking = localBooking;
+        }
       }
 
-      // 4. Fallback mẫu mặc định nếu là mã demo
-      if (!foundBooking) {
+      // 5. Fallback mẫu mặc định chỉ khi bật ?demo=1 (G3: tránh in phiếu dấu đỏ mẫu khi không có ?demo=1)
+      if (!foundBooking && isDemoMode) {
         const defaultSamples = [
           {
-            id: 'BL9821', booking_code: 'BL9821', guest_name: 'Hoàng Minh Tuấn', guest_phone: '0988776655',
+            id: 'BL9821', booking_code: 'BL9821', guest_name: 'Hoàng Minh Tuấn (Mẫu Demo)', guest_phone: '0988776655',
             guest_email: 'minhtuan.dalat@gmail.com', room_id: 'Élite Room', guests: 2,
-            check_in: '2026-11-05', check_out: '2026-11-07', total_amount: 2400000, paid_amount: 2400000,
+            check_in: '2026-11-05', check_out: '2026-11-07', total_amount: 2500000, paid_amount: 2500000,
             payment_status: 'paid', booking_status: 'confirmed', smartlock_pin: '839204',
-            note: 'Cần phòng tầng cao, view nhìn trọn thung lũng sương.'
+            note: 'Bản xem trước mẫu demo — Cần phòng tầng cao, view nhìn trọn thung lũng sương.'
           },
           {
-            id: 'BL7342', booking_code: 'BL7342', guest_name: 'Trần Thị Mai Anh', guest_phone: '0912345678',
+            id: 'BL7342', booking_code: 'BL7342', guest_name: 'Trần Thị Mai Anh (Mẫu Demo)', guest_phone: '0912345678',
             guest_email: 'maianh.tran@outlook.com', room_id: 'Original Suite', guests: 2,
-            check_in: '2026-11-10', check_out: '2026-11-12', total_amount: 3200000, paid_amount: 3200000,
+            check_in: '2026-11-10', check_out: '2026-11-12', total_amount: 3100000, paid_amount: 3100000,
             payment_status: 'paid', booking_status: 'confirmed', smartlock_pin: '561829',
-            note: 'Kỷ niệm ngày cưới, setup giúp hoa tươi.'
+            note: 'Bản xem trước mẫu demo — Kỷ niệm ngày cưới, setup giúp hoa tươi.'
           },
           {
-            id: 'BL3519', booking_code: 'BL3519', guest_name: 'Phạm Trần Linh', guest_phone: '0965555555',
+            id: 'BL3519', booking_code: 'BL3519', guest_name: 'Phạm Trần Linh (Mẫu Demo)', guest_phone: '0965555555',
             guest_email: 'banhfuli1503@gmail.com', room_id: 'Deluxe Twin', guests: 2,
-            check_in: '2027-02-02', check_out: '2027-02-04', total_amount: 2700000, paid_amount: 0,
+            check_in: '2027-02-02', check_out: '2027-02-04', total_amount: 1900000, paid_amount: 0,
             payment_status: 'pending', booking_status: 'pending', smartlock_pin: '',
             note: 'Đặt trực tuyến từ website Banla.'
           }
