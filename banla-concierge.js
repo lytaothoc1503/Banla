@@ -26,8 +26,8 @@
       area: '30m²',
       capacity: '2 người lớn + 1 trẻ',
       maxGuests: 3,
-      price: 1250000,
-      priceText: '1.250.000 ₫/đêm',
+      price: 1060000,
+      priceText: '1.060.000 ₫/đêm',
       highlights: 'Gác mái gỗ trầm ấm cúng, bồn tắm nằm thư giãn, giường lớn và góc đọc sách riêng.'
     },
     {
@@ -36,8 +36,8 @@
       area: '28m²',
       capacity: '2 người lớn + 1 trẻ',
       maxGuests: 3,
-      price: 1150000,
-      priceText: '1.150.000 ₫/đêm',
+      price: 970000,
+      priceText: '970.000 ₫/đêm',
       highlights: 'Tường xanh olive thanh lịch, trần gỗ ấm, không gian yên tĩnh và cân đối.'
     },
     {
@@ -46,8 +46,8 @@
       area: '28m²',
       capacity: '2 người lớn + 1 trẻ',
       maxGuests: 3,
-      price: 1100000,
-      priceText: '1.100.000 ₫/đêm',
+      price: 880000,
+      priceText: '880.000 ₫/đêm',
       highlights: 'Trần gỗ cao thoáng, giường King êm ái, cửa sổ đón nắng sớm cao nguyên.'
     },
     {
@@ -56,8 +56,8 @@
       area: '35m²',
       capacity: '4 người lớn + 1–2 trẻ',
       maxGuests: 6,
-      price: 1850000,
-      priceText: '1.850.000 ₫/đêm',
+      price: 1240000,
+      priceText: '1.240.000 ₫/đêm',
       highlights: '2 không gian phòng thông nhau tiện lợi, phù hợp gia đình hoặc nhóm bạn 4–6 người.'
     },
     {
@@ -66,8 +66,8 @@
       area: '22m²',
       capacity: '2–3 người lớn',
       maxGuests: 3,
-      price: 950000,
-      priceText: '950.000 ₫/đêm',
+      price: 700000,
+      priceText: '700.000 ₫/đêm',
       highlights: '2 giường đơn êm ái, gọn gàng, tối ưu chi phí cho bạn bè hoặc đồng nghiệp.'
     },
     {
@@ -76,8 +76,8 @@
       area: '35m²',
       capacity: '2 người lớn + 1 trẻ',
       maxGuests: 3,
-      price: 1550000,
-      priceText: '1.550.000 ₫/đêm',
+      price: 1150000,
+      priceText: '1.150.000 ₫/đêm',
       highlights: 'Hạng Suite rộng rãi nhất cho cặp đôi/gia đình nhỏ, có bàn làm việc và khu tiếp khách riêng.'
     },
     {
@@ -86,8 +86,8 @@
       area: '20m²',
       capacity: '2 người lớn + 1 trẻ',
       maxGuests: 3,
-      price: 980000,
-      priceText: '980.000 ₫/đêm',
+      price: 790000,
+      priceText: '790.000 ₫/đêm',
       highlights: 'Ban công riêng nhìn ra phố núi, ngập tràn ánh sáng tự nhiên để thưởng trà ngắm sương.'
     }
   ];
@@ -112,7 +112,7 @@
     if (/^(xin chao|chao|hi|hello|alo|banla oi|shop oi|ad oi|le tan)(\s|$)/.test(q) && q.split(' ').length <= 4) {
       return 'Dạ Banla Boutique Hotel Đà Lạt kính chào quý khách! **Ngoài lạnh. Trong ấm.**\n' +
         'Banla có thể tư vấn nhanh cho quý khách về:\n' +
-        '- **7 hạng phòng & bảng giá** (950.000 ₫ – 1.850.000 ₫/đêm)\n' +
+        '- **7 hạng phòng & bảng giá** (700.000 ₫ – 1.240.000 ₫/đêm)\n' +
         '- Gợi ý phòng cho **cặp đôi, gia đình có bé nhỏ, nhóm 4 người**\n' +
         '- Khung giờ & ưu đãi 15% tại **The Roof Café & Cocktail Bar**\n' +
         '- Cách **đặt cọc VietQR** & nhận **Phiếu dấu đỏ + Mã Smart-Lock PIN 6 số**\n' +
@@ -127,11 +127,11 @@
       (q.indexOf('vo chong') !== -1 && (q.indexOf('be') !== -1 || q.indexOf('con') !== -1))
     ) {
       return 'Dạ với **2 người lớn và 1 bé**, Banla có **5 hạng phòng** đúng chuẩn sức chứa **2 NL + 1 trẻ**, rất ấm áp và thoải mái ạ:\n' +
-        '- **Élite Room (30m² · 1.250.000 ₫/đêm)**: Phòng gác mái gỗ trầm đặc trưng, có **bồn tắm nằm** và góc thư giãn riêng (được các gia đình có bé yêu thích nhất).\n' +
-        '- **Original Suite (35m² · 1.550.000 ₫/đêm)**: Không gian rộng rãi nhất, có khu vực tiếp khách thoải mái cho bé vui chơi.\n' +
-        '- **Banla Signature (28m² · 1.150.000 ₫/đêm)**: Tông xanh olive dịu mắt, trần gỗ ấm và yên tĩnh.\n' +
-        '- **Highland Room (28m² · 1.100.000 ₫/đêm)**: Trần gỗ cao thoáng, giường King êm ái đón nắng sớm.\n' +
-        '- **Deluxe Balcony (20m² · 980.000 ₫/đêm)**: Tiết kiệm, có ban công riêng thoáng sáng.\n\n' +
+        '- **Élite Room (30m² · 1.060.000 ₫/đêm)**: Phòng gác mái gỗ trầm đặc trưng, có **bồn tắm nằm** và góc thư giãn riêng (được các gia đình có bé yêu thích nhất).\n' +
+        '- **Original Suite (35m² · 1.150.000 ₫/đêm)**: Không gian rộng rãi nhất, có khu vực tiếp khách thoải mái cho bé vui chơi.\n' +
+        '- **Banla Signature (28m² · 970.000 ₫/đêm)**: Tông xanh olive dịu mắt, trần gỗ ấm và yên tĩnh.\n' +
+        '- **Highland Room (28m² · 880.000 ₫/đêm)**: Trần gỗ cao thoáng, giường King êm ái đón nắng sớm.\n' +
+        '- **Deluxe Balcony (20m² · 790.000 ₫/đêm)**: Tiết kiệm, có ban công riêng thoáng sáng.\n\n' +
         'Quý khách có thể chọn phòng và đặt ngay tại #contact (chọn **Cọc 50%** hoặc **Thanh toán 100% giảm 10%**) ạ!';
     }
 
@@ -147,8 +147,8 @@
       (q.indexOf('gia dinh') !== -1 && q.indexOf('1 be') === -1)
     ) {
       return 'Dạ với gia đình hoặc nhóm bạn **4 – 6 khách**, lựa chọn lý tưởng nhất tại Banla là:\n' +
-        '- **Connecting Room (35m² · 1.850.000 ₫/đêm)**: Thiết kế **2 không gian phòng thông nhau** tiện lợi, sức chứa **4 người lớn + 1–2 trẻ**, vừa gắn kết vừa đảm bảo sự riêng tư.\n' +
-        '- Ngoài ra nếu đi nhóm 2–3 bạn muốn nằm giường riêng, quý khách có thể chọn **Deluxe Twin (22m² · 2 giường đơn · 950.000 ₫/đêm)**.\n\n' +
+        '- **Connecting Room (35m² · 1.240.000 ₫/đêm)**: Thiết kế **2 không gian phòng thông nhau** tiện lợi, sức chứa **4 người lớn + 1–2 trẻ**, vừa gắn kết vừa đảm bảo sự riêng tư.\n' +
+        '- Ngoài ra nếu đi nhóm 2–3 bạn muốn nằm giường riêng, quý khách có thể chọn **Deluxe Twin (22m² · 2 giường đơn · 700.000 ₫/đêm)**.\n\n' +
         'Quý khách bấm vào #contact để đặt giữ phòng sớm nhé ạ!';
     }
 
@@ -156,7 +156,7 @@
     if (q.indexOf('elite') !== -1 || q.indexOf('gac mai') !== -1 || q.indexOf('bon tam') !== -1) {
       return 'Dạ **Élite Room** là hạng phòng gác mái biểu tượng của Banla ạ:\n' +
         '- **Diện tích & Sức chứa**: 30m² · 2 người lớn + 1 trẻ\n' +
-        '- **Giá niêm yết**: **1.250.000 ₫/đêm** (Thanh toán 100% giảm 10% còn **1.125.000 ₫/đêm**)\n' +
+        '- **Giá niêm yết**: **1.060.000 ₫/đêm** (Thanh toán 100% giảm 10% còn **954.000 ₫/đêm**)\n' +
         '- **Điểm nổi bật**: Trần gỗ trầm ấm áp, giường lớn, góc thư giãn riêng và **bồn tắm nằm** thư giãn.\n' +
         'Quý khách có thể đặt ngay tại #contact để giữ căn gác mái đẹp nhất ạ!';
     }
@@ -164,7 +164,7 @@
     if (q.indexOf('signature') !== -1 || q.indexOf('olive') !== -1) {
       return 'Dạ **Banla Signature** mang đậm tinh thần nghệ thuật tối giản của Banla:\n' +
         '- **Diện tích & Sức chứa**: 28m² · 2 người lớn + 1 trẻ\n' +
-        '- **Giá niêm yết**: **1.150.000 ₫/đêm** (Thanh toán 100% giảm 10% còn **1.035.000 ₫/đêm**)\n' +
+        '- **Giá niêm yết**: **970.000 ₫/đêm** (Thanh toán 100% giảm 10% còn **873.000 ₫/đêm**)\n' +
         '- **Điểm nổi bật**: Tường xanh olive thanh lịch, trần gỗ ấm và bố cục mở yên tĩnh.\n' +
         'Quý khách chọn hạng **Banla Signature** tại #contact nhé ạ!';
     }
@@ -172,7 +172,7 @@
     if (q.indexOf('highland') !== -1 || q.indexOf('huong nui') !== -1) {
       return 'Dạ **Highland Room** rất hợp với quý khách thích không gian thoáng đãng:\n' +
         '- **Diện tích & Sức chứa**: 28m² · 2 người lớn + 1 trẻ\n' +
-        '- **Giá niêm yết**: **1.100.000 ₫/đêm** (Thanh toán 100% giảm 10% còn **990.000 ₫/đêm**)\n' +
+        '- **Giá niêm yết**: **880.000 ₫/đêm** (Thanh toán 100% giảm 10% còn **792.000 ₫/đêm**)\n' +
         '- **Điểm nổi bật**: Trần gỗ cao thoáng với ánh đèn vàng ấm, giường King êm ái và cửa sổ đón nắng sớm.\n' +
         'Mời quý khách đặt phòng tại #contact ạ!';
     }
@@ -180,7 +180,7 @@
     if (q.indexOf('suite') !== -1 || q.indexOf('original') !== -1 || q.indexOf('lam viec') !== -1) {
       return 'Dạ **Original Suite** là hạng phòng rộng rãi và sang trọng cho cặp đôi hoặc khách công tác:\n' +
         '- **Diện tích & Sức chứa**: 35m² · 2 người lớn + 1 trẻ\n' +
-        '- **Giá niêm yết**: **1.550.000 ₫/đêm** (Thanh toán 100% giảm 10% còn **1.395.000 ₫/đêm**)\n' +
+        '- **Giá niêm yết**: **1.150.000 ₫/đêm** (Thanh toán 100% giảm 10% còn **1.035.000 ₫/đêm**)\n' +
         '- **Điểm nổi bật**: Không gian Suite rộng, bàn làm việc riêng, khu vực tiếp khách ấm cúng.\n' +
         'Quý khách đặt giữ phòng tại #contact nhé ạ!';
     }
@@ -188,14 +188,14 @@
     if (q.indexOf('twin') !== -1 || q.indexOf('2 giuong') !== -1 || q.indexOf('hai giuong') !== -1) {
       return 'Dạ **Deluxe Twin** là lựa chọn tiết kiệm và tiện nghi cho bạn bè hoặc đồng nghiệp:\n' +
         '- **Diện tích & Sức chứa**: 22m² · 2–3 người lớn (2 giường đơn êm ái)\n' +
-        '- **Giá niêm yết**: **950.000 ₫/đêm** (Thanh toán 100% giảm 10% còn **855.000 ₫/đêm**)\n' +
+        '- **Giá niêm yết**: **700.000 ₫/đêm** (Thanh toán 100% giảm 10% còn **630.000 ₫/đêm**)\n' +
         'Quý khách có thể đặt ngay tại #contact ạ!';
     }
 
     if (q.indexOf('balcony') !== -1 || q.indexOf('ban cong') !== -1) {
       return 'Dạ **Deluxe Balcony** dành cho quý khách thích ngồi ban công thưởng trà ngắm sương sớm:\n' +
         '- **Diện tích & Sức chứa**: 20m² · 2 người lớn + 1 trẻ\n' +
-        '- **Giá niêm yết**: **980.000 ₫/đêm** (Thanh toán 100% giảm 10% còn **882.000 ₫/đêm**)\n' +
+        '- **Giá niêm yết**: **790.000 ₫/đêm** (Thanh toán 100% giảm 10% còn **711.000 ₫/đêm**)\n' +
         '- **Điểm nổi bật**: Ban công riêng hướng phố núi thoáng đãng, tràn ngập ánh sáng tự nhiên.\n' +
         'Mời quý khách đặt tại #contact ạ!';
     }
@@ -245,19 +245,19 @@
     // 10. Bảng giá tổng hợp / tất cả các phòng / khuyến mãi
     if (q.indexOf('gia') !== -1 || q.indexOf('bao nhieu') !== -1 || q.indexOf('hang phong') !== -1 || q.indexOf('cac phong') !== -1 || q.indexOf('7 phong') !== -1 || q.indexOf('uu dai') !== -1 || q.indexOf('khuyen mai') !== -1 || q.indexOf('giam gia') !== -1) {
       return 'Dạ **bảng giá niêm yết 7 hạng phòng** tại Banla Boutique Hotel Đà Lạt:\n' +
-        '- **Deluxe Twin** (22m² · 2–3 NL · 2 giường đơn): **950.000 ₫/đêm**\n' +
-        '- **Deluxe Balcony** (20m² · 2 NL + 1 trẻ · Ban công): **980.000 ₫/đêm**\n' +
-        '- **Highland Room** (28m² · 2 NL + 1 trẻ · Trần gỗ cao): **1.100.000 ₫/đêm**\n' +
-        '- **Banla Signature** (28m² · 2 NL + 1 trẻ · Xanh olive): **1.150.000 ₫/đêm**\n' +
-        '- **Élite Room** (30m² · 2 NL + 1 trẻ · Gác mái, bồn tắm): **1.250.000 ₫/đêm**\n' +
-        '- **Original Suite** (35m² · 2 NL + 1 trẻ · Suite rộng): **1.550.000 ₫/đêm**\n' +
-        '- **Connecting Room** (35m² · 4 NL + 1–2 trẻ · 2 phòng thông nhau): **1.850.000 ₫/đêm**\n\n' +
+        '- **Deluxe Twin** (22m² · 2–3 NL · 2 giường đơn): **700.000 ₫/đêm**\n' +
+        '- **Deluxe Balcony** (20m² · 2 NL + 1 trẻ · Ban công): **790.000 ₫/đêm**\n' +
+        '- **Highland Room** (28m² · 2 NL + 1 trẻ · Trần gỗ cao): **880.000 ₫/đêm**\n' +
+        '- **Banla Signature** (28m² · 2 NL + 1 trẻ · Xanh olive): **970.000 ₫/đêm**\n' +
+        '- **Élite Room** (30m² · 2 NL + 1 trẻ · Gác mái, bồn tắm): **1.060.000 ₫/đêm**\n' +
+        '- **Original Suite** (35m² · 2 NL + 1 trẻ · Suite rộng): **1.150.000 ₫/đêm**\n' +
+        '- **Connecting Room** (35m² · 4 NL + 1–2 trẻ · 2 phòng thông nhau): **1.240.000 ₫/đêm**\n\n' +
         '**Ưu đãi đặt trực tiếp**: Giảm ngay **10%** khi chọn Thanh toán 100% qua VietQR và giảm **15%** đồ uống tại **The Roof**. Đặt ngay tại #contact ạ!';
     }
 
     // 11. Câu trả lời tổng quát khi câu hỏi mở (vẫn đầy đủ thông tin hữu ích, không bao giờ báo lỗi)
     return 'Dạ cảm ơn quý khách đã quan tâm đến **Banla Boutique Hotel Đà Lạt** (47 Nguyễn Đình Chiểu, Phường 9)!\n' +
-      '- **7 hạng phòng boutique**: Giá từ **950.000 ₫ – 1.850.000 ₫/đêm** (Sức chứa từ 2 khách, gia đình 2 NL + 1 bé đến nhóm 4–6 khách).\n' +
+      '- **7 hạng phòng boutique**: Giá từ **700.000 ₫ – 1.240.000 ₫/đêm** (Sức chứa từ 2 khách, gia đình 2 NL + 1 bé đến nhóm 4–6 khách).\n' +
       '- **Ưu đãi đặt trực tiếp**: Cọc 50% giữ phòng hoặc **Thanh toán 100% giảm ngay 10%**, tặng kèm **ưu đãi 15% tại The Roof Café & Cocktail Bar**.\n' +
       '- **Nhận phòng thông minh**: Nhận ngay **Phiếu xác nhận Dấu Đỏ** và **Mã Smart-Lock PIN 6 số** sau khi đối soát VietQR.\n\n' +
       'Quý khách có thể đặt phòng trực tiếp tại #contact hoặc liên hệ **Hotline ' + HOTLINE + ' – ' + HOTLINE_ALT + '** / [Fanpage Banla 24/7](' + FANPAGE + ') để lễ tân hỗ trợ ngay ạ!';

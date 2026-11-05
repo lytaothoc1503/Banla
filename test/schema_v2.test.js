@@ -43,17 +43,17 @@ test('v2: tạo đơn cọc 50% — giá do CSDL tự tính', async () => {
   const b = await createBooking('anon', { room: 'signature', ci: day(10), co: day(12), option: 'deposit_50' });
   assert.match(b.booking_code, /^BL[0-9A-Z]{6}$/);
   assert.strictEqual(Number(b.nights), 2);
-  assert.strictEqual(Number(b.total_amount), 2300000);
+  assert.strictEqual(Number(b.total_amount), 1940000);
   assert.strictEqual(Number(b.discount_amount), 0);
-  assert.strictEqual(Number(b.amount_due), 1150000);
-  assert.strictEqual(Number(b.remaining_at_checkin), 1150000);
+  assert.strictEqual(Number(b.amount_due), 970000);
+  assert.strictEqual(Number(b.remaining_at_checkin), 970000);
 });
 
 test('v2: tạo đơn trả 100% — giảm đúng 10%', async () => {
   const b = await createBooking('anon', { room: 'suite', ci: day(20), co: day(23), option: 'pay_100' });
-  assert.strictEqual(Number(b.total_amount), 4650000);
-  assert.strictEqual(Number(b.discount_amount), 465000);
-  assert.strictEqual(Number(b.amount_due), 4185000);
+  assert.strictEqual(Number(b.total_amount), 3450000);
+  assert.strictEqual(Number(b.discount_amount), 345000);
+  assert.strictEqual(Number(b.amount_due), 3105000);
   assert.strictEqual(Number(b.remaining_at_checkin), 0);
 });
 
@@ -107,7 +107,7 @@ test('v2 (G2): tra đơn cần đúng mã + đúng SĐT; chưa trả tiền thì
 
 test('v2 (G4/D8): cọc 50% — trả thiếu vẫn pending, đủ mới paid, chống ghi trùng, duyệt mới có PIN', async () => {
   const b = await createBooking('anon', { phone: '0933000111', room: 'elite', ci: day(70), co: day(72), option: 'deposit_50' });
-  const code = b.booking_code; // tổng 2.500.000, phải cọc 1.250.000
+  const code = b.booking_code; // tổng 2.120.000, phải cọc 1.060.000
 
   // Duyệt khi chưa có tiền → bị từ chối
   await assert.rejects(as('service_role', "select banla.approve_booking($1, '482917', 'le_tan')", [code]), /Chưa nhận đủ tiền/);
@@ -123,12 +123,12 @@ test('v2 (G4/D8): cọc 50% — trả thiếu vẫn pending, đủ mới paid, c
   s = (await as('anon', 'select * from public.banla_booking_status($1,$2)', [code, '0933000111'])).rows[0];
   assert.strictEqual(Number(s.paid_amount), 1000000);
 
-  // Chuyển nốt 250.000 → đủ cọc → paid, nhưng CHƯA có PIN vì chưa duyệt
-  await as('service_role', "select banla.record_payment($1, 250000, 'TX-002')", [code]);
+  // Chuyển nốt 60.000 → đủ cọc → paid, nhưng CHƯA có PIN vì chưa duyệt
+  await as('service_role', "select banla.record_payment($1, 60000, 'TX-002')", [code]);
   s = (await as('anon', 'select * from public.banla_booking_status($1,$2)', [code, '0933000111'])).rows[0];
   assert.strictEqual(s.payment_status, 'paid');
-  assert.strictEqual(Number(s.paid_amount), 1250000);
-  assert.strictEqual(Number(s.remaining_amount), 1250000, 'Cọc 50%: còn 50% trả khi nhận phòng, không bị ghi thành 100%');
+  assert.strictEqual(Number(s.paid_amount), 1060000);
+  assert.strictEqual(Number(s.remaining_amount), 1060000, 'Cọc 50%: còn 50% trả khi nhận phòng, không bị ghi thành 100%');
   assert.strictEqual(s.smartlock_pin, null);
 
   // Duyệt → có PIN
@@ -154,7 +154,7 @@ test('v2: ràng buộc CSDL cấm gắn PIN cho đơn chưa thanh toán (kể c�
 
 test('v2: hủy đơn xóa PIN và giải phóng phòng', async () => {
   const b = await createBooking('anon', { room: 'suite', ci: day(100), co: day(102), phone: '0977000222', option: 'pay_100' });
-  await as('service_role', "select banla.record_payment($1, 2790000, 'TX-SUITE')", [b.booking_code]);
+  await as('service_role', "select banla.record_payment($1, 2070000, 'TX-SUITE')", [b.booking_code]);
   await as('service_role', "select banla.approve_booking($1, '765432', 'le_tan')", [b.booking_code]);
   await as('service_role', "select banla.cancel_booking($1, 'Khách đổi lịch')", [b.booking_code]);
   const s = (await as('anon', 'select * from public.banla_booking_status($1,$2)', [b.booking_code, '0977000222'])).rows[0];

@@ -42,7 +42,7 @@ test('Lễ tân AI (POST /api/chat): trả lời chính xác câu hỏi "Phòng 
 
 test('Lễ tân AI (POST /api/chat): tư vấn giá phòng, The Roof, đặt cọc VietQR, Smart-Lock PIN và đường đi', async () => {
   const questions = [
-    { q: 'Bảng giá các hạng phòng bên mình thế nào?', expect: '950.000' },
+    { q: 'Bảng giá các hạng phòng bên mình thế nào?', expect: '700.000' },
     { q: 'Quầy cà phê The Roof mở cửa mấy giờ?', expect: '08:00' },
     { q: 'Cách đặt cọc VietQR và ưu đãi thanh toán 100%?', expect: '0352554863' },
     { q: 'Nhận phòng bằng khóa Smart-Lock PIN như thế nào?', expect: '6 số' },
@@ -131,17 +131,17 @@ test('Server-side Booking (D11) & Payment Session (D16): tự động tính giá
   const savedList = JSON.parse(fs.readFileSync(tmp, 'utf8'));
   const saved = savedList.find((b) => b.id === id);
   assert.ok(saved);
-  assert.strictEqual(saved.unitPrice, 1550000);
+  assert.strictEqual(saved.unitPrice, 1150000);
   assert.strictEqual(saved.nights, 2);
-  assert.strictEqual(saved.totalPrice, 3100000);
+  assert.strictEqual(saved.totalPrice, 2300000);
   assert.strictEqual(saved.paymentOption, 'pay_100');
-  assert.strictEqual(saved.discountAmount, 310000);
-  assert.strictEqual(saved.depositAmount, 2790000);
+  assert.strictEqual(saved.discountAmount, 230000);
+  assert.strictEqual(saved.depositAmount, 2070000);
 
   const resSession = await fetch(`${base}/api/banla/session/create`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ bookingId: 'BL9821', amount: 2790000 })
+    body: JSON.stringify({ bookingId: 'BL9821', amount: 2070000 })
   });
   assert.strictEqual(resSession.status, 201);
   const sessionJson = await resSession.json();

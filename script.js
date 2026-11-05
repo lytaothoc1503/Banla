@@ -10,17 +10,17 @@
 const BANLA_STORAGE_KEY = 'BANLA_BOOKINGS_STORE';
 
 const ROOM_PRICES = {
-  'Élite Room': 1250000,
-  'Attic Room': 1250000,
-  'Banla Signature': 1150000,
-  'Highland Room': 1100000,
-  'King Room Hướng Núi': 1100000,
-  'Connecting Room': 1850000,
-  'Deluxe Twin': 950000,
-  'Original Suite': 1550000,
-  'Suite Hướng Núi': 1550000,
-  'Deluxe Balcony': 980000,
-  'Deluxe với Ban công': 980000
+  'Élite Room': 1060000,
+  'Attic Room': 1060000,
+  'Banla Signature': 970000,
+  'Highland Room': 880000,
+  'King Room Hướng Núi': 880000,
+  'Connecting Room': 1240000,
+  'Deluxe Twin': 700000,
+  'Original Suite': 1150000,
+  'Suite Hướng Núi': 1150000,
+  'Deluxe Balcony': 790000,
+  'Deluxe với Ban công': 790000
 };
 
 function getSiteRoot() {
@@ -109,7 +109,7 @@ window.addEventListener('scroll', () => {
 
 // Helper: Calculate nights & total amount
 function calculateStaySummary(roomName, checkinStr, checkoutStr, paymentOption = 'deposit_50') {
-  const unitPrice = ROOM_PRICES[roomName] || 1150000;
+  const unitPrice = ROOM_PRICES[roomName] || 970000;
   let nights = 1;
   if (checkinStr && checkoutStr) {
     const d1 = new Date(checkinStr);
@@ -184,7 +184,7 @@ async function saveBookingToSupabase(bookingObj) {
         guests: Number(bookingObj.guests) || 2,
         check_in: checkInIso,
         check_out: checkOutIso,
-        total_amount: Number(bookingObj.totalPrice) || 1150000,
+        total_amount: Number(bookingObj.totalPrice) || 970000,
         paid_amount: 0,
         payment_status: 'pending',
         booking_status: 'pending',

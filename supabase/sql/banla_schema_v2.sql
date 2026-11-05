@@ -58,13 +58,13 @@ create table if not exists banla.rooms (
 
 -- ⚠ inventory = 1 cho mỗi hạng là GIẢ ĐỊNH. Chủ khách sạn cần sửa đúng số phòng thực tế.
 insert into banla.rooms (code, name, unit_price, max_guests, inventory) values
-  ('elite',      'Élite Room',      1250000, 3, 1),
-  ('signature',  'Banla Signature', 1150000, 3, 1),
-  ('highland',   'Highland Room',   1100000, 3, 1),
-  ('connecting', 'Connecting Room', 1850000, 6, 1),
-  ('twin',       'Deluxe Twin',      950000, 3, 1),
-  ('suite',      'Original Suite',  1550000, 3, 1),
-  ('balcony',    'Deluxe Balcony',   980000, 3, 1)
+  ('elite',      'Élite Room',      1060000, 3, 1),
+  ('signature',  'Banla Signature',  970000, 3, 1),
+  ('highland',   'Highland Room',    880000, 3, 1),
+  ('connecting', 'Connecting Room', 1240000, 6, 1),
+  ('twin',       'Deluxe Twin',      700000, 3, 1),
+  ('suite',      'Original Suite',  1150000, 3, 1),
+  ('balcony',    'Deluxe Balcony',   790000, 3, 1)
 on conflict (code) do update
   set name = excluded.name,
       unit_price = excluded.unit_price,
