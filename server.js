@@ -263,7 +263,7 @@ app.post('/api/booking', bookingLimiter, async (req, res) => {
     const q = (booking.room || '').toLowerCase();
     return q && (String(r.id).toLowerCase() === q || String(r.name).toLowerCase() === q || q.includes(String(r.id).toLowerCase()));
   });
-  const unitPrice = Number(matchedRoom?.price) || 1150000;
+  const unitPrice = Number(matchedRoom?.price) || 970000;
   let nights = 1;
   if (booking.checkin && booking.checkout) {
     const diffDays = Math.round((Date.parse(booking.checkout) - Date.parse(booking.checkin)) / 86400000);
@@ -668,13 +668,13 @@ THÔNG TIN CHÍNH THỨC — BANLA BOUTIQUE HOTEL ĐÀ LẠT
 - Email: concact@banlaboutiquedalat.com · Instagram @banla.boutiquehotel · TikTok @banlaboutiquehotel
 - Nhận phòng từ 14:00, trả phòng trước 12:00. Đổi lịch/nhận phòng sớm: báo trước tối thiểu 72 giờ.
 - 7 hạng phòng (giá niêm yết/đêm):
-  1. Élite Room (gác mái, trần gỗ, bồn tắm nằm) — 30m², 2 NL + 1 trẻ — 1.250.000 ₫
-  2. Banla Signature (tường xanh olive, trần gỗ) — 28m², 2 NL + 1 trẻ — 1.150.000 ₫
-  3. Highland Room (trần gỗ cao, giường King) — 28m², 2 NL + 1 trẻ — 1.100.000 ₫
-  4. Connecting Room (2 phòng thông nhau, gia đình) — 35m², 4 NL + 1–2 trẻ — 1.850.000 ₫
-  5. Deluxe Twin (2 giường đơn) — 22m², 2–3 NL — 950.000 ₫
-  6. Original Suite (rộng, bàn làm việc, khu tiếp khách) — 35m², 2 NL + 1 trẻ — 1.550.000 ₫
-  7. Deluxe Balcony (ban công riêng hướng phố) — 20m², 2 NL + 1 trẻ — 980.000 ₫
+  1. Élite Room (gác mái, trần gỗ, bồn tắm nằm) — 30m², 2 NL + 1 trẻ — 1.060.000 ₫
+  2. Banla Signature (tường xanh olive, trần gỗ) — 28m², 2 NL + 1 trẻ — 970.000 ₫
+  3. Highland Room (trần gỗ cao, giường King) — 28m², 2 NL + 1 trẻ — 880.000 ₫
+  4. Connecting Room (2 phòng thông nhau, gia đình) — 35m², 4 NL + 1–2 trẻ — 1.240.000 ₫
+  5. Deluxe Twin (2 giường đơn) — 22m², 2–3 NL — 700.000 ₫
+  6. Original Suite (rộng, bàn làm việc, khu tiếp khách) — 35m², 2 NL + 1 trẻ — 1.150.000 ₫
+  7. Deluxe Balcony (ban công riêng hướng phố) — 20m², 2 NL + 1 trẻ — 790.000 ₫
 - The Roof by Banla (tầng thượng): Café & trà 08:00–16:00; Cocktail & Wine Bar 16:00–00:00. Khách đặt trực tiếp giảm 15% đồ uống.
 - Bữa sáng: phở, bánh mì xíu mại, món Á – Âu, cà phê rang xay.
 - Đặt phòng trên website: chọn Cọc 50% (phần còn lại trả khi check-in) hoặc Thanh toán 100% (giảm ngay 10%). Thanh toán qua VietQR ngân hàng MB Bank (STK 0352554863 — BANLA BOUTIQUE HOTEL), nội dung BANLA_MÃĐƠN. Sau khi đối soát sẽ nhận Phiếu xác nhận có dấu đỏ và mã Smart-Lock PIN 6 số (hiệu lực 14:00 Check-in → 12:00 Check-out).
@@ -700,18 +700,18 @@ function buildSmartConciergeReply(question) {
     q.includes('gia dinh nho')
   ) {
     return 'Dạ với **2 người lớn và 1 bé**, Banla có **5 hạng phòng** đúng chuẩn sức chứa **2 NL + 1 trẻ**, rất ấm áp và thoải mái ạ:\n' +
-      '- **Élite Room (30m² · 1.250.000 ₫/đêm)**: Phòng gác mái gỗ trầm đặc trưng, có **bồn tắm nằm** và góc thư giãn riêng.\n' +
-      '- **Original Suite (35m² · 1.550.000 ₫/đêm)**: Không gian rộng rãi nhất, có khu vực tiếp khách thoải mái cho bé.\n' +
-      '- **Banla Signature (28m² · 1.150.000 ₫/đêm)**: Tông xanh olive dịu mắt, trần gỗ ấm và yên tĩnh.\n' +
-      '- **Highland Room (28m² · 1.100.000 ₫/đêm)**: Trần gỗ cao thoáng, giường King êm ái đón nắng sớm.\n' +
-      '- **Deluxe Balcony (20m² · 980.000 ₫/đêm)**: Tiết kiệm, có ban công riêng thoáng sáng.\n\n' +
+      '- **Élite Room (30m² · 1.060.000 ₫/đêm)**: Phòng gác mái gỗ trầm đặc trưng, có **bồn tắm nằm** và góc thư giãn riêng.\n' +
+      '- **Original Suite (35m² · 1.150.000 ₫/đêm)**: Không gian rộng rãi nhất, có khu vực tiếp khách thoải mái cho bé.\n' +
+      '- **Banla Signature (28m² · 970.000 ₫/đêm)**: Tông xanh olive dịu mắt, trần gỗ ấm và yên tĩnh.\n' +
+      '- **Highland Room (28m² · 880.000 ₫/đêm)**: Trần gỗ cao thoáng, giường King êm ái đón nắng sớm.\n' +
+      '- **Deluxe Balcony (20m² · 790.000 ₫/đêm)**: Tiết kiệm, có ban công riêng thoáng sáng.\n\n' +
       'Quý khách có thể chọn phòng và đặt ngay tại #contact (chọn **Cọc 50%** hoặc **Thanh toán 100% giảm 10%**) ạ!';
   }
 
   if (q.includes('4 nguoi') || q.includes('4 khach') || q.includes('nhom ban') || q.includes('connecting') || q.includes('thong nhau')) {
     return 'Dạ với gia đình hoặc nhóm bạn **4 – 6 khách**, lựa chọn lý tưởng nhất tại Banla là:\n' +
-      '- **Connecting Room (35m² · 1.850.000 ₫/đêm)**: Thiết kế **2 không gian phòng thông nhau** tiện lợi, sức chứa **4 người lớn + 1–2 trẻ**, vừa gắn kết vừa đảm bảo sự riêng tư.\n' +
-      '- Ngoài ra nếu đi nhóm 2–3 bạn muốn nằm giường riêng, quý khách có thể chọn **Deluxe Twin (22m² · 2 giường đơn · 950.000 ₫/đêm)**.\n\n' +
+      '- **Connecting Room (35m² · 1.240.000 ₫/đêm)**: Thiết kế **2 không gian phòng thông nhau** tiện lợi, sức chứa **4 người lớn + 1–2 trẻ**, vừa gắn kết vừa đảm bảo sự riêng tư.\n' +
+      '- Ngoài ra nếu đi nhóm 2–3 bạn muốn nằm giường riêng, quý khách có thể chọn **Deluxe Twin (22m² · 2 giường đơn · 700.000 ₫/đêm)**.\n\n' +
       'Quý khách bấm vào #contact để đặt giữ phòng sớm nhé ạ!';
   }
 
@@ -738,13 +738,13 @@ function buildSmartConciergeReply(question) {
   }
 
   return 'Dạ **bảng giá niêm yết 7 hạng phòng** tại Banla Boutique Hotel Đà Lạt (47 Nguyễn Đình Chiểu, Phường 9):\n' +
-    '- **Deluxe Twin** (22m² · 2–3 NL · 2 giường đơn): **950.000 ₫/đêm**\n' +
-    '- **Deluxe Balcony** (20m² · 2 NL + 1 trẻ · Ban công): **980.000 ₫/đêm**\n' +
-    '- **Highland Room** (28m² · 2 NL + 1 trẻ · Trần gỗ cao): **1.100.000 ₫/đêm**\n' +
-    '- **Banla Signature** (28m² · 2 NL + 1 trẻ · Xanh olive): **1.150.000 ₫/đêm**\n' +
-    '- **Élite Room** (30m² · 2 NL + 1 trẻ · Gác mái, bồn tắm): **1.250.000 ₫/đêm**\n' +
-    '- **Original Suite** (35m² · 2 NL + 1 trẻ · Suite rộng): **1.550.000 ₫/đêm**\n' +
-    '- **Connecting Room** (35m² · 4 NL + 1–2 trẻ · 2 phòng thông nhau): **1.850.000 ₫/đêm**\n\n' +
+    '- **Deluxe Twin** (22m² · 2–3 NL · 2 giường đơn): **700.000 ₫/đêm**\n' +
+    '- **Deluxe Balcony** (20m² · 2 NL + 1 trẻ · Ban công): **790.000 ₫/đêm**\n' +
+    '- **Highland Room** (28m² · 2 NL + 1 trẻ · Trần gỗ cao): **880.000 ₫/đêm**\n' +
+    '- **Banla Signature** (28m² · 2 NL + 1 trẻ · Xanh olive): **970.000 ₫/đêm**\n' +
+    '- **Élite Room** (30m² · 2 NL + 1 trẻ · Gác mái, bồn tắm): **1.060.000 ₫/đêm**\n' +
+    '- **Original Suite** (35m² · 2 NL + 1 trẻ · Suite rộng): **1.150.000 ₫/đêm**\n' +
+    '- **Connecting Room** (35m² · 4 NL + 1–2 trẻ · 2 phòng thông nhau): **1.240.000 ₫/đêm**\n\n' +
     'Quý khách đặt trực tiếp tại #contact được **giảm 10%** khi thanh toán 100% qua VietQR và **giảm 15%** tại **The Roof** ạ!';
 }
 
