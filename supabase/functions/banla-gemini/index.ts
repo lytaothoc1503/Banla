@@ -40,19 +40,18 @@ THÔNG TIN CHÍNH THỨC — BANLA BOUTIQUE HOTEL ĐÀ LẠT
 - Slogan: "Ngoài lạnh. Trong ấm." — tên Banla lấy cảm hứng từ chiếc bàn là đồng xưa ủi phẳng cái se lạnh phố núi.
 - Hotline 24/7: 0296.9996.999 – 0352554863. Fanpage Facebook: https://www.facebook.com/Banlaboutiquedalat/
 - Email: concact@banlaboutiquedalat.com · Instagram @banla.boutiquehotel
-- Nhận phòng từ 14:00, trả phòng trước 12:00. Đổi lịch/nhận phòng sớm: báo trước tối thiểu 72 giờ.
-- 7 hạng phòng (giá tham khảo/đêm):
-  1. Élite Room (gác mái, trần gỗ, bồn tắm) — 30m², 2 NL + 1 trẻ — 1.060.000 ₫
-  2. Banla Signature (tường xanh olive, trần gỗ) — 28m², 2 NL + 1 trẻ — 970.000 ₫
-  3. Highland Room (trần gỗ cao, giường King) — 28m², 2 NL + 1 trẻ — 880.000 ₫
-  4. Connecting Room (2 phòng thông nhau, gia đình) — 35m², 4 NL + 1–2 trẻ — 1.240.000 ₫
-  5. Deluxe Twin (2 giường đơn) — 22m², 2–3 NL — 700.000 ₫
-  6. Original Suite (rộng, bàn làm việc, khu tiếp khách) — 35m², 2 NL + 1 trẻ — 1.150.000 ₫
-  7. Deluxe Balcony (ban công riêng hướng phố) — 20m², 2 NL + 1 trẻ — 790.000 ₫
-- The Roof by Banla (tầng thượng): Café & trà 08:00–16:00; Cocktail & Wine Bar 16:00–00:00. Khách đặt trực tiếp giảm 15% đồ uống.
+- Nhận phòng từ 14:00, trả phòng trước 12:00. Đổi lịch: báo trước tối thiểu 72 giờ. Lưu trú từ 3 đêm: hỗ trợ nhận phòng sớm từ 12:00 (tuỳ phòng trống).
+- 7 hạng phòng (giá niêm yết/đêm):
+  1. Deluxe Twin — 22m², 2–3 NL — 700.000 ₫
+  2. Deluxe Balcony — 20m², 2 NL + 1 trẻ — 790.000 ₫
+  3. Highland Room — 28m², 2 NL + 1 trẻ — 880.000 ₫
+  4. Banla Signature — 28m², 2 NL + 1 trẻ — 970.000 ₫
+  5. Élite Room (gác mái, bồn tắm nằm) — 30m², 2 NL + 1 trẻ — 1.060.000 ₫
+  6. Original Suite — 35m², 2 NL + 1 trẻ — 1.150.000 ₫
+  7. Connecting Room (2 phòng thông nhau) — 35m², 4 NL + 1–2 trẻ — 1.240.000 ₫
+- The Roof by Banla (tầng thượng): Café & trà 08:00–16:00; Cocktail & Wine Bar 16:00–00:00. Khách đặt trên website giảm 15% đồ uống; gói từ 3 đêm tặng 02 đồ uống chào mừng (tuỳ phục vụ).
 - Bữa sáng: phở, bánh mì xíu mại, món Á – Âu, cà phê rang xay.
-- Ưu đãi: Đặt sớm trước 14 ngày giảm 10%; Long Stay từ 3 đêm: hỗ trợ nhận phòng sớm 12:00 (tuỳ phòng trống), tặng 02 đồ uống tại The Roof.
-- Đặt phòng trên website: chọn Cọc 50% (phần còn lại trả khi check-in) hoặc Thanh toán 100% (giảm 10%). Thanh toán bằng VietQR, nội dung chuyển khoản BANLA_MÃĐƠN. Sau khi đối soát sẽ nhận Phiếu xác nhận có dấu đỏ và mã Smart-Lock PIN 6 số (hiệu lực từ giờ check-in đến check-out). Gửi biên lai qua Fanpage Facebook để đối soát nhanh.
+- Đặt phòng trên website: Cọc 50% (phần còn lại trả khi check-in) hoặc Thanh toán 100% (giảm ngay 10%). Không có ưu đãi “đặt sớm trước 14 ngày” ngoài hai lựa chọn trên. Thanh toán VietQR MB Bank STK 0352554863 — BANLA BOUTIQUE HOTEL, nội dung BANLA_MÃĐƠN. Sau đối soát: Phiếu dấu đỏ + Smart-Lock PIN 6 số (14:00 check-in → 12:00 check-out). Gửi biên lai qua Fanpage Facebook.
 - Hỗ trợ đặt xe đưa đón sân bay Liên Khương, limousine Đà Lạt – Nha Trang (135 km qua đèo Khánh Lê).
 `.trim();
 

@@ -660,93 +660,28 @@ app.use('/api/banla', banlaPaymentRouter);
 // ==========================================
 // BANLA AI CONCIERGE ("BÀN LÀ · LỄ TÂN AI")
 // ==========================================
+const { buildSmartConciergeReply } = require('./banla-concierge-knowledge');
+
 const HOTEL_FACTS_PROMPT = `
 THÔNG TIN CHÍNH THỨC — BANLA BOUTIQUE HOTEL ĐÀ LẠT
 - Địa chỉ: 47 Nguyễn Đình Chiểu, Phường 9, TP. Đà Lạt. Cách Hồ Xuân Hương, Vườn Hoa Thành Phố, Chợ Đà Lạt khoảng 5–7 phút; cách sân bay Liên Khương ~30 km (~35 phút).
 - Slogan: "Ngoài lạnh. Trong ấm." — tên Banla lấy cảm hứng từ chiếc bàn là đồng xưa ủi phẳng cái se lạnh phố núi.
 - Hotline 24/7: 0296.9996.999 – 0352554863. Fanpage Facebook: https://www.facebook.com/Banlaboutiquedalat/
 - Email: concact@banlaboutiquedalat.com · Instagram @banla.boutiquehotel
-- Nhận phòng từ 14:00, trả phòng trước 12:00. Đổi lịch/nhận phòng sớm: báo trước tối thiểu 72 giờ.
+- Nhận phòng từ 14:00, trả phòng trước 12:00. Đổi lịch: báo trước tối thiểu 72 giờ. Lưu trú từ 3 đêm: hỗ trợ nhận phòng sớm từ 12:00 (tuỳ phòng trống).
 - 7 hạng phòng (giá niêm yết/đêm):
-  1. Élite Room (gác mái, trần gỗ, bồn tắm nằm) — 30m², 2 NL + 1 trẻ — 1.060.000 ₫
-  2. Banla Signature (tường xanh olive, trần gỗ) — 28m², 2 NL + 1 trẻ — 970.000 ₫
-  3. Highland Room (trần gỗ cao, giường King) — 28m², 2 NL + 1 trẻ — 880.000 ₫
-  4. Connecting Room (2 phòng thông nhau, gia đình) — 35m², 4 NL + 1–2 trẻ — 1.240.000 ₫
-  5. Deluxe Twin (2 giường đơn) — 22m², 2–3 NL — 700.000 ₫
-  6. Original Suite (rộng, bàn làm việc, khu tiếp khách) — 35m², 2 NL + 1 trẻ — 1.150.000 ₫
-  7. Deluxe Balcony (ban công riêng hướng phố) — 20m², 2 NL + 1 trẻ — 790.000 ₫
-- The Roof by Banla (tầng thượng): Café & trà 08:00–16:00; Cocktail & Wine Bar 16:00–00:00. Khách đặt trực tiếp giảm 15% đồ uống.
+  1. Deluxe Twin — 22m², 2–3 NL — 700.000 ₫
+  2. Deluxe Balcony — 20m², 2 NL + 1 trẻ — 790.000 ₫
+  3. Highland Room — 28m², 2 NL + 1 trẻ — 880.000 ₫
+  4. Banla Signature — 28m², 2 NL + 1 trẻ — 970.000 ₫
+  5. Élite Room (gác mái, bồn tắm nằm) — 30m², 2 NL + 1 trẻ — 1.060.000 ₫
+  6. Original Suite — 35m², 2 NL + 1 trẻ — 1.150.000 ₫
+  7. Connecting Room (2 phòng thông nhau) — 35m², 4 NL + 1–2 trẻ — 1.240.000 ₫
+- The Roof by Banla (tầng thượng): Café & trà 08:00–16:00; Cocktail & Wine Bar 16:00–00:00. Khách đặt trên website giảm 15% đồ uống; gói từ 3 đêm tặng 02 đồ uống chào mừng (tuỳ phục vụ).
 - Bữa sáng: phở, bánh mì xíu mại, món Á – Âu, cà phê rang xay.
-- Đặt phòng trên website: chọn Cọc 50% (phần còn lại trả khi check-in) hoặc Thanh toán 100% (giảm ngay 10%). Thanh toán qua VietQR ngân hàng MB Bank (STK 0352554863 — BANLA BOUTIQUE HOTEL), nội dung BANLA_MÃĐƠN. Sau khi đối soát sẽ nhận Phiếu xác nhận có dấu đỏ và mã Smart-Lock PIN 6 số (hiệu lực 14:00 Check-in → 12:00 Check-out).
+- Đặt phòng trên website: Cọc 50% (phần còn lại trả khi check-in) hoặc Thanh toán 100% (giảm ngay 10%). Không có ưu đãi “đặt sớm trước 14 ngày” ngoài hai lựa chọn trên. Thanh toán VietQR MB Bank STK 0352554863 — BANLA BOUTIQUE HOTEL, nội dung BANLA_MÃĐƠN. Sau đối soát: Phiếu dấu đỏ + Smart-Lock PIN 6 số (14:00 check-in → 12:00 check-out). Gửi biên lai qua Fanpage Facebook.
+- Hỗ trợ đặt xe đưa đón sân bay Liên Khương, limousine Đà Lạt – Nha Trang (135 km qua đèo Khánh Lê).
 `.trim();
-
-function normalizeViText(str) {
-  return String(str || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function buildSmartConciergeReply(question) {
-  const q = normalizeViText(question);
-
-  if (
-    (q.includes('2 nguoi lon') && (q.includes('1 be') || q.includes('1 tre') || q.includes('em be') || q.includes('con nho'))) ||
-    q.includes('2 nl') ||
-    q.includes('gia dinh nho')
-  ) {
-    return 'Dạ với **2 người lớn và 1 bé**, Banla có **5 hạng phòng** đúng chuẩn sức chứa **2 NL + 1 trẻ**, rất ấm áp và thoải mái ạ:\n' +
-      '- **Élite Room (30m² · 1.060.000 ₫/đêm)**: Phòng gác mái gỗ trầm đặc trưng, có **bồn tắm nằm** và góc thư giãn riêng.\n' +
-      '- **Original Suite (35m² · 1.150.000 ₫/đêm)**: Không gian rộng rãi nhất, có khu vực tiếp khách thoải mái cho bé.\n' +
-      '- **Banla Signature (28m² · 970.000 ₫/đêm)**: Tông xanh olive dịu mắt, trần gỗ ấm và yên tĩnh.\n' +
-      '- **Highland Room (28m² · 880.000 ₫/đêm)**: Trần gỗ cao thoáng, giường King êm ái đón nắng sớm.\n' +
-      '- **Deluxe Balcony (20m² · 790.000 ₫/đêm)**: Tiết kiệm, có ban công riêng thoáng sáng.\n\n' +
-      'Quý khách có thể chọn phòng và đặt ngay tại #contact (chọn **Cọc 50%** hoặc **Thanh toán 100% giảm 10%**) ạ!';
-  }
-
-  if (q.includes('4 nguoi') || q.includes('4 khach') || q.includes('nhom ban') || q.includes('connecting') || q.includes('thong nhau')) {
-    return 'Dạ với gia đình hoặc nhóm bạn **4 – 6 khách**, lựa chọn lý tưởng nhất tại Banla là:\n' +
-      '- **Connecting Room (35m² · 1.240.000 ₫/đêm)**: Thiết kế **2 không gian phòng thông nhau** tiện lợi, sức chứa **4 người lớn + 1–2 trẻ**, vừa gắn kết vừa đảm bảo sự riêng tư.\n' +
-      '- Ngoài ra nếu đi nhóm 2–3 bạn muốn nằm giường riêng, quý khách có thể chọn **Deluxe Twin (22m² · 2 giường đơn · 700.000 ₫/đêm)**.\n\n' +
-      'Quý khách bấm vào #contact để đặt giữ phòng sớm nhé ạ!';
-  }
-
-  if (q.includes('roof') || q.includes('tang thuong') || q.includes('cafe') || q.includes('ca phe') || q.includes('cocktail') || q.includes('wine') || q.includes('bar')) {
-    return 'Dạ **The Roof by Banla** nằm trên tầng thượng của khách sạn với tầm nhìn trọn phố núi mờ sương ạ:\n' +
-      '- **Café & Trà nóng**: **08:00 – 16:00** hàng ngày\n' +
-      '- **Cocktail & Wine Bar**: **16:00 – 00:00** hàng ngày\n' +
-      '- **Đặc quyền khách lưu trú**: Giảm trực tiếp **15% tổng hóa đơn đồ uống** tại The Roof khi đặt phòng trên website.\n' +
-      'Quý khách đặt phòng tại #contact để nhận ngay ưu đãi nhé!';
-  }
-
-  if (q.includes('vietqr') || q.includes('dat coc') || q.includes('coc') || q.includes('thanh toan') || q.includes('chuyen khoan') || q.includes('dau do') || q.includes('pin') || q.includes('smart lock')) {
-    return 'Dạ quy trình **Đặt phòng – VietQR – Nhận Phiếu Dấu Đỏ & Mã Smart-Lock** tại Banla rất minh bạch:\n' +
-      '- **Bước 1**: Điền thông tin tại #contact và chọn **Cọc 50% tổng đơn** hoặc **Thanh toán 100% (giảm ngay 10%)**.\n' +
-      '- **Bước 2**: Quét mã VietQR ngân hàng **MB Bank (STK 0352554863 — BANLA BOUTIQUE HOTEL)** với nội dung `BANLA_MÃĐƠN`.\n' +
-      '- **Bước 3**: Sau khi đối soát biên lai qua Fanpage Facebook Banla, hệ thống cấp **Phiếu xác nhận có Dấu Đỏ chính thức** và **Mã Smart-Lock PIN 6 số** (hiệu lực 14:00 Check-in → 12:00 Check-out).';
-  }
-
-  if (q.includes('san bay') || q.includes('lien khuong') || q.includes('dia chi') || q.includes('o dau') || q.includes('duong di') || q.includes('bao xa') || q.includes('ho xuan huong')) {
-    return 'Dạ vị trí và di chuyển đến **Banla Boutique Hotel Đà Lạt**:\n' +
-      '- **Địa chỉ**: **47 Nguyễn Đình Chiểu, Phường 9, TP. Đà Lạt**.\n' +
-      '- **Kết nối trung tâm**: Chỉ **5–7 phút** tới **Hồ Xuân Hương, Vườn Hoa Thành Phố và Chợ Đêm Đà Lạt**.\n' +
-      '- **Từ sân bay Liên Khương**: Khoảng **30 km (~35 phút đi ô tô)**. Lễ tân hỗ trợ đặt xe đưa đón sân bay và limousine tuyến **Đà Lạt – Nha Trang (135 km)** qua Hotline **0296.9996.999 – 0352554863** ạ!';
-  }
-
-  return 'Dạ **bảng giá niêm yết 7 hạng phòng** tại Banla Boutique Hotel Đà Lạt (47 Nguyễn Đình Chiểu, Phường 9):\n' +
-    '- **Deluxe Twin** (22m² · 2–3 NL · 2 giường đơn): **700.000 ₫/đêm**\n' +
-    '- **Deluxe Balcony** (20m² · 2 NL + 1 trẻ · Ban công): **790.000 ₫/đêm**\n' +
-    '- **Highland Room** (28m² · 2 NL + 1 trẻ · Trần gỗ cao): **880.000 ₫/đêm**\n' +
-    '- **Banla Signature** (28m² · 2 NL + 1 trẻ · Xanh olive): **970.000 ₫/đêm**\n' +
-    '- **Élite Room** (30m² · 2 NL + 1 trẻ · Gác mái, bồn tắm): **1.060.000 ₫/đêm**\n' +
-    '- **Original Suite** (35m² · 2 NL + 1 trẻ · Suite rộng): **1.150.000 ₫/đêm**\n' +
-    '- **Connecting Room** (35m² · 4 NL + 1–2 trẻ · 2 phòng thông nhau): **1.240.000 ₫/đêm**\n\n' +
-    'Quý khách đặt trực tiếp tại #contact được **giảm 10%** khi thanh toán 100% qua VietQR và **giảm 15%** tại **The Roof** ạ!';
-}
 
 app.post('/api/chat', async (req, res) => {
   try {
@@ -827,4 +762,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { app, validateBooking, getRoomsData };
+module.exports = { app, validateBooking, getRoomsData, buildSmartConciergeReply };

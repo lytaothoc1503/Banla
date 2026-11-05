@@ -11,8 +11,12 @@ process.env.ADMIN_KEY = 'TEST_ADMIN_KEY_2026_xyz';
 process.env.BANLA_WEBHOOK_SECRET = 'test_webhook_secret_2026';
 
 const { app, buildSmartConciergeReply } = require('../server');
+const knowledge = require('../banla-concierge-knowledge');
 let server;
 let base;
+
+assert.strictEqual(typeof buildSmartConciergeReply, 'function');
+assert.strictEqual(buildSmartConciergeReply, knowledge.buildSmartConciergeReply);
 
 before(() => new Promise((resolve) => {
   server = app.listen(0, () => {
@@ -46,7 +50,9 @@ test('Lễ tân AI (POST /api/chat): tư vấn giá phòng, The Roof, đặt c�
     { q: 'Quầy cà phê The Roof mở cửa mấy giờ?', expect: '08:00' },
     { q: 'Cách đặt cọc VietQR và ưu đãi thanh toán 100%?', expect: '0352554863' },
     { q: 'Nhận phòng bằng khóa Smart-Lock PIN như thế nào?', expect: '6 số' },
-    { q: 'Từ sân bay Liên Khương về khách sạn bao xa?', expect: '47 Nguyễn Đình Chiểu' }
+    { q: 'Từ sân bay Liên Khương về khách sạn bao xa?', expect: '47 Nguyễn Đình Chiểu' },
+    { q: 'Giờ check-in check-out bên mình?', expect: '14:00' },
+    { q: 'Đặt sớm trước 14 ngày có giảm thêm không?', expect: '700.000', reject: '14 ngày giảm' }
   ];
 
   for (const item of questions) {
@@ -59,7 +65,24 @@ test('Lễ tân AI (POST /api/chat): tư vấn giá phòng, The Roof, đặt c�
     const data = await res.json();
     assert.ok(data.answer.includes(item.expect), `Câu hỏi "${item.q}" phải chứa "${item.expect}"`);
     assert.ok(!data.answer.includes('Trợ lý AI tạm thời chưa sẵn sàng'));
+    if (item.reject) {
+      assert.ok(!data.answer.includes(item.reject), `Không được hứa "${item.reject}"`);
+    }
   }
+});
+
+test('Lễ tân AI knowledge: không nhầm wifi/làm việc thành Suite; cocktail không kích hoạt cọc sai', () => {
+  const wifi = buildSmartConciergeReply('Tôi muốn làm việc remote, wifi thế nào?');
+  assert.ok(wifi.includes('WiFi'), wifi);
+  assert.ok(!wifi.includes('Original Suite'), 'Không được đẩy Suite chỉ vì chữ làm việc');
+
+  const roof = buildSmartConciergeReply('Quầy cocktail The Roof mở đến mấy giờ?');
+  assert.ok(roof.includes('16:00'), roof);
+  assert.ok(roof.includes('The Roof'), roof);
+
+  const early = buildSmartConciergeReply('Đặt sớm trước 14 ngày có giảm 10% không?');
+  assert.ok(early.includes('Thanh toán 100% giảm 10%') || early.includes('700.000'), early);
+  assert.ok(!/đặt sớm trước 14 ngày giảm/i.test(early));
 });
 
 test('Lễ tân AI (POST /api/chat): câu hỏi rỗng -> 400', async () => {
@@ -103,12 +126,18 @@ test('Lễ tân AI (Client-side banla-concierge.js): hoạt động độc lập
     body: { appendChild: () => {} }
   };
 
+  global.BanlaConciergeKnowledge = knowledge;
   require('../banla-concierge.js');
   assert.ok(windowObj.BanlaConcierge, 'window.BanlaConcierge phải được khởi tạo');
   const reply = windowObj.BanlaConcierge.replyLocal('Phòng nào hợp cho 2 người lớn và 1 bé?');
   assert.ok(reply.includes('2 người lớn và 1 bé'));
   assert.ok(reply.includes('Original Suite'));
   assert.ok(!reply.includes('Trợ lý AI tạm thời chưa sẵn sàng'));
+  assert.strictEqual(
+    windowObj.BanlaConcierge.replyLocal('Bảng giá'),
+    buildSmartConciergeReply('Bảng giá'),
+    'Client local và server knowledge phải cùng một bộ trả lời'
+  );
 });
 
 test('Server-side Booking (D11) & Payment Session (D16): tự động tính giá phòng, cọc 50% / giảm 10% và STK 0352554863', async () => {
