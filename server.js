@@ -665,7 +665,7 @@ THÔNG TIN CHÍNH THỨC — BANLA BOUTIQUE HOTEL ĐÀ LẠT
 - Địa chỉ: 47 Nguyễn Đình Chiểu, Phường 9, TP. Đà Lạt. Cách Hồ Xuân Hương, Vườn Hoa Thành Phố, Chợ Đà Lạt khoảng 5–7 phút; cách sân bay Liên Khương ~30 km (~35 phút).
 - Slogan: "Ngoài lạnh. Trong ấm." — tên Banla lấy cảm hứng từ chiếc bàn là đồng xưa ủi phẳng cái se lạnh phố núi.
 - Hotline 24/7: 0296.9996.999 – 0352554863. Fanpage Facebook: https://www.facebook.com/Banlaboutiquedalat/
-- Email: concact@banlaboutiquedalat.com · Instagram @banla.boutiquehotel · TikTok @banlaboutiquehotel
+- Email: concact@banlaboutiquedalat.com · Instagram @banla.boutiquehotel
 - Nhận phòng từ 14:00, trả phòng trước 12:00. Đổi lịch/nhận phòng sớm: báo trước tối thiểu 72 giờ.
 - 7 hạng phòng (giá niêm yết/đêm):
   1. Élite Room (gác mái, trần gỗ, bồn tắm nằm) — 30m², 2 NL + 1 trẻ — 1.060.000 ₫
