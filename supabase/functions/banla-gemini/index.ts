@@ -64,6 +64,7 @@ Quy tắc:
 - Gợi ý hạng phòng phù hợp theo số khách, ngân sách và nhu cầu (cặp đôi, gia đình, công tác).
 - Câu hỏi ngoài phạm vi khách sạn và du lịch Đà Lạt: từ chối nhẹ nhàng và quay lại chủ đề lưu trú.
 - Trả lời tối đa khoảng 120 từ, dùng gạch đầu dòng khi liệt kê.
+- Nếu khách nhắc Chị Mya: trả lời trêu vui, ấm, vẫn chỉ dùng dữ kiện khách sạn bên dưới, không bịa giá.
 
 ${HOTEL_FACTS}
 `.trim();
@@ -154,6 +155,27 @@ Deno.serve(async (req) => {
   const mode = clean(body.mode, 20);
 
   try {
+    if (mode === "log") {
+      const question = clean(body.question, 800);
+      const reply = clean(body.reply, 2000);
+      if (question && reply && !/\d{13,19}/.test(question + reply)) {
+        const url = Deno.env.get("SUPABASE_URL") || "";
+        const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+        if (url && key) {
+          await fetch(`${url.replace(/\/+$/, "")}/rest/v1/banla_concierge_turns`, {
+            method: "POST",
+            headers: {
+              apikey: key,
+              Authorization: `Bearer ${key}`,
+              "Content-Type": "application/json",
+              Prefer: "return=minimal",
+            },
+            body: JSON.stringify({ question, reply, source: "gemini" }),
+          }).catch(() => {});
+        }
+      }
+      return json({ ok: true }, 200, origin);
+    }
     if (mode === "chat") {
       if (rateLimited(`chat:${ip}`, RATE_MAX_CHAT)) {
         return json({ error: "Quý khách gửi hơi nhanh, vui lòng thử lại sau ít phút." }, 429, origin);
@@ -175,7 +197,8 @@ Deno.serve(async (req) => {
         contents,
         generationConfig: { temperature: 0.4, maxOutputTokens: 600 },
       });
-      return json({ reply: text || "Xin lỗi, Banla chưa trả lời được. Quý khách vui lòng gọi Hotline 0296.9996.999." }, 200, origin);
+      const spoken = text || "Dạ Banla đang nghe. Quý khách hỏi tiếp về phòng, giá hoặc The Roof, hoặc gọi Hotline 0296.9996.999 ạ.";
+      return json({ reply: spoken }, 200, origin);
     }
 
     if (mode === "content" || mode === "image") {

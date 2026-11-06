@@ -169,6 +169,37 @@ function isGreeting(q) {
   return /^(xin chao|chao|hi|hello|alo|banla oi|shop oi|ad oi|le tan)(\s|$)/.test(q) && q.split(' ').length <= 4;
 }
 
+function replyForChiMya(q) {
+  if (!q.includes('mya')) return '';
+  if (q.includes('du kien') || q.includes('du dinh') || q.includes('ke hoach')) {
+    return (
+      'Dạ **Chị Mya dự kiến** ghé Đà Lạt thì Banla giữ sẵn góc ấm nhất. Anh chủ nhà đang trêu: "Chị Mya chốt ngày chưa, hay để Banla đợi thêm một tách trà?"\n' +
+      'Phòng nhận từ **14:00**, trả trước **12:00**. Chị Mya chọn ngày tại #contact là Banla trải giường liền ạ.'
+    );
+  }
+  if (q.includes('tim phong') || q.includes('phong tai') || (q.includes('phong') && q.includes('dau'))) {
+    return (
+      'Dạ **Chị Mya đang tìm phòng** thì tìm đúng **Banla Boutique Hotel**, **47 Nguyễn Đình Chiểu, Phường 9, Đà Lạt**. Banla mách nhỏ: phòng tường olive **Banla Signature** hợp Chị Mya — yên, trần gỗ, có chỗ ngồi uống trà.\n' +
+      'Đặt giúp Chị Mya tại #contact nhé ạ.'
+    );
+  }
+  if (q.includes('an com') || q.includes('an sang') || q.includes('doi bung')) {
+    return (
+      'Dạ Banla hỏi lại cho vui: **Chị Mya ăn cơm chưa?** Bếp Banla có phở, bánh mì xíu mại và cà phê rang xay. Chưa ăn thì ghé bàn ấm; ăn rồi thì lên **The Roof** uống gì nóng, phố núi đang lạnh.\n' +
+      'Banla không để Chị Mya đói đâu ạ.'
+    );
+  }
+  if (q.includes('giau') || q.includes('nhieu tien')) {
+    return (
+      'Dạ Banla không đếm ví ai hết. **Chị Mya giàu chưa** thì Banla chỉ thấy Chị Mya giàu sự chiều chuộng: trả đủ trên web được **giảm 10%**, đồ uống **The Roof giảm 15%**. Giàu một chuyến Đà Lạt ấm là đủ làm anh chủ nhà chịu thua ạ.'
+    );
+  }
+  return (
+    'Dạ Banla nghe tới **Chị Mya** là cười trước đã. Chị Mya cần phòng, bữa ăn hay chỉ muốn bị trêu một câu, Banla đều có lời.\n' +
+    'Hỏi tiếp đi ạ, hoặc đặt giúp Chị Mya tại #contact.'
+  );
+}
+
 function buildSmartConciergeReply(question) {
   const raw = String(question || '').trim();
   const q = normalizeVi(raw);
@@ -180,6 +211,9 @@ function buildSmartConciergeReply(question) {
       'Quý khách đang đi Đà Lạt mấy người ạ?'
     );
   }
+
+  const myaReply = replyForChiMya(q);
+  if (myaReply) return myaReply;
 
   if (isGreeting(q)) {
     return (

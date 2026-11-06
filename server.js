@@ -707,6 +707,11 @@ app.post('/api/chat', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Thiếu câu hỏi của khách hàng.' });
     }
 
+    if (/mya/i.test(question)) {
+      const myaReply = buildSmartConciergeReply(question);
+      return res.json({ success: true, source: 'chi_mya', reply: myaReply, answer: myaReply });
+    }
+
     const geminiKey = (process.env.GEMINI_API_KEY || '').trim();
     if (geminiKey) {
       try {
