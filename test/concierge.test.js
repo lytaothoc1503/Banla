@@ -85,6 +85,29 @@ test('Lễ tân AI knowledge: không nhầm wifi/làm việc thành Suite; cockt
   assert.ok(!/đặt sớm trước 14 ngày giảm/i.test(early));
 });
 
+test('Lễ tân AI: bấm gợi ý Chị Mya có đối thoại trêu, câu lạ vẫn có lời', async () => {
+  const chips = [
+    ['Chị Mya dự kiến', 'chốt ngày'],
+    ['Chị Mya đang tìm phòng tại?', '47 Nguyễn Đình Chiểu'],
+    ['Chị Mya ăn cơm chưa', 'ăn cơm chưa'],
+    ['Chị Mya giàu chưa', 'chiều chuộng']
+  ];
+  for (const [q, expectBit] of chips) {
+    const res = await fetch(`${base}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q })
+    });
+    assert.strictEqual(res.status, 200);
+    const data = await res.json();
+    assert.strictEqual(data.source, 'chi_mya');
+    assert.ok(data.reply.includes('Chị Mya'), data.reply);
+    assert.ok(data.reply.toLowerCase().includes(expectBit.toLowerCase()), data.reply);
+  }
+  const other = buildSmartConciergeReply('kể một câu chuyện không liên quan gì');
+  assert.ok(other && other.includes('Banla'));
+});
+
 test('Lễ tân AI (POST /api/chat): câu hỏi rỗng -> 400', async () => {
   const res = await fetch(`${base}/api/chat`, {
     method: 'POST',

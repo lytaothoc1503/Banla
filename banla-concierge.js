@@ -217,6 +217,32 @@
     var typing = addBubble('model', '…');
     typing.classList.add('bc-typing');
 
+    function rememberCloud(question, reply) {
+      var sbUrl = supabaseEndpoint();
+      if (!sbUrl) return;
+      var key = readConfig('BANLA_GEMINI_KEY') || readConfig('BANLA_SUPABASE_ANON_KEY');
+      var headers = { 'Content-Type': 'application/json' };
+      if (key) { headers.apikey = key; headers.Authorization = 'Bearer ' + key; }
+      tryFetchJson(sbUrl, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({ mode: 'log', question: question, reply: reply })
+      }, 2500).catch(function () { /* nhật ký đám mây là phụ, câu trả lời đã hiện */ });
+    }
+
+    if (/mya/i.test(text)) {
+      var myaReply = generateLocalConciergeReply(text) || 'Dạ Banla đang nghe Chị Mya đây ạ.';
+      typing.remove();
+      history.push({ role: 'model', text: myaReply });
+      saveHistory();
+      addBubble('model', myaReply);
+      rememberCloud(text, myaReply);
+      busy = false;
+      sendBtn.disabled = false;
+      input.focus();
+      return;
+    }
+
     var payload = JSON.stringify({ mode: 'chat', messages: history });
 
     // Bước 1: Thử gọi `/api/chat` trên Express Server (nếu đang chạy backend Node)
@@ -249,13 +275,24 @@
         return generateLocalConciergeReply(text);
       })
       .then(function (reply) {
+        var spoken = String(reply || '').trim() || generateLocalConciergeReply(text);
         typing.remove();
-        history.push({ role: 'model', text: reply });
+        history.push({ role: 'model', text: spoken });
         saveHistory();
-        addBubble('model', reply);
+        addBubble('model', spoken);
+        rememberCloud(text, spoken);
         busy = false;
         sendBtn.disabled = false;
         input.focus();
+      })
+      .catch(function () {
+        var spoken = generateLocalConciergeReply(text);
+        try { typing.remove(); } catch (e) { /* bubble đã gỡ */ }
+        history.push({ role: 'model', text: spoken });
+        saveHistory();
+        addBubble('model', spoken);
+        busy = false;
+        sendBtn.disabled = false;
       });
   }
 
