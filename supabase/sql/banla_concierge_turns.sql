@@ -1,4 +1,4 @@
--- Nhật ký lễ tân AI. Không lưu số thẻ.
+-- Lưu lượt hội thoại để lễ tân xem lại; không cấp quyền trực tiếp cho client.
 create table if not exists public.banla_concierge_turns (
   id bigint generated always as identity primary key,
   question text not null,

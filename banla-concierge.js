@@ -1,39 +1,16 @@
-/* Banla × Gemini — Trợ lý lễ tân AI "Bàn Là".
-   Ưu tiên kết nối:
-     1. Backend nội bộ `/api/chat` (khi chạy trên Node.js Express server)
-     2. Supabase Edge Function `banla-gemini` (khi đã deploy lên Supabase)
-     3. Bộ tri thức thông minh tích hợp sẵn `BANLA_SMART_CONCIERGE` (luôn hoạt động 24/7 trên cả GitHub Pages / banlaboutiquedalat.com mà không bao giờ báo lỗi "Trợ lý AI tạm thời chưa sẵn sàng"). */
+/* Banla × Gemini — Trợ lý lễ tân AI "Bàn Là". */
 (function () {
   'use strict';
 
-  var knowledge =
-    (typeof BanlaConciergeKnowledge !== 'undefined' && BanlaConciergeKnowledge) ||
-    (typeof require === 'function' ? require('./banla-concierge-knowledge') : null);
-
-  var HOTLINE = (knowledge && knowledge.HOTLINE) || '0296.9996.999';
-  var HOTLINE_ALT = (knowledge && knowledge.HOTLINE_ALT) || '0352554863';
-  var FANPAGE = (knowledge && knowledge.FANPAGE) || 'https://www.facebook.com/Banlaboutiquedalat/';
   var STORE_KEY = 'banla_concierge_history_v1';
+  var MAX_HISTORY_MESSAGES = 20;
   var SUGGESTIONS = [
-    'Chị Mya dự kiến',
-    'Chị Mya đang tìm phòng tại?',
-    'Chị Mya ăn cơm chưa',
-    'Chị Mya giàu chưa'
+    'Phòng nào hợp cho 2 người lớn và 1 bé?',
+    'Bảng giá 7 hạng phòng tại Banla?',
+    'Giờ mở cửa và ưu đãi The Roof?',
+    'Cách đặt cọc VietQR & nhận mã PIN Smart-Lock?',
+    'Từ sân bay Liên Khương về khách sạn bao xa?'
   ];
-
-  /* Tri thức lễ tân dùng chung với /api/chat (banla-concierge-knowledge.js). */
-  function generateLocalConciergeReply(question) {
-    if (knowledge && typeof knowledge.buildSmartConciergeReply === 'function') {
-      return knowledge.buildSmartConciergeReply(question);
-    }
-    return (
-      'Dạ Banla Boutique Hotel sẵn sàng hỗ trợ quý khách. Vui lòng hỏi về hạng phòng, giá, The Roof, VietQR hoặc gọi Hotline **' +
-      HOTLINE +
-      ' – ' +
-      HOTLINE_ALT +
-      '** ạ!'
-    );
-  }
 
   function readConfig(name) {
     try { return window[name] || localStorage.getItem(name) || ''; } catch (e) { return window[name] || ''; }
@@ -63,10 +40,20 @@
   }
 
   var history = [];
-  try { history = JSON.parse(sessionStorage.getItem(STORE_KEY) || '[]').slice(-12); } catch (e) { history = []; }
+  try {
+    var savedHistory = JSON.parse(sessionStorage.getItem(STORE_KEY) || '[]');
+    if (Array.isArray(savedHistory)) {
+      history = savedHistory.filter(function (message) {
+        return message && (message.role === 'user' || message.role === 'model')
+          && typeof message.text === 'string' && message.text.trim();
+      }).map(function (message) {
+        return { role: message.role, text: message.text.slice(0, 2000) };
+      }).slice(-MAX_HISTORY_MESSAGES);
+    }
+  } catch (e) { history = []; }
 
   function saveHistory() {
-    try { sessionStorage.setItem(STORE_KEY, JSON.stringify(history.slice(-12))); } catch (e) { /* ignore */ }
+    try { sessionStorage.setItem(STORE_KEY, JSON.stringify(history.slice(-MAX_HISTORY_MESSAGES))); } catch (e) { /* storage may be unavailable */ }
   }
 
   /* ---------- Giao diện ---------- */
@@ -90,10 +77,10 @@
       '<div class="bc-chips"></div>' +
       '<form class="bc-form">' +
         '<label class="bc-sr" for="bcInput">Câu hỏi của quý khách</label>' +
-        '<textarea id="bcInput" class="bc-input" rows="1" maxlength="800" placeholder="Hỏi về phòng, giá, The Roof, đường đi..."></textarea>' +
+        '<textarea id="bcInput" class="bc-input" rows="1" maxlength="800" placeholder="Cứ hỏi tự nhiên về kỳ nghỉ của quý khách..."></textarea>' +
         '<button type="submit" class="bc-send" aria-label="Gửi câu hỏi">➤</button>' +
       '</form>' +
-      '<p class="bc-note">Tư vấn theo dữ liệu chính thức của Banla. Xác nhận phòng trống qua Hotline ' + HOTLINE + ' - ' + HOTLINE_ALT + '.</p>' +
+      '<p class="bc-note">Gemini tư vấn theo dữ liệu chính thức của Banla. Hội thoại có thể được lưu để hỗ trợ lễ tân; vui lòng không gửi thông tin cá nhân. Xác nhận phòng trống qua Hotline 0296.9996.999 - 0352554863.</p>' +
     '</section>';
   document.body.appendChild(root);
 
@@ -124,14 +111,14 @@
       b.type = 'button';
       b.className = 'bc-chip';
       b.textContent = q;
-      b.addEventListener('click', function () { ask(q); });
+      b.addEventListener('click', function () { return ask(q); });
       chips.appendChild(b);
     });
   }
 
   function renderHistory() {
     log.innerHTML = '';
-    addBubble('model', 'Xin chào quý khách! Banla có thể tư vấn **hạng phòng**, **giá**, **The Roof**, đường đi và cách **đặt cọc VietQR**. Quý khách cần hỗ trợ gì ạ?');
+    addBubble('model', 'Xin chào quý khách! Quý khách có thể nhập câu hỏi theo cách tự nhiên; các gợi ý bên dưới chỉ để bắt đầu nhanh ạ.');
     history.forEach(function (m) { addBubble(m.role, m.text); });
     renderChips();
   }
@@ -161,11 +148,11 @@
     input.style.height = Math.min(input.scrollHeight, 110) + 'px';
   });
   input.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(input.value); }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); return ask(input.value); }
   });
   form.addEventListener('submit', function (e) {
     e.preventDefault();
-    ask(input.value);
+    return ask(input.value);
   });
 
   function tryFetchJson(url, options, timeoutMs) {
@@ -202,6 +189,48 @@
     });
   }
 
+  function requestGeminiReply(messages) {
+    var endpoint = supabaseEndpoint();
+    if (!endpoint) return Promise.reject(new Error('Gemini endpoint is not configured.'));
+
+    var key = readConfig('BANLA_GEMINI_KEY') || readConfig('BANLA_SUPABASE_ANON_KEY');
+    var headers = { 'Content-Type': 'application/json' };
+    if (key) {
+      headers.apikey = key;
+      headers.Authorization = 'Bearer ' + key;
+    }
+
+    return tryFetchJson(endpoint, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({ mode: 'chat', messages: messages.slice(-MAX_HISTORY_MESSAGES) })
+    }, 15000).then(function (data) {
+      var reply = String(data && data.reply || '').trim();
+      if (!reply) throw new Error('Gemini returned an empty reply.');
+      return reply;
+    });
+  }
+
+  function rememberCloud(question, reply) {
+    var endpoint = supabaseEndpoint();
+    if (!endpoint) return;
+
+    var key = readConfig('BANLA_GEMINI_KEY') || readConfig('BANLA_SUPABASE_ANON_KEY');
+    var headers = { 'Content-Type': 'application/json' };
+    if (key) {
+      headers.apikey = key;
+      headers.Authorization = 'Bearer ' + key;
+    }
+
+    tryFetchJson(endpoint, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({ mode: 'log', question: question, reply: reply })
+    }, 2500).catch(function (error) {
+      console.warn('Banla conversation memory could not be saved:', error.status || error.message);
+    });
+  }
+
   function ask(raw) {
     var text = String(raw || '').trim().slice(0, 800);
     if (!text || busy) return;
@@ -217,90 +246,31 @@
     var typing = addBubble('model', '…');
     typing.classList.add('bc-typing');
 
-    function rememberCloud(question, reply) {
-      var sbUrl = supabaseEndpoint();
-      if (!sbUrl) return;
-      var key = readConfig('BANLA_GEMINI_KEY') || readConfig('BANLA_SUPABASE_ANON_KEY');
-      var headers = { 'Content-Type': 'application/json' };
-      if (key) { headers.apikey = key; headers.Authorization = 'Bearer ' + key; }
-      tryFetchJson(sbUrl, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify({ mode: 'log', question: question, reply: reply })
-      }, 2500).catch(function () { /* nhật ký đám mây là phụ, câu trả lời đã hiện */ });
-    }
-
-    if (/mya/i.test(text)) {
-      var myaReply = generateLocalConciergeReply(text) || 'Dạ Banla đang nghe Chị Mya đây ạ.';
-      typing.remove();
-      history.push({ role: 'model', text: myaReply });
-      saveHistory();
-      addBubble('model', myaReply);
-      rememberCloud(text, myaReply);
-      busy = false;
-      sendBtn.disabled = false;
-      input.focus();
-      return;
-    }
-
-    var payload = JSON.stringify({ mode: 'chat', messages: history });
-
-    // Bước 1: Thử gọi `/api/chat` trên Express Server (nếu đang chạy backend Node)
-    tryFetchJson('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: payload
-    }, 3500)
-      .catch(function () {
-        // Bước 2: Thử gọi Supabase Edge Function `banla-gemini` (nếu đã deploy)
-        var sbUrl = supabaseEndpoint();
-        if (!sbUrl) throw new Error('no_edge_endpoint');
-        var key = readConfig('BANLA_GEMINI_KEY') || readConfig('BANLA_SUPABASE_ANON_KEY');
-        var headers = { 'Content-Type': 'application/json' };
-        if (key) { headers.apikey = key; headers.Authorization = 'Bearer ' + key; }
-        return tryFetchJson(sbUrl, {
-          method: 'POST',
-          headers: headers,
-          body: payload
-        }, 5000);
-      })
-      .then(function (data) {
-        var reply = String((data && (data.reply || data.answer)) || '').trim();
-        if (!reply) reply = generateLocalConciergeReply(text);
+    return requestGeminiReply(history)
+      .then(function (reply) {
+        typing.remove();
+        history.push({ role: 'model', text: reply });
+        saveHistory();
+        addBubble('model', reply);
+        rememberCloud(text, reply);
         return reply;
       })
-      .catch(function () {
-        // Bước 3: Fallback mượt mà sang Trí tuệ Lễ tân Nội bộ (Smart Knowledge Engine)
-        // Đảm bảo trên GitHub Pages / banlaboutiquedalat.com luôn trả lời ngay lập tức, chuẩn xác 100%
-        return generateLocalConciergeReply(text);
-      })
-      .then(function (reply) {
-        var spoken = String(reply || '').trim() || generateLocalConciergeReply(text);
+      .catch(function (error) {
         typing.remove();
-        history.push({ role: 'model', text: spoken });
-        saveHistory();
-        addBubble('model', spoken);
-        rememberCloud(text, spoken);
+        addBubble('model', 'Bàn Là hiện chưa kết nối được với Gemini nên chưa thể trả lời câu hỏi này. Quý khách vui lòng thử gửi lại sau ít phút ạ.', true);
+        console.error('Banla Gemini request failed:', error);
+        return null;
+      })
+      .then(function (result) {
         busy = false;
         sendBtn.disabled = false;
         input.focus();
-      })
-      .catch(function () {
-        var spoken = generateLocalConciergeReply(text);
-        try { typing.remove(); } catch (e) { /* bubble đã gỡ */ }
-        history.push({ role: 'model', text: spoken });
-        saveHistory();
-        addBubble('model', spoken);
-        busy = false;
-        sendBtn.disabled = false;
+        return result;
       });
   }
 
-  // Экспорт helper cho kiểm thử tự động nếu cần
   window.BanlaConcierge = {
     ask: ask,
-    replyLocal: generateLocalConciergeReply,
-    rooms: null,
-    knowledge: knowledge
+    rooms: null
   };
 })();
