@@ -227,6 +227,9 @@
       discountAmount,
       remainingAmount,
       paymentOption,
+      roomName: options.roomName || options.room || '',
+      checkin: options.checkin || '',
+      checkout: options.checkout || '',
       memo,
       bankId,
       accountNo,
@@ -399,33 +402,52 @@
     }, 2500);
   }
 
+  function paymentPayload(provider) {
+    return {
+      action: 'checkout',
+      bookingId: currentSession && currentSession.bookingId,
+      provider,
+      roomName: currentSession && currentSession.roomName,
+      checkin: currentSession && currentSession.checkin,
+      checkout: currentSession && currentSession.checkout,
+      paymentOption: currentSession && currentSession.paymentOption,
+      amount: currentSession && currentSession.amount
+    };
+  }
+
   async function startCard(provider) {
     const msg = document.getElementById('banlaCardMsg');
     const buttons = document.querySelectorAll('[data-card-provider]');
     buttons.forEach((btn) => { btn.disabled = true; });
     if (msg) {
       msg.style.display = 'block';
-      msg.textContent = 'Đang chuyển sang trang bảo mật của cổng thanh toán...';
+      msg.textContent = 'Đang mở trang nhập thẻ của cổng thanh toán...';
     }
+    const body = paymentPayload(provider);
+    const endpoints = ['/api/payments/card/checkout'];
+    const remote = window.BANLA_PAYMENT_ENDPOINT || 'https://hcikbpvzbzottxoitujl.supabase.co/functions/v1/banla-payment';
+    if (remote) endpoints.push(remote);
+    let lastMessage = '';
     try {
-      const res = await fetch('/api/payments/card/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bookingId: currentSession && currentSession.bookingId,
-          provider
-        })
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data && isHostedGatewayUrl(data.redirectUrl)) {
-        window.location.assign(data.redirectUrl);
-        return;
+      for (let i = 0; i < endpoints.length; i++) {
+        const headers = { 'Content-Type': 'application/json' };
+        if (i > 0 && window.BANLA_GEMINI_KEY) {
+          headers.apikey = window.BANLA_GEMINI_KEY;
+          headers.Authorization = 'Bearer ' + window.BANLA_GEMINI_KEY;
+        }
+        const res = await fetch(endpoints[i], { method: 'POST', headers, body: JSON.stringify(body) });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data && isHostedGatewayUrl(data.redirectUrl)) {
+          window.location.assign(data.redirectUrl);
+          return;
+        }
+        if (data && data.message) lastMessage = data.message;
       }
       if (msg) {
-        msg.textContent = (data && data.message) || 'Không mở được trang thanh toán. Banla không thu thập số thẻ trên trang này.';
+        msg.textContent = lastMessage || 'Chưa mở được trang nhập thẻ. Cổng PayPal/OnePay cần được cấu hình trên máy chủ.';
       }
     } catch (err) {
-      if (msg) msg.textContent = 'Không kết nối được máy chủ thanh toán. Banla không thu thập số thẻ trên trang này.';
+      if (msg) msg.textContent = 'Không kết nối được cổng thanh toán. Quý khách thử lại sau.';
     }
     buttons.forEach((btn) => { btn.disabled = false; });
   }
