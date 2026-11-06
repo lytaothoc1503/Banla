@@ -27,47 +27,66 @@ before(() => new Promise((resolve) => {
 
 after(() => server.close());
 
-test('Lễ tân AI (POST /api/chat): trả lời chính xác câu hỏi "Phòng nào hợp cho 2 người lớn và 1 bé?" và không bao giờ báo lỗi "tạm thời chưa sẵn sàng"', async () => {
-  const res = await fetch(`${base}/api/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question: 'Phòng nào hợp cho 2 người lớn và 1 bé?' })
-  });
-  assert.strictEqual(res.status, 200);
-  const data = await res.json();
-  assert.strictEqual(data.success, true);
-  assert.ok(typeof data.answer === 'string' && data.answer.length > 40);
-  assert.ok(!data.answer.includes('Trợ lý AI tạm thời chưa sẵn sàng'), 'Không được trả về lỗi fallback cũ');
-  assert.ok(
-    data.answer.includes('Original Suite') || data.answer.includes('Élite Room') || data.answer.includes('Connecting'),
-    'Phải gợi ý các hạng phòng phù hợp cho gia đình 2 người lớn + 1 bé'
-  );
-});
-
-test('Lễ tân AI (POST /api/chat): tư vấn giá phòng, The Roof, đặt cọc VietQR, Smart-Lock PIN và đường đi', async () => {
-  const questions = [
-    { q: 'Bảng giá các hạng phòng bên mình thế nào?', expect: '700.000' },
-    { q: 'Quầy cà phê The Roof mở cửa mấy giờ?', expect: '08:00' },
-    { q: 'Cách đặt cọc VietQR và ưu đãi thanh toán 100%?', expect: '0352554863' },
-    { q: 'Nhận phòng bằng khóa Smart-Lock PIN như thế nào?', expect: '6 số' },
-    { q: 'Từ sân bay Liên Khương về khách sạn bao xa?', expect: '47 Nguyễn Đình Chiểu' },
-    { q: 'Giờ check-in check-out bên mình?', expect: '14:00' },
-    { q: 'Đặt sớm trước 14 ngày có giảm thêm không?', expect: '700.000', reject: '14 ngày giảm' }
-  ];
-
-  for (const item of questions) {
+test('Lễ tân AI (POST /api/chat): không có Gemini thì báo dịch vụ chưa cấu hình, không trả lời mẫu', async () => {
+  const previousKey = process.env.GEMINI_API_KEY;
+  delete process.env.GEMINI_API_KEY;
+  try {
     const res = await fetch(`${base}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question: item.q })
+      body: JSON.stringify({ question: 'Phòng nào hợp cho 2 người lớn và 1 bé?' })
+    });
+    assert.strictEqual(res.status, 503);
+    const data = await res.json();
+    assert.strictEqual(data.success, false);
+    assert.match(data.error, /Gemini chưa được cấu hình/);
+  } finally {
+    if (previousKey === undefined) delete process.env.GEMINI_API_KEY;
+    else process.env.GEMINI_API_KEY = previousKey;
+  }
+});
+
+test('Lễ tân AI (POST /api/chat): chuyển hội thoại gần nhất cho Gemini để trả lời tiếp tự nhiên', async () => {
+  const originalFetch = global.fetch;
+  const previousKey = process.env.GEMINI_API_KEY;
+  let upstreamBody;
+  process.env.GEMINI_API_KEY = 'test-gemini-key';
+  global.fetch = (url, options) => {
+    if (String(url).startsWith('https://generativelanguage.googleapis.com/')) {
+      upstreamBody = JSON.parse(options.body);
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ candidates: [{ content: { parts: [{ text: 'Gemini trả lời theo ngữ cảnh.' }] } }] })
+      });
+    }
+    return originalFetch(url, options);
+  };
+  try {
+    const res = await fetch(`${base}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [
+          { role: 'user', text: 'Tôi đi cùng gia đình, phòng nào phù hợp?' },
+          { role: 'model', text: 'Banla gợi ý Original Suite.' },
+          { role: 'user', text: 'Vậy giá phòng đó thế nào?' }
+        ]
+      })
     });
     assert.strictEqual(res.status, 200);
     const data = await res.json();
-    assert.ok(data.answer.includes(item.expect), `Câu hỏi "${item.q}" phải chứa "${item.expect}"`);
-    assert.ok(!data.answer.includes('Trợ lý AI tạm thời chưa sẵn sàng'));
-    if (item.reject) {
-      assert.ok(!data.answer.includes(item.reject), `Không được hứa "${item.reject}"`);
-    }
+    assert.strictEqual(data.source, 'gemini');
+    assert.strictEqual(data.reply, 'Gemini trả lời theo ngữ cảnh.');
+    assert.deepStrictEqual(upstreamBody.contents.map((message) => message.parts[0].text), [
+      'Tôi đi cùng gia đình, phòng nào phù hợp?',
+      'Banla gợi ý Original Suite.',
+      'Vậy giá phòng đó thế nào?'
+    ]);
+    assert.match(upstreamBody.systemInstruction.parts[0].text, /dùng các lượt hội thoại trước để hiểu câu tiếp nối/);
+  } finally {
+    global.fetch = originalFetch;
+    if (previousKey === undefined) delete process.env.GEMINI_API_KEY;
+    else process.env.GEMINI_API_KEY = previousKey;
   }
 });
 
@@ -85,29 +104,6 @@ test('Lễ tân AI knowledge: không nhầm wifi/làm việc thành Suite; cockt
   assert.ok(!/đặt sớm trước 14 ngày giảm/i.test(early));
 });
 
-test('Lễ tân AI: bấm gợi ý Chị Mya có đối thoại trêu, câu lạ vẫn có lời', async () => {
-  const chips = [
-    ['Chị Mya dự kiến', 'chốt ngày'],
-    ['Chị Mya đang tìm phòng tại?', '47 Nguyễn Đình Chiểu'],
-    ['Chị Mya ăn cơm chưa', 'ăn cơm chưa'],
-    ['Chị Mya giàu chưa', 'chiều chuộng']
-  ];
-  for (const [q, expectBit] of chips) {
-    const res = await fetch(`${base}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question: q })
-    });
-    assert.strictEqual(res.status, 200);
-    const data = await res.json();
-    assert.strictEqual(data.source, 'chi_mya');
-    assert.ok(data.reply.includes('Chị Mya'), data.reply);
-    assert.ok(data.reply.toLowerCase().includes(expectBit.toLowerCase()), data.reply);
-  }
-  const other = buildSmartConciergeReply('kể một câu chuyện không liên quan gì');
-  assert.ok(other && other.includes('Banla'));
-});
-
 test('Lễ tân AI (POST /api/chat): câu hỏi rỗng -> 400', async () => {
   const res = await fetch(`${base}/api/chat`, {
     method: 'POST',
@@ -117,11 +113,12 @@ test('Lễ tân AI (POST /api/chat): câu hỏi rỗng -> 400', async () => {
   assert.strictEqual(res.status, 400);
 });
 
-test('Lễ tân AI (Client-side banla-concierge.js): hoạt động độc lập trên GitHub Pages ngay cả khi không có backend/Edge Function', async () => {
+test('Lễ tân AI client: khởi tạo khung chat và không dùng câu trả lời tri thức dự phòng', async () => {
   const windowObj = {
     location: { protocol: 'https:', hostname: 'banlaboutiquedalat.com' },
-    BANLA_SUPABASE_URL: 'https://hcikbpvzbzottxoitujl.supabase.co',
-    BANLA_SUPABASE_ANON_KEY: 'sb_publishable_test'
+    BANLA_GEMINI_ENDPOINT: 'https://example.test/functions/v1/banla-gemini',
+    BANLA_GEMINI_KEY: 'sb_publishable_test',
+    setTimeout: () => 0
   };
   global.window = windowObj;
   const stubEl = () => ({
@@ -149,18 +146,13 @@ test('Lễ tân AI (Client-side banla-concierge.js): hoạt động độc lập
     body: { appendChild: () => {} }
   };
 
-  global.BanlaConciergeKnowledge = knowledge;
+  delete require.cache[require.resolve('../banla-concierge.js')];
   require('../banla-concierge.js');
   assert.ok(windowObj.BanlaConcierge, 'window.BanlaConcierge phải được khởi tạo');
-  const reply = windowObj.BanlaConcierge.replyLocal('Phòng nào hợp cho 2 người lớn và 1 bé?');
-  assert.ok(reply.includes('2 người lớn và 1 bé'));
-  assert.ok(reply.includes('Original Suite'));
-  assert.ok(!reply.includes('Trợ lý AI tạm thời chưa sẵn sàng'));
-  assert.strictEqual(
-    windowObj.BanlaConcierge.replyLocal('Bảng giá'),
-    buildSmartConciergeReply('Bảng giá'),
-    'Client local và server knowledge phải cùng một bộ trả lời'
-  );
+  assert.strictEqual(windowObj.BanlaConcierge.replyLocal, undefined);
+  const script = fs.readFileSync(require.resolve('../banla-concierge.js'), 'utf8');
+  assert.ok(!script.includes("tryFetchJson('/api/chat'"), 'Không ưu tiên câu trả lời mặc định từ backend nội bộ');
+  assert.ok(!script.includes('generateLocalConciergeReply'), 'Không dùng tri thức tĩnh làm câu trả lời dự phòng');
 });
 
 test('Server-side Booking (D11) & Payment Session (D16): tự động tính giá phòng, cọc 50% / giảm 10% và STK 0352554863', async () => {
