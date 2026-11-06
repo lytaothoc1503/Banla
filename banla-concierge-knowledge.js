@@ -288,7 +288,8 @@ function buildSmartConciergeReply(question) {
       'Dạ quy trình **Đặt phòng – VietQR – Phiếu Dấu Đỏ & Smart-Lock PIN** tại Banla:\n' +
       '- **Bước 1**: Điền #contact — chọn **Cọc 50%** (phần còn lại trả khi check-in) hoặc **Thanh toán 100% (giảm ngay 10%)**.\n' +
       '- **Bước 2**: Quét VietQR **MB Bank · STK 0352554863 — BANLA BOUTIQUE HOTEL**, nội dung `BANLA_MÃĐƠN`.\n' +
-      '- **Bước 3**: Gửi biên lai qua Fanpage Facebook Banla. Sau đối soát, nhận **Phiếu dấu đỏ** và **mã Smart-Lock PIN 6 số** (hiệu lực **14:00 check-in → 12:00 check-out**).'
+      '- **Bước 3**: Gửi biên lai qua Fanpage Facebook Banla. Sau đối soát, nhận **Phiếu dấu đỏ** và **mã Smart-Lock PIN 6 số** (hiệu lực **14:00 check-in → 12:00 check-out**).\n' +
+      '- **Thẻ Visa, thẻ tín dụng hoặc thẻ ghi nợ**: bấm **Thanh toán an toàn qua PayPal** hoặc **Thanh toán an toàn qua OnePay**. Số thẻ chỉ nhập trên trang của cổng. Banla không thu thập hoặc lưu số thẻ, ngày hết hạn hay mã CVV.'
     );
   }
 

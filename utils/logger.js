@@ -6,7 +6,12 @@
 const isProd = process.env.NODE_ENV === 'production';
 
 // Mask các trường nhạy cảm nếu vô tình in ra
-const SENSITIVE_KEYS = ['key', 'admin_key', 'token', 'secret', 'password', 'pin', 'smartlock_pin', 'authorization'];
+const SENSITIVE_KEYS = [
+  'key', 'admin_key', 'token', 'secret', 'password', 'pin', 'smartlock_pin', 'authorization',
+  'pan', 'cvv', 'cvc', 'cid', 'cardnumber', 'card_number', 'card_no', 'expiry', 'expiration',
+  'exp_month', 'exp_year', 'client_secret', 'hash_key', 'access_code', 'vpc_card', 'vpc_carduid',
+  'vpc_cardholdername'
+];
 
 function redactSensitiveData(data) {
   if (!data || typeof data !== 'object') return data;

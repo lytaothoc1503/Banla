@@ -77,8 +77,48 @@
         color: #D4AF37; font-size: 10.5px; padding: 2px 8px; border-radius: 6px; cursor: pointer;
         margin-left: 6px; font-weight: 600;
       }
+      .banla-card-pay {
+        margin: 0 0 14px; padding: 12px; border-radius: 14px;
+        background: rgba(255,255,255,0.04); border: 1px solid rgba(212,175,55,0.32);
+      }
+      .banla-card-pay h4 { margin: 0 0 6px; font-size: 15px; color: #fff; }
+      .banla-card-pay p { margin: 0 0 8px; font-size: 12px; line-height: 1.45; color: #E2E8F0; }
+      .banla-card-actions { display: flex; flex-direction: column; gap: 8px; }
+      .banla-card-actions button { width: 100%; padding: 11px 12px; font-size: 13px; }
+      .banla-card-actions button:disabled { opacity: 0.6; cursor: wait; transform: none; }
+      .banla-card-secondary {
+        background: transparent; color: #F5E5C9; border: 1px solid rgba(212,175,55,0.55);
+        border-radius: 10px; font-weight: 700; cursor: pointer; font-family: inherit;
+      }
     `;
     document.head.appendChild(style);
+  }
+
+  function escHtml(value) {
+    return String(value).replace(/[&<>"']/g, (ch) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[ch]));
+  }
+
+  function formatCardAmount(amount) {
+    const digits = String(Math.round(Number(amount) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return `${digits} ₫`;
+  }
+
+  function isHostedGatewayUrl(url) {
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== 'https:' || parsed.username || parsed.password) return false;
+      const host = parsed.hostname.toLowerCase();
+      return host === 'www.paypal.com'
+        || host === 'paypal.com'
+        || host === 'www.sandbox.paypal.com'
+        || host === 'sandbox.paypal.com'
+        || host === 'mtf.onepay.vn'
+        || host === 'onepay.vn';
+    } catch (err) {
+      return false;
+    }
   }
 
   function copyText(txt, btnEl) {
@@ -264,6 +304,16 @@
           </div>
 
           ${!isPaid ? `
+            <section class="banla-card-pay">
+              <h4>Thanh toán bằng thẻ</h4>
+              <p>Bạn sẽ thanh toán trên trang bảo mật của PayPal hoặc OnePay bằng thẻ Visa, thẻ tín dụng hoặc thẻ ghi nợ. Chúng tôi không thu thập hoặc lưu số thẻ, ngày hết hạn hay mã CVV.</p>
+              <p>Số tiền: ${escHtml(formatCardAmount(currentSession.amount))} · Mã đơn: ${escHtml(currentSession.bookingId)}</p>
+              <div class="banla-card-actions">
+                <button type="button" class="banla-gold-btn" data-card-provider="paypal">Thanh toán an toàn qua PayPal</button>
+                <button type="button" class="banla-card-secondary" data-card-provider="onepay">Thanh toán an toàn qua OnePay</button>
+              </div>
+              <p id="banlaCardMsg" style="display:none;margin-top:8px;"></p>
+            </section>
             <div style="display:flex;gap:8px;margin:10px 0;">
               <button id="banlaTabQr" onclick="BanlaPayment.switchTab('qr')" style="flex:1;padding:8px;border-radius:8px;background:rgba(212,175,55,0.2);color:#D4AF37;border:1px solid rgba(212,175,55,0.3);cursor:pointer;font-size:12px;font-weight:600;">Quét mã VietQR</button>
               <button id="banlaTabBank" onclick="BanlaPayment.switchTab('bank')" style="flex:1;padding:8px;border-radius:8px;background:none;color:#94A3B8;border:none;cursor:pointer;font-size:12px;">Mở App Ngân Hàng</button>
@@ -327,6 +377,9 @@
 
       if (!isPaid) {
         renderBanks(VN_BANKS);
+        modal.querySelectorAll('[data-card-provider]').forEach((btn) => {
+          btn.addEventListener('click', () => startCard(btn.getAttribute('data-card-provider')));
+        });
       }
     }
 
@@ -344,6 +397,37 @@
         }
       }
     }, 2500);
+  }
+
+  async function startCard(provider) {
+    const msg = document.getElementById('banlaCardMsg');
+    const buttons = document.querySelectorAll('[data-card-provider]');
+    buttons.forEach((btn) => { btn.disabled = true; });
+    if (msg) {
+      msg.style.display = 'block';
+      msg.textContent = 'Đang chuyển sang trang bảo mật của cổng thanh toán...';
+    }
+    try {
+      const res = await fetch('/api/payments/card/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingId: currentSession && currentSession.bookingId,
+          provider
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data && isHostedGatewayUrl(data.redirectUrl)) {
+        window.location.assign(data.redirectUrl);
+        return;
+      }
+      if (msg) {
+        msg.textContent = (data && data.message) || 'Không mở được trang thanh toán. Banla không thu thập số thẻ trên trang này.';
+      }
+    } catch (err) {
+      if (msg) msg.textContent = 'Không kết nối được máy chủ thanh toán. Banla không thu thập số thẻ trên trang này.';
+    }
+    buttons.forEach((btn) => { btn.disabled = false; });
   }
 
   function renderBanks(list) {
@@ -376,6 +460,7 @@
     open: openModal,
     close: closeModal,
     copy: copyText,
+    startCard,
     switchTab: function (tab) {
       const tabQr = document.getElementById('banlaTabQr');
       const tabBank = document.getElementById('banlaTabBank');
