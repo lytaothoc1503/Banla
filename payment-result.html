@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kết quả thanh toán thẻ — Banla</title>
+  <style>
+    body { margin: 0; font-family: Figtree, sans-serif; background: #111614; color: #e2e8f0; }
+    main { max-width: 520px; margin: 10vh auto; padding: 28px; border: 1px solid rgba(212,175,55,.45); border-radius: 18px; }
+    h1 { font-size: 1.35rem; color: #f5e5c9; }
+    a { color: #d4af37; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 id="title">Thanh toán bằng thẻ</h1>
+    <p id="message"></p>
+    <p><a href="/#contact">Về trang đặt phòng</a></p>
+  </main>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const state = params.get('state') || '';
+    const order = params.get('order') || '';
+    const amount = Number(params.get('amount') || 0);
+    const formatted = amount
+      ? amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' ₫'
+      : '';
+    const title = document.getElementById('title');
+    const message = document.getElementById('message');
+    if (state === 'success' && order && formatted) {
+      title.textContent = 'Thanh toán thành công';
+      message.textContent = 'Thanh toán thành công. Cổng thanh toán đã xác nhận số tiền ' + formatted + ' cho đơn ' + order + '.';
+    } else if (state === 'cancel') {
+      title.textContent = 'Đã hủy thanh toán';
+      message.textContent = 'Bạn đã hủy thanh toán. Đơn chưa được thanh toán; bạn có thể thử lại.';
+    } else if (state === 'mismatch') {
+      title.textContent = 'Chưa xác nhận thanh toán';
+      message.textContent = 'Số tiền cổng thanh toán trả về không khớp hóa đơn. Đơn chưa được thanh toán.';
+    } else {
+      title.textContent = 'Thanh toán chưa hoàn tất';
+      message.textContent = 'Thanh toán chưa hoàn tất. Đơn chưa được thanh toán; bạn có thể thử lại.';
+    }
+  </script>
+</body>
+</html>

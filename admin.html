@@ -626,6 +626,32 @@
         </div>
       </div>
     </section>
+
+    <section class="table-card" id="cardPaymentsCard">
+      <div class="table-toolbar">
+        <div>
+          <strong>Thanh toán thẻ (PayPal / OnePay)</strong>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px;">Chỉ chủ cửa hàng xem được sau khi đăng nhập. Không có số thẻ, ngày hết hạn hay CVV.</div>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Thời gian</th>
+              <th>Mã đơn</th>
+              <th>Cổng</th>
+              <th>Số tiền</th>
+              <th>Trạng thái</th>
+              <th>Mã giao dịch cổng</th>
+            </tr>
+          </thead>
+          <tbody id="cardPaymentsBody">
+            <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted);">Chưa có giao dịch thẻ.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </div>
 
   <!-- 1. Modal VietQR Động cho từng Booking -->
@@ -818,6 +844,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="vendor/html2canvas.min.js"></script>
   <script src="phieu.js"></script>
+  <script src="banla-config.js"></script>
   <script>
     (function () {
       'use strict';
@@ -1430,6 +1457,43 @@ Hotline 24/7: 0296.9996.999 - 0352554863`;
         document.getElementById('authOverlay').style.display = 'none';
         document.getElementById('adminApp').style.display = 'block';
         loadAllBookings();
+        loadCardPayments();
+      }
+
+      async function loadCardPayments() {
+        const body = document.getElementById('cardPaymentsBody');
+        if (!body || !adminKey) return;
+        const endpoint = window.BANLA_PAYMENT_ENDPOINT || 'https://hcikbpvzbzottxoitujl.supabase.co/functions/v1/banla-payment';
+        const headers = { 'Content-Type': 'application/json', 'x-admin-key': adminKey };
+        if (window.BANLA_GEMINI_KEY) {
+          headers.apikey = window.BANLA_GEMINI_KEY;
+          headers.Authorization = 'Bearer ' + window.BANLA_GEMINI_KEY;
+        }
+        try {
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ action: 'admin-payments' })
+          });
+          const data = await res.json().catch(() => ({}));
+          const rows = Array.isArray(data.payments) ? data.payments : [];
+          if (!rows.length) {
+            body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted);">Chưa có giao dịch thẻ.</td></tr>';
+            return;
+          }
+          body.innerHTML = rows.map((row) => `
+            <tr>
+              <td>${esc(formatDateShort(row.created_at))}</td>
+              <td><strong>#${esc(row.booking_id)}</strong></td>
+              <td>${esc(row.provider)}</td>
+              <td>${vnd(row.amount)} ${esc(row.currency || 'VND')}</td>
+              <td>${esc(row.status)}</td>
+              <td style="font-family:monospace;font-size:12px;">${esc(row.provider_capture_id || row.provider_order_id || '')}</td>
+            </tr>
+          `).join('');
+        } catch {
+          body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted);">Chưa tải được sổ thanh toán thẻ.</td></tr>';
+        }
       }
 
       if (adminKey) {
@@ -1453,6 +1517,23 @@ Hotline 24/7: 0296.9996.999 - 0352554863`;
             if (d && d.success) valid = true;
           }
         } catch {}
+        if (!valid) {
+          try {
+            const endpoint = window.BANLA_PAYMENT_ENDPOINT || 'https://hcikbpvzbzottxoitujl.supabase.co/functions/v1/banla-payment';
+            const headers = { 'Content-Type': 'application/json' };
+            if (window.BANLA_GEMINI_KEY) {
+              headers.apikey = window.BANLA_GEMINI_KEY;
+              headers.Authorization = 'Bearer ' + window.BANLA_GEMINI_KEY;
+            }
+            const res = await fetch(endpoint, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({ action: 'admin-login', key: pin })
+            });
+            const d = await res.json().catch(() => ({}));
+            if (res.ok && d && d.success) valid = true;
+          } catch {}
+        }
 
         if (valid) {
           adminKey = pin;
