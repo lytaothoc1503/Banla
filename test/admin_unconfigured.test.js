@@ -10,21 +10,32 @@ const path = require('node:path');
 test('Bảo mật D4: thiếu ADMIN_KEY và BANLA_WEBHOOK_SECRET -> API quản trị và webhook trả 503', () => {
   const tmp = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'banla-noadmin-')), 'bookings.json');
   const script = `
+    const http = require('node:http');
+    const { Duplex } = require('node:stream');
     const { app } = require(${JSON.stringify(path.join(__dirname, '..', 'server.js'))});
-    const srv = app.listen(0, async () => {
-      const base = 'http://127.0.0.1:' + srv.address().port;
-      const login = await fetch(base + '/api/admin/login', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: 'BANLA8888' })
+    function invoke(method, url, headers = {}, body = '') {
+      return new Promise((resolve, reject) => {
+        const sock = new Duplex({ read() {}, write(_c, _e, cb) { cb(); } });
+        sock.remoteAddress = '127.0.0.1';
+        const req = new http.IncomingMessage(sock);
+        req.method = method;
+        req.url = url;
+        req.headers = { host: '127.0.0.1', ...headers };
+        if (body) req.headers['content-length'] = String(Buffer.byteLength(body));
+        const res = new http.ServerResponse(req);
+        const origEnd = res.end.bind(res);
+        res.end = (c, e, cb) => { origEnd(c, e, cb); resolve({ status: res.statusCode }); };
+        app.handle(req, res, reject);
+        if (body) req.push(body);
+        req.push(null);
       });
-      const list = await fetch(base + '/api/admin/bookings', { headers: { 'x-admin-key': 'BANLA8888' } });
-      const hook = await fetch(base + '/api/banla/webhook', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-banla-signature': 'x' },
-        body: '{}'
-      });
+    }
+    (async () => {
+      const login = await invoke('POST', '/api/admin/login', { 'content-type': 'application/json' }, JSON.stringify({ key: 'BANLA8888' }));
+      const list = await invoke('GET', '/api/admin/bookings', { 'x-admin-key': 'BANLA8888' });
+      const hook = await invoke('POST', '/api/banla/webhook', { 'content-type': 'application/json', 'x-banla-signature': 'x' }, '{}');
       console.log(JSON.stringify({ login: login.status, list: list.status, hook: hook.status }));
-      srv.close();
-    });
+    })();
   `;
   const env = { ...process.env, NODE_ENV: 'test', BOOKINGS_FILE: tmp };
   delete env.ADMIN_KEY;

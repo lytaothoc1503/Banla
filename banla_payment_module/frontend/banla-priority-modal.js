@@ -1,7 +1,8 @@
 /**
- * BANLA PRIORITY MODAL SDK (Plug & Play)
+ * BANLA PRIORITY MODAL SDK (Real-Data Verified Edition)
  * Giao diện MB Bank Priority (Đen Carbon - Bạc Titanium - Vàng Ánh Kim)
- * Bộ lọc >20 ngân hàng, VietQR động chuẩn cú pháp BANLA_{BOOKING_CODE}, mở Phiếu Dấu Đỏ & Fanpage 24/7
+ * Khắc phục G1: Tuyệt đối KHÔNG tin dữ liệu `localStorage` để xác nhận thanh toán.
+ * Chỉ mở trạng thái ĐÃ XÁC THỰC CSDL khi Server API hoặc kênh SSE xác nhận đơn ở trạng thái PAID.
  */
 (function (window) {
   'use strict';
@@ -27,6 +28,17 @@
 
   let currentSession = null;
   let sseConnection = null;
+  let pollInterval = null;
+
+  function getRootPrefix() {
+    const p = window.location.pathname || '';
+    if (p.includes('/phong/') || p.includes('/lien-he/') || p.includes('/khach-san/')) {
+      const segs = p.split('/').filter(Boolean);
+      if (p.includes('/khach-san/banla-boutique-hotel')) return '../../';
+      if (segs.length >= 2) return '../';
+    }
+    return '';
+  }
 
   function injectStyles() {
     if (document.getElementById('banla-priority-css')) return;
@@ -106,55 +118,60 @@
     }
   }
 
-    let pollInterval = null;
-
   function stopPolling() {
     if (pollInterval) {
       clearInterval(pollInterval);
       pollInterval = null;
     }
+    if (sseConnection) {
+      try { sseConnection.close(); } catch {}
+      sseConnection = null;
+    }
   }
 
-  async function checkRealtimeStatus(bookingCode) {
-    const clean = String(bookingCode).replace(/^#+/, '').toUpperCase();
-    try {
-      // 1. Kiểm tra LocalStorage
-      const raw = localStorage.getItem('BANLA_BOOKINGS_STORE');
-      if (raw) {
-        const list = JSON.parse(raw);
-        const item = list.find(b => String(b.id || b.booking_code).toUpperCase() === clean);
-        if (item && (item.payment_status === 'paid' || item.paymentStatus === 'PAID')) {
-          return item;
-        }
-      }
-    } catch (e) {}
+  // CHỈ kiểm tra trạng thái thực tế từ Máy chủ (TUYỆT ĐỐI KHÔNG đọc localStorage để tránh giả mạo G1)
+  async function checkRealtimeStatus(bookingCode, contactHint) {
+    const clean = String(bookingCode || '').replace(/^#+/, '').trim().toUpperCase();
+    if (!clean) return null;
+    const root = getRootPrefix();
 
-    // 2. Kiểm tra Backend API (/api/booking/detail) nếu có kết nối máy chủ
     try {
-      const res = await fetch('/api/booking/detail?id=' + encodeURIComponent(clean));
+      let detailUrl = `${root}api/booking/detail?id=${encodeURIComponent(clean)}`;
+      if (contactHint) detailUrl += `&contact=${encodeURIComponent(contactHint)}`;
+      const res = await fetch(detailUrl, { credentials: 'same-origin' });
       if (res.ok) {
         const data = await res.json();
         const b = data && data.booking;
-        if (b && (b.paymentStatus === 'PAID' || b.payment_status === 'paid')) {
-          try {
-            const raw = localStorage.getItem('BANLA_BOOKINGS_STORE');
-            const list = raw ? JSON.parse(raw) : [];
-            const idx = Array.isArray(list)
-              ? list.findIndex(x => String(x.id || x.booking_code).toUpperCase() === clean)
-              : -1;
-            if (idx !== -1) {
-              list[idx].payment_status = 'paid';
-              list[idx].paymentStatus = 'PAID';
-              list[idx].booking_status = 'confirmed';
-              list[idx].status = 'confirmed';
-              if (b.smartLockPin) list[idx].smartlock_pin = b.smartLockPin;
-              localStorage.setItem('BANLA_BOOKINGS_STORE', JSON.stringify(list));
-            }
-          } catch (err) {}
+        if (b && (b.paymentStatus === 'PAID' || b.paymentStatus === 'DEPOSIT_PAID' || b.payment_status === 'paid')) {
           return b;
         }
       }
-    } catch (e) {}
+    } catch (_) {}
+
+    // Fallback cho GitHub Pages tĩnh nếu đã chạy Supabase RPC công khai và có SĐT khách
+    if (contactHint && window.BANLA_SUPABASE_URL && window.BANLA_SUPABASE_ANON_KEY) {
+      try {
+        const sbRes = await fetch(`${window.BANLA_SUPABASE_URL.replace(/\/+$/, '')}/rest/v1/rpc/banla_booking_status`, {
+          method: 'POST',
+          headers: {
+            apikey: window.BANLA_SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${window.BANLA_SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            p_booking_code: clean,
+            p_guest_phone: String(contactHint)
+          })
+        });
+        if (sbRes.ok) {
+          const rows = await sbRes.json();
+          const row = Array.isArray(rows) ? rows[0] : rows;
+          if (row && row.payment_status === 'paid') {
+            return row;
+          }
+        }
+      } catch (_) {}
+    }
 
     return null;
   }
@@ -163,22 +180,30 @@
     injectStyles();
     stopPolling();
 
+    const rawCode = String(options.bookingId || '').replace(/^#+/, '').trim().toUpperCase();
+    const amount = Math.trunc(Number(options.amount) || 0);
+    if (!rawCode || amount <= 0) {
+      alert('Không thể mở cổng thanh toán VietQR vì thiếu mã đặt phòng hoặc số tiền thực tế từ hệ thống.');
+      return;
+    }
+
     const bankCfg = getSavedBankConfig();
-    const rawCode = String(options.bookingId || 'BL9821').replace(/^#+/, '').toUpperCase();
     const bookingId = rawCode;
     const memo = options.memo || ('BANLA_' + rawCode);
     const bankId = options.bankId || bankCfg.bankId || 'MB';
     const accountNo = options.accountNo || bankCfg.accountNo || '0352554863';
     const accountName = options.accountName || bankCfg.accountName || 'BANLA BOUTIQUE HOTEL';
-    const sessionId = options.sessionId || ('SESS_' + Date.now());
+    const sessionId = options.sessionId || '';
+    const guestContact = options.guestPhone || options.guestEmail || '';
 
-    const amount = Number(options.amount) || 1150000;
-    const totalAmount = Number(options.totalAmount) || amount;
-    const discountAmount = Number(options.discountAmount) || 0;
-    const remainingAmount = Number(options.remainingAmount) || 0;
+    const totalAmount = Math.trunc(Number(options.totalAmount) || amount);
+    const discountAmount = Math.trunc(Number(options.discountAmount) || 0);
+    const remainingAmount = Math.trunc(Number(options.remainingAmount) || 0);
     const paymentOption = options.paymentOption || (discountAmount > 0 ? 'pay_100' : 'deposit_50');
 
-    const vietQrUrl = `https://img.vietqr.io/image/${encodeURIComponent(bankId)}-${encodeURIComponent(accountNo)}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(memo)}&accountName=${encodeURIComponent(accountName)}`;
+    const vietQrUrl =
+      options.vietQrUrl ||
+      `https://img.vietqr.io/image/${encodeURIComponent(bankId)}-${encodeURIComponent(accountNo)}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(memo)}&accountName=${encodeURIComponent(accountName)}`;
 
     currentSession = {
       bookingId,
@@ -192,6 +217,7 @@
       accountNo,
       accountName,
       sessionId,
+      guestContact,
       vietQrUrl,
       isVerifiedPaid: false,
       onSuccess: options.onSuccess || function () {}
@@ -205,10 +231,11 @@
       document.body.appendChild(modal);
     }
 
-    const baseDir = window.location.pathname.includes('/phong/') || window.location.pathname.includes('/lien-he/') || window.location.pathname.includes('/khach-san/')
-      ? '../'
-      : '';
-    const slipUrl = `${baseDir}phieu.html?ma=${encodeURIComponent(bookingId)}`;
+    const baseDir = getRootPrefix();
+    let slipUrl = `${baseDir}phieu.html?ma=${encodeURIComponent(bookingId)}`;
+    if (guestContact) {
+      slipUrl += `&contact=${encodeURIComponent(guestContact)}`;
+    }
 
     function renderModalContent(isPaid = false) {
       modal.innerHTML = `
@@ -227,13 +254,12 @@
                 </span>
               ` : `
                 <span style="background:rgba(217,119,6,0.15);border:1px solid #d97706;color:#fbbf24;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">
-                  ⏳ ĐANG CHỜ THANH TOÁN (PENDING)
+                  ⏳ ĐANG CHỜ THANH TOÁN & ĐỐI SOÁT CSDL
                 </span>
               `}
             </div>
           </div>
 
-          <!-- Bảng tóm tắt khoản tiền -->
           <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(212,175,55,0.32);border-radius:14px;padding:12px 14px;margin-bottom:12px;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
               <div>
@@ -258,15 +284,16 @@
             ` : `
               <div style="margin-top:8px;padding-top:8px;border-top:1px dashed rgba(255,255,255,0.1);font-size:11.5px;color:#94A3B8;display:flex;justify-content:space-between;">
                 <span>Tổng giá trị đơn: ${currentSession.totalAmount.toLocaleString('vi-VN')} đ</span>
-                <span>Còn lại thanh toán khi check-in: <strong style="color:#fff;">${currentSession.remainingAmount.toLocaleString('vi-VN')} đ</strong></span>
+                <span>Còn lại khi check-in: <strong style="color:#fff;">${currentSession.remainingAmount.toLocaleString('vi-VN')} đ</strong></span>
               </div>
             `}
           </div>
 
           ${!isPaid ? `
-            <div style="display:flex;gap:8px;margin:10px 0;">
-              <button id="banlaTabQr" onclick="BanlaPayment.switchTab('qr')" style="flex:1;padding:8px;border-radius:8px;background:rgba(212,175,55,0.2);color:#D4AF37;border:1px solid rgba(212,175,55,0.3);cursor:pointer;font-size:12px;font-weight:600;">Quét mã VietQR</button>
-              <button id="banlaTabBank" onclick="BanlaPayment.switchTab('bank')" style="flex:1;padding:8px;border-radius:8px;background:none;color:#94A3B8;border:none;cursor:pointer;font-size:12px;">Mở App Ngân Hàng</button>
+            <div style="display:flex;gap:6px;margin:10px 0;">
+              <button id="banlaTabQr" onclick="BanlaPayment.switchTab('qr')" style="flex:1;padding:8px 6px;border-radius:8px;background:rgba(212,175,55,0.2);color:#D4AF37;border:1px solid rgba(212,175,55,0.3);cursor:pointer;font-size:11.5px;font-weight:600;">Quét VietQR</button>
+              <button id="banlaTabVisa" onclick="BanlaPayment.switchTab('visa')" style="flex:1;padding:8px 6px;border-radius:8px;background:none;color:#94A3B8;border:none;cursor:pointer;font-size:11.5px;font-weight:600;">💳 Thẻ Tín Dụng Visa</button>
+              <button id="banlaTabBank" onclick="BanlaPayment.switchTab('bank')" style="flex:1;padding:8px 6px;border-radius:8px;background:none;color:#94A3B8;border:none;cursor:pointer;font-size:11.5px;">App Ngân Hàng</button>
             </div>
 
             <div id="banlaQrSec" style="text-align:center;">
@@ -281,26 +308,40 @@
               </div>
             </div>
 
+            <div id="banlaVisaSec" style="display:none;background:rgba(255,255,255,0.03);border:1px solid rgba(212,175,55,0.28);border-radius:12px;padding:14px;text-align:center;">
+              <div style="display:flex;justify-content:center;gap:6px;margin-bottom:8px;">
+                <span style="background:#1e3a8a;color:#fff;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:4px;letter-spacing:0.6px;">VISA</span>
+                <span style="background:#991b1b;color:#fff;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:4px;letter-spacing:0.6px;">MASTERCARD</span>
+                <span style="background:#065f46;color:#fff;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:4px;letter-spacing:0.6px;">JCB</span>
+                <span style="background:#0369a1;color:#fff;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:4px;letter-spacing:0.6px;">AMEX</span>
+              </div>
+              <p style="font-size:12px;color:#E2E8F0;line-height:1.5;margin:0 0 12px;">
+                Thanh toán trực tuyến an toàn bằng <strong>Thẻ Tín Dụng / Ghi Nợ Quốc Tế</strong> qua cổng bảo mật <strong>OnePay 3D Secure</strong>. Banla tuyệt đối không lưu thông tin thẻ (PCI DSS).
+              </p>
+              <button type="button" id="banlaBtnPayVisa" onclick="BanlaPayment.payWithVisa(this)" class="banla-gold-btn" style="padding:11px 14px;font-size:13px;">
+                🔒 Thanh Toán Thẻ Quốc Tế (${currentSession.amount.toLocaleString('vi-VN')} đ)
+              </button>
+              <div id="banlaVisaError" style="display:none;margin-top:8px;font-size:11.5px;color:#fca5a5;"></div>
+            </div>
+
             <div id="banlaBankSec" style="display:none;">
               <input type="text" id="banlaSearchInput" oninput="BanlaPayment.searchBank(this.value)" placeholder="Gõ tên ngân hàng (MB, VCB, TCB, ACB...)" class="banla-input" style="margin-bottom:10px;">
               <div id="banlaBankList" style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px;max-height:165px;overflow-y:auto;"></div>
             </div>
 
-            <!-- BƯỚC QUAN TRỌNG: GỬI BIÊN LAI QUA FB ĐỂ ĐỐI SOÁT CSDL -->
             <div style="margin-top:12px;background:linear-gradient(135deg, rgba(24,119,242,0.22) 0%, rgba(212,175,55,0.12) 100%);border:1.5px solid #1877F2;border-radius:12px;padding:12px;text-align:left;">
               <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
                 <span style="font-size:15px;">📸</span>
                 <strong style="color:#60A5FA;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">QUY TRÌNH XÁC THỰC THANH TOÁN:</strong>
               </div>
               <p style="margin:0 0 8px;font-size:12px;color:#F1F5F9;line-height:1.45;">
-                Sau khi chuyển khoản VietQR, quý khách vui lòng <strong>chụp ảnh biên lai giao dịch thành công và gửi qua Facebook Banla</strong>. Đội ngũ Lễ tân sẽ đối soát trên CSDL ngân hàng, duyệt đơn và xuất <strong>Phiếu xác nhận dịch vụ có Dấu Đỏ chính thức cùng Mã PIN Smart-Lock</strong>.
+                Sau khi chuyển khoản VietQR, hệ thống sẽ tự động cập nhật ngay khi ngân hàng báo có, hoặc quý khách <strong>gửi ảnh biên lai qua Facebook Banla</strong> để Lễ tân duyệt nhanh và cấp <strong>Phiếu xác nhận Dấu Đỏ cùng Mã PIN Smart-Lock 6 số</strong>.
               </p>
               <a href="https://www.facebook.com/Banlaboutiquedalat/" target="_blank" rel="noopener" class="banla-fb-btn" style="width:100%;padding:9px;font-size:12.5px;box-sizing:border-box;font-weight:700;">
                 👉 Gửi biên lai qua Facebook để xác nhận chính thức
               </a>
             </div>
 
-            <!-- Nút xem phiếu CHỜ THANH TOÁN (Không dấu đỏ) -->
             <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;">
               <a href="${slipUrl}" target="_blank" class="banla-gold-btn" style="padding:10px;font-size:12px;text-align:center;text-decoration:none;display:block;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#E2E8F0;">
                 📄 Xem Phiếu Yêu Cầu Đặt Phòng (#${currentSession.bookingId}) - Chờ thanh toán
@@ -310,12 +351,11 @@
               </div>
             </div>
           ` : `
-            <!-- GIAO DIỆN KHI ĐÃ ĐƯỢC CSDL CHỨNG MINH LÀ ĐÃ THANH TOÁN THẬT -->
             <div style="background:rgba(34,197,94,0.1);border:1.5px solid #22c55e;border-radius:12px;padding:16px;text-align:center;margin:14px 0;">
               <div style="font-size:32px;margin-bottom:6px;">🛡️</div>
               <h4 style="color:#22c55e;margin:0 0 6px;font-size:16px;">ĐƠN ĐÃ ĐƯỢC DUYỆT & ĐỐI SOÁT CSDL</h4>
               <p style="font-size:12.5px;color:#F1F5F9;margin:0 0 12px;line-height:1.5;">
-                Giao dịch của bạn đã được ghi nhận trên cơ sở dữ liệu. Bây giờ bạn có thể mở và in <strong>Phiếu xác nhận dịch vụ chính thức có Con Dấu Đỏ</strong> của Banla Boutique Hotel.
+                Giao dịch của quý khách đã được ghi nhận trên cơ sở dữ liệu máy chủ Banla. Quý khách có thể mở và in ngay <strong>Phiếu xác nhận dịch vụ chính thức có Con Dấu Đỏ</strong>.
               </p>
               <a href="${slipUrl}" target="_blank" class="banla-gold-btn" style="padding:12px;font-size:13.5px;text-align:center;text-decoration:none;display:block;font-weight:700;">
                 🏆 Xem & In Phiếu Xác Nhận Dấu Đỏ & Mã Smart-Lock PIN
@@ -330,20 +370,48 @@
       }
     }
 
+    function handleVerifiedSuccess(verifiedData) {
+      if (!currentSession || currentSession.isVerifiedPaid) return;
+      stopPolling();
+      currentSession.isVerifiedPaid = true;
+      renderModalContent(true);
+      if (typeof currentSession.onSuccess === 'function') {
+        currentSession.onSuccess(verifiedData);
+      }
+    }
+
     renderModalContent(false);
 
-    // Bắt đầu lắng nghe / polling CSDL thời gian thực
+    // Kênh 1: Lắng nghe SSE thời gian thực từ máy chủ (theo sessionId hoặc bookingId)
+    if (typeof window.EventSource === 'function') {
+      try {
+        const streamKey = sessionId || bookingId;
+        sseConnection = new EventSource(`${baseDir}api/banla/stream/${encodeURIComponent(streamKey)}`);
+        sseConnection.onmessage = async function (ev) {
+          try {
+            const payload = JSON.parse(ev.data || '{}');
+            if (payload && payload.status === 'CONFIRMED') {
+              const verified = await checkRealtimeStatus(bookingId, guestContact);
+              handleVerifiedSuccess(verified || payload);
+            }
+          } catch (_) {}
+        };
+        sseConnection.onerror = function () {
+          if (sseConnection) {
+            try { sseConnection.close(); } catch {}
+            sseConnection = null;
+          }
+        };
+      } catch (_) {}
+    }
+
+    // Kênh 2: Polling đối chiếu trực tiếp CSDL máy chủ mỗi 3 giây
     pollInterval = setInterval(async () => {
-      const verified = await checkRealtimeStatus(bookingId);
+      const verified = await checkRealtimeStatus(bookingId, guestContact);
       if (verified) {
-        stopPolling();
-        currentSession.isVerifiedPaid = true;
-        renderModalContent(true);
-        if (typeof currentSession.onSuccess === 'function') {
-          currentSession.onSuccess(verified);
-        }
+        handleVerifiedSuccess(verified);
       }
-    }, 2500);
+    }, 3000);
   }
 
   function renderBanks(list) {
@@ -366,10 +434,6 @@
     stopPolling();
     const modal = document.getElementById('banlaPriorityModal');
     if (modal) modal.remove();
-    if (sseConnection) {
-      sseConnection.close();
-      sseConnection = null;
-    }
   }
 
   window.BanlaPayment = {
@@ -378,15 +442,18 @@
     copy: copyText,
     switchTab: function (tab) {
       const tabQr = document.getElementById('banlaTabQr');
+      const tabVisa = document.getElementById('banlaTabVisa');
       const tabBank = document.getElementById('banlaTabBank');
       const secQr = document.getElementById('banlaQrSec');
+      const secVisa = document.getElementById('banlaVisaSec');
       const secBank = document.getElementById('banlaBankSec');
       if (!secQr || !secBank) return;
 
       secQr.style.display = tab === 'qr' ? 'block' : 'none';
+      if (secVisa) secVisa.style.display = tab === 'visa' ? 'block' : 'none';
       secBank.style.display = tab === 'bank' ? 'block' : 'none';
 
-      [tabQr, tabBank].forEach(t => {
+      [tabQr, tabVisa, tabBank].forEach(t => {
         if (t) {
           t.style.background = 'none';
           t.style.color = '#94A3B8';
@@ -394,11 +461,52 @@
         }
       });
 
-      const activeBtn = tab === 'qr' ? tabQr : tabBank;
+      const activeBtn = tab === 'qr' ? tabQr : (tab === 'visa' ? tabVisa : tabBank);
       if (activeBtn) {
         activeBtn.style.background = 'rgba(212,175,55,0.2)';
         activeBtn.style.color = '#D4AF37';
         activeBtn.style.border = '1px solid rgba(212,175,55,0.3)';
+      }
+    },
+    payWithVisa: async function (btnEl) {
+      if (!currentSession || !currentSession.bookingId) return;
+      const errBox = document.getElementById('banlaVisaError');
+      if (errBox) {
+        errBox.style.display = 'none';
+        errBox.textContent = '';
+      }
+      const origText = btnEl ? btnEl.textContent : '';
+      if (btnEl) {
+        btnEl.disabled = true;
+        btnEl.textContent = 'Đang kết nối cổng bảo mật OnePay 3D Secure...';
+      }
+      try {
+        const res = await fetch(`${getRootPrefix()}api/payments/visa/create-intent`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            booking_id: currentSession.bookingId,
+            payment_option: currentSession.paymentOption || 'deposit_50'
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.redirect_url) {
+          window.location.assign(data.redirect_url);
+          return;
+        }
+        if (errBox) {
+          errBox.style.display = 'block';
+          errBox.textContent = data.message || 'Cổng thanh toán thẻ quốc tế chưa sẵn sàng. Quý khách vui lòng chọn tab Quét VietQR.';
+        }
+      } catch (_) {
+        if (errBox) {
+          errBox.style.display = 'block';
+          errBox.textContent = 'Không thể kết nối máy chủ thanh toán thẻ. Quý khách vui lòng chuyển sang tab Quét VietQR.';
+        }
+      }
+      if (btnEl) {
+        btnEl.disabled = false;
+        btnEl.textContent = origText;
       }
     },
     searchBank: function (q) {

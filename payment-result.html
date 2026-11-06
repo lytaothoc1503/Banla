@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Kết quả thanh toán đặt phòng | Banla Boutique Hotel Đà Lạt</title>
+  <link rel="icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --fog: #eef2f3;
+      --mist: #dfe6e8;
+      --paper: #f7f8f8;
+      --ink: #1a2428;
+      --ink-soft: #3d4b52;
+      --muted: #6c7a80;
+      --pine: #2a3f38;
+      --pine-dark: #1d2c27;
+      --ember: #b8612e;
+      --ember-deep: #96491e;
+      --brass: #c4894a;
+      --line: rgba(26, 36, 40, 0.12);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(180deg, var(--mist) 0%, var(--fog) 100%);
+      color: var(--ink);
+      font-family: 'Figtree', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+      padding: 36px 16px 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .brand-bar {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .brand-bar a {
+      text-decoration: none;
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 1.65rem;
+      letter-spacing: 0.28em;
+      color: var(--pine);
+      font-weight: 600;
+    }
+    .brand-bar p {
+      font-family: 'Fraunces', Georgia, serif;
+      font-style: italic;
+      font-size: 0.88rem;
+      color: var(--ember);
+      margin-top: 2px;
+    }
+
+    .result-card {
+      width: 100%;
+      max-width: 620px;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 34px 32px;
+      box-shadow: 0 18px 44px rgba(26, 36, 40, 0.08);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .status-success { background: rgba(22, 163, 74, 0.12); color: #15803d; }
+    .status-processing { background: rgba(196, 137, 74, 0.16); color: #9a5b13; }
+    .status-failed { background: rgba(207, 34, 46, 0.1); color: #b91c1c; }
+
+    h1 {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: clamp(1.65rem, 4vw, 2.1rem);
+      font-weight: 500;
+      color: var(--ink);
+      line-height: 1.22;
+      margin-bottom: 10px;
+    }
+
+    .lead {
+      color: var(--ink-soft);
+      font-size: 0.96rem;
+      margin-bottom: 22px;
+    }
+
+    .summary-box {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin-bottom: 22px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px dashed rgba(26, 36, 40, 0.1);
+      font-size: 0.93rem;
+    }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-row span { color: var(--muted); }
+    .summary-row strong { color: var(--ink); text-align: right; }
+
+    .pin-highlight {
+      background: linear-gradient(135deg, var(--pine) 0%, var(--pine-dark) 100%);
+      color: #fff;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .pin-highlight .pin-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: rgba(255, 255, 255, 0.78);
+    }
+    .pin-highlight .pin-note {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.72);
+      margin-top: 2px;
+    }
+    .pin-highlight .pin-code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      color: #f6d38b;
+    }
+
+    .verify-contact-box {
+      background: var(--fog);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      font-size: 0.88rem;
+    }
+    .verify-contact-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .verify-contact-row input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      font: inherit;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .btn {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 14px 20px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+    }
+    .btn:disabled { opacity: 0.65; cursor: not-allowed; }
+    .btn-primary { background: var(--ember); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--ember-deep); }
+    .btn-pine { background: var(--pine); color: #fff; }
+    .btn-pine:hover:not(:disabled) { background: var(--pine-dark); }
+    .btn-outline { background: #fff; color: var(--ink); border-color: var(--line); }
+    .btn-outline:hover:not(:disabled) { background: var(--fog); }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2.5px solid rgba(154, 91, 19, 0.25);
+      border-top-color: #9a5b13;
+      border-radius: 50%;
+      animation: spin 0.85s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .support-footer {
+      margin-top: 22px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      font-size: 0.83rem;
+      color: var(--muted);
+      text-align: center;
+    }
+    .support-footer a { color: var(--ember); text-decoration: none; font-weight: 600; }
+
+    @media (max-width: 560px) {
+      .result-card { padding: 24px 20px; }
+      .verify-contact-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <header class="brand-bar">
+    <a href="index.html">BANLA</a>
+    <p>Ngoài lạnh. Trong ấm.</p>
+  </header>
+
+  <main class="result-card" id="resultCard" aria-live="polite">
+    <div class="status-pill status-processing">
+      <span class="spinner"></span>
+      <span>Đang kiểm tra giao dịch</span>
+    </div>
+    <h1>Đang tải kết quả thanh toán...</h1>
+    <p class="lead">Vui lòng đợi trong giây lát trong khi hệ thống Banla kiểm tra trạng thái đơn đặt phòng của quý khách.</p>
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const params = new URLSearchParams(window.location.search);
+      const bookingIdParam = (params.get('booking_id') || params.get('booking_code') || '').trim();
+      const merchantTxnRef = (params.get('merchant_txn_ref') || params.get('vpc_MerchTxnRef') || '').trim();
+      const initialState = (params.get('state') || '').trim();
+      const txnCode = (params.get('txn_code') || params.get('vpc_TxnResponseCode') || '').trim();
+      const cardEl = document.getElementById('resultCard');
+
+      let pollCount = 0;
+      const MAX_POLLS = 15;
+      let verifiedContact = '';
+
+      function esc(str) {
+        return String(str ?? '').replace(/[&<>"']/g, (ch) => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        }[ch]));
+      }
+
+      function formatVnd(n) {
+        return Number(n || 0).toLocaleString('vi-VN') + ' ₫';
+      }
+
+      function syncLocalBookingStore(statusData) {
+        try {
+          const raw = localStorage.getItem('BANLA_BOOKINGS_STORE');
+          const list = raw ? JSON.parse(raw) : [];
+          if (!Array.isArray(list)) return;
+          const codeUpper = String(statusData.booking_code || '').toUpperCase();
+          const idx = list.findIndex(
+            (b) =>
+              String(b.id || '').toUpperCase() === codeUpper ||
+              String(b.booking_code || '').toUpperCase() === codeUpper
+          );
+          if (idx >= 0 && statusData.payment_status === 'PAID') {
+            list[idx].paymentStatus = 'PAID';
+            list[idx].payment_status = 'paid';
+            list[idx].status = 'confirmed';
+            list[idx].booking_status = 'confirmed';
+            list[idx].paidAmount = statusData.paid_vnd;
+            list[idx].paid_amount = statusData.paid_vnd;
+            list[idx].remainingAmount = statusData.remaining_vnd;
+            if (statusData.smart_lock_pin) {
+              list[idx].smartLockPin = statusData.smart_lock_pin;
+              list[idx].smartlock_pin = statusData.smart_lock_pin;
+            }
+            localStorage.setItem('BANLA_BOOKINGS_STORE', JSON.stringify(list));
+          }
+        } catch (_) {}
+      }
+
+      function renderNotFound() {
+        cardEl.innerHTML = `
+          <div class="status-pill status-failed">Không tìm thấy giao dịch</div>
+          <h1>Không tìm thấy thông tin thanh toán</h1>
+          <p class="lead">Vui lòng kiểm tra lại đường dẫn hoặc mã đặt phòng, hoặc liên hệ lễ tân Banla để được hỗ trợ đối soát ngay lập tức.</p>
+          <div class="actions">
+            <a class="btn btn-pine" href="index.html#contact">Quay về trang Đặt phòng</a>
+            <a class="btn btn-outline" href="https://www.facebook.com/Banlaboutiquedalat/" target="_blank" rel="noopener">Nhắn Fanpage Banla 24/7</a>
+          </div>
+          <div class="support-footer">
+            Hotline hỗ trợ 24/7: <a href="tel:02969996999">0296.9996.999</a> · <a href="tel:0352554863">0352554863</a>
+          </div>
+        `;
+      }
+
+      function renderSuccess(d) {
+        syncLocalBookingStore(d);
+        const code = esc(d.booking_code);
+        const voucherUrl = 'phieu.html?ma=' + encodeURIComponent(d.booking_code) +
+          (verifiedContact ? '&contact=' + encodeURIComponent(verifiedContact) : '');
+
+        const pinBlock = d.smart_lock_pin
+          ? `
+            <div class="pin-highlight">
+              <div>
+                <div class="pin-label">Mã khóa phòng Smart-Lock PIN</div>
+                <div class="pin-note">Hiệu lực 14:00 Check-in → 12:00 Check-out</div>
+              </div>
+              <div class="pin-code">${esc(d.smart_lock_pin)}</div>
+            </div>
+          `
+          : d.pin_requires_verification
+          ? `
+            <div class="verify-contact-box">
+              <strong>Mở khóa hiển thị mã Smart-Lock PIN 6 số:</strong>
+              <p>Nhập số điện thoại hoặc email đã dùng khi đặt phòng để xác thực chủ đơn.</p>
+              <div class="verify-contact-row">
+                <input type="text" id="verifyContactInput" placeholder="Số điện thoại hoặc Email đặt phòng">
+                <button type="button" class="btn btn-pine" id="verifyContactBtn" style="width:auto;">Xác thực</button>
+              </div>
+            </div>
+          `
+          : '';
+
+        cardEl.innerHTML = `
+          <div class="status-pill status-success">✓ Đã xác nhận thanh toán thẻ</div>
+          <h1>Đặt phòng thành công</h1>
+          <p class="lead">Cảm ơn quý khách. Banla Boutique Hotel đã xác thực thanh toán và giữ phòng chính thức cho kỳ nghỉ của quý khách.</p>
+          <div class="summary-box">
+            <div class="summary-row"><span>Mã đặt phòng</span><strong>#${code}</strong></div>
+            <div class="summary-row"><span>Hạng phòng</span><strong>${esc(d.room_name)}</strong></div>
+            ${d.check_in && d.check_out ? `<div class="summary-row"><span>Thời gian lưu trú</span><strong>${esc(d.check_in)} → ${esc(d.check_out)} (${Number(d.nights) || 1} đêm)</strong></div>` : ''}
+            <div class="summary-row"><span>Đã thanh toán (Thẻ Quốc Tế)</span><strong style="color:#15803d;">${formatVnd(d.paid_vnd)}</strong></div>
+            <div class="summary-row"><span>Còn lại khi nhận phòng</span><strong>${formatVnd(d.remaining_vnd)}</strong></div>
+          </div>
+          ${pinBlock}
+          <div class="actions">
+            <a class="btn btn-primary" href="${voucherUrl}">Mở &amp; Tải Phiếu Xác Nhận Có Dấu Đỏ</a>
+            <a class="btn btn-outline" href="index.html">Về trang chủ Banla</a>
+          </div>
+          <div class="support-footer">
+            Banla không lưu trữ thông tin thẻ của quý khách · Hotline 24/7: <a href="tel:02969996999">0296.9996.999</a>
+          </div>
+        `;
+
+        const verifyBtn = document.getElementById('verifyContactBtn');
+        if (verifyBtn) {
+          verifyBtn.addEventListener('click', () => {
+            const val = (document.getElementById('verifyContactInput')?.value || '').trim();
+            if (!val) return;
+            verifiedContact = val;
+            checkPaymentStatus();
+          });
+        }
+      }
+
+      function renderProcessing(d) {
+        const code = esc(d?.booking_code || bookingIdParam || '---');
+        cardEl.innerHTML = `
+          <div class="status-pill status-processing">
+            <span class="spinner"></span>
+            <span>Đang xác nhận giao dịch IPN</span>
+          </div>
+          <h1>Đang xác nhận thanh toán</h1>
+          <p class="lead">Giao dịch thẻ của quý khách đã được ghi nhận. Hệ thống đang đối soát chữ ký bảo mật từ cổng OnePay để cấp Phiếu dấu đỏ và mã khóa Smart-Lock PIN.</p>
+          <div class="summary-box">
+            <div class="summary-row"><span>Mã đặt phòng</span><strong>#${code}</strong></div>
+            ${d?.room_name ? `<div class="summary-row"><span>Hạng phòng</span><strong>${esc(d.room_name)}</strong></div>` : ''}
+            <div class="summary-row"><span>Trạng thái</span><strong>Đang đồng bộ tự động (${pollCount}/${MAX_POLLS})...</strong></div>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn btn-pine" id="manualRefreshBtn">Kiểm tra lại ngay</button>
+            <a class="btn btn-outline" href="index.html">Về trang chủ</a>
+          </div>
+          <div class="support-footer">
+            Trang sẽ tự động cập nhật ngay khi cổng thanh toán phản hồi · Hotline: <a href="tel:02969996999">0296.9996.999</a>
+          </div>
+        `;
+
+        document.getElementById('manualRefreshBtn')?.addEventListener('click', () => checkPaymentStatus());
+      }
+
+      function renderFailed(d) {
+        const code = esc(d?.booking_code || bookingIdParam || '');
+        const reason = esc(d?.failure_message || 'Giao dịch chưa hoàn tất hoặc đã bị hủy trên cổng thanh toán.');
+        cardEl.innerHTML = `
+          <div class="status-pill status-failed">Chưa hoàn tất thanh toán</div>
+          <h1>Thanh toán chưa hoàn tất</h1>
+          <p class="lead">${reason} Đơn đặt phòng của quý khách vẫn đang được lưu tạm để quý khách có thể thử lại hoặc chuyển sang VietQR.</p>
+          ${code ? `
+            <div class="summary-box">
+              <div class="summary-row"><span>Mã đặt phòng</span><strong>#${code}</strong></div>
+              ${d?.room_name ? `<div class="summary-row"><span>Hạng phòng</span><strong>${esc(d.room_name)}</strong></div>` : ''}
+              ${d?.amount_due_vnd ? `<div class="summary-row"><span>Số tiền cần thanh toán</span><strong>${formatVnd(d.amount_due_vnd)}</strong></div>` : ''}
+            </div>
+          ` : ''}
+          <div class="actions">
+            ${code ? `<button type="button" class="btn btn-primary" id="retryVisaBtn">Thử thanh toán lại bằng Thẻ Quốc Tế</button>` : ''}
+            ${code ? `<a class="btn btn-pine" href="phieu.html?ma=${encodeURIComponent(d?.booking_code || bookingIdParam)}">Xem Phiếu tạm tính / Thanh toán VietQR</a>` : ''}
+            <a class="btn btn-outline" href="index.html#contact">Quay lại biểu mẫu Đặt phòng</a>
+          </div>
+          <div class="support-footer">
+            Cần hỗ trợ thanh toán? Gọi <a href="tel:02969996999">0296.9996.999</a> hoặc nhắn <a href="https://www.facebook.com/Banlaboutiquedalat/" target="_blank" rel="noopener">Fanpage Banla 24/7</a>
+          </div>
+        `;
+
+        const retryBtn = document.getElementById('retryVisaBtn');
+        if (retryBtn && code) {
+          retryBtn.addEventListener('click', async () => {
+            retryBtn.disabled = true;
+            retryBtn.textContent = 'Đang khởi tạo phiên thanh toán mới...';
+            try {
+              const res = await fetch('/api/payments/visa/create-intent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ booking_id: d?.booking_code || bookingIdParam })
+              });
+              const json = await res.json();
+              if (res.ok && json.redirect_url) {
+                window.location.assign(json.redirect_url);
+                return;
+              }
+              alert(json.message || 'Không thể khởi tạo lại phiên thanh toán thẻ.');
+            } catch (_) {
+              alert('Không thể kết nối máy chủ thanh toán. Vui lòng thử lại hoặc chọn VietQR.');
+            }
+            retryBtn.disabled = false;
+            retryBtn.textContent = 'Thử thanh toán lại bằng Thẻ Quốc Tế';
+          });
+        }
+      }
+
+      async function checkPaymentStatus() {
+        if (!bookingIdParam && !merchantTxnRef) {
+          renderNotFound();
+          return;
+        }
+
+        try {
+          const qs = new URLSearchParams();
+          if (bookingIdParam) qs.set('booking_code', bookingIdParam);
+          if (merchantTxnRef) qs.set('merchant_txn_ref', merchantTxnRef);
+          if (verifiedContact) qs.set('contact', verifiedContact);
+
+          const res = await fetch('/api/payments/status?' + qs.toString());
+          if (res.status === 404) {
+            renderNotFound();
+            return;
+          }
+          const json = await res.json();
+          if (!res.ok || !json.success) {
+            renderNotFound();
+            return;
+          }
+
+          if (json.payment_status === 'PAID') {
+            renderSuccess(json);
+            return;
+          }
+
+          const shouldWaitIpn =
+            (initialState === 'processing' || txnCode === '0') &&
+            json.payment_status !== 'FAILED' &&
+            pollCount < MAX_POLLS;
+
+          if (shouldWaitIpn) {
+            pollCount += 1;
+            renderProcessing(json);
+            setTimeout(checkPaymentStatus, 3500);
+            return;
+          }
+
+          renderFailed(json);
+        } catch (_) {
+          renderNotFound();
+        }
+      }
+
+      checkPaymentStatus();
+    })();
+  </script>
+</body>
+</html>
+

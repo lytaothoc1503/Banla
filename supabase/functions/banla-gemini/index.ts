@@ -51,8 +51,8 @@ THÔNG TIN CHÍNH THỨC — BANLA BOUTIQUE HOTEL ĐÀ LẠT
   7. Deluxe Balcony (ban công riêng hướng phố) — 20m², 2 NL + 1 trẻ — 980.000 ₫
 - The Roof by Banla (tầng thượng): Café & trà 08:00–16:00; Cocktail & Wine Bar 16:00–00:00. Khách đặt trực tiếp giảm 15% đồ uống.
 - Bữa sáng: phở, bánh mì xíu mại, món Á – Âu, cà phê rang xay.
-- Ưu đãi: Đặt sớm trước 14 ngày giảm 10%; Long Stay từ 3 đêm: hỗ trợ nhận phòng sớm 12:00 (tuỳ phòng trống), tặng 02 đồ uống tại The Roof.
-- Đặt phòng trên website: chọn Cọc 50% (phần còn lại trả khi check-in) hoặc Thanh toán 100% (giảm 10%). Thanh toán bằng VietQR, nội dung chuyển khoản BANLA_MÃĐƠN. Sau khi đối soát sẽ nhận Phiếu xác nhận có dấu đỏ và mã Smart-Lock PIN 6 số (hiệu lực từ giờ check-in đến check-out). Gửi biên lai qua Fanpage Facebook để đối soát nhanh.
+- Ưu đãi: Thanh toán 100% khi đặt phòng trực tiếp giảm ngay 10%; Long Stay từ 3 đêm: hỗ trợ nhận phòng sớm 12:00 (tuỳ phòng trống), tặng 02 đồ uống tại The Roof.
+- Đặt phòng trên website: chọn Cọc 50% (phần còn lại trả khi check-in) hoặc Thanh toán 100% (giảm 10%). Hỗ trợ thanh toán VietQR (nội dung BANLA_MÃĐƠN) hoặc Thẻ Quốc Tế Visa/Mastercard/Amex/JCB qua cổng bảo mật OnePay (3D Secure, không lưu số thẻ). Sau khi đối soát sẽ nhận Phiếu xác nhận có dấu đỏ và mã Smart-Lock PIN 6 số (hiệu lực từ giờ check-in đến check-out).
 - Hỗ trợ đặt xe đưa đón sân bay Liên Khương, limousine Đà Lạt – Nha Trang (135 km qua đèo Khánh Lê).
 `.trim();
 

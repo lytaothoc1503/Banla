@@ -60,6 +60,35 @@
     .btn-fb { background: #1877F2; color: #fff; }
     .btn-fb:hover { background: #166fe5; }
 
+    .pin-unlock-banner {
+      max-width: 1000px;
+      margin: 0 auto 14px;
+      background: #fffbeb;
+      border: 1.5px solid #f59e0b;
+      border-radius: 10px;
+      padding: 12px 18px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      box-shadow: 0 4px 12px rgba(180, 83, 9, 0.08);
+    }
+    .pin-unlock-form {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .pin-unlock-input {
+      padding: 8px 12px;
+      border: 1px solid #d97706;
+      border-radius: 7px;
+      font-size: 13px;
+      min-width: 220px;
+      font-family: inherit;
+    }
+
     .slip-wrapper {
       max-width: 1020px;
       margin: 0 auto;
@@ -79,7 +108,7 @@
 
     @media print {
       body { background: #fff !important; padding: 0 !important; }
-      .action-bar, .hint-print { display: none !important; }
+      .action-bar, .hint-print, .pin-unlock-banner { display: none !important; }
       .slip-wrapper { padding: 0 !important; max-width: none !important; }
       .banla-slip-container {
         box-shadow: none !important;
@@ -112,146 +141,209 @@
     Mẹo in đẹp: Chọn <strong>Khổ ngang (Landscape)</strong> và bật <strong>"Đồ họa nền (Background graphics)"</strong> khi in hoặc lưu PDF.
   </p>
 
+  <!-- Thanh xác thực SĐT/Email để hiển thị Mã PIN 6 số chống lộ lọt (IDOR Protection) -->
+  <div class="pin-unlock-banner" id="pinUnlockBanner">
+    <div style="font-size: 13px; color: #92400e;">
+      <strong>🔒 Bảo mật khóa cửa thông minh:</strong> Nhập <strong>Số điện thoại hoặc Email đặt phòng</strong> để hiển thị Mã Smart-Lock PIN 6 số trên phiếu in.
+    </div>
+    <form class="pin-unlock-form" id="pinUnlockForm">
+      <input type="text" class="pin-unlock-input" id="pinContactInput" required placeholder="Nhập SĐT hoặc Email đặt phòng..." />
+      <button type="submit" class="btn-act btn-primary" style="padding: 8px 14px; font-size: 13px;">Xác thực &amp; Hiện mã PIN</button>
+    </form>
+  </div>
+
   <div class="slip-wrapper">
     <div id="slipContent">
       <div class="loading-state">
-        <h3 style="color: var(--pine); margin-bottom: 8px;">Đang mở phiếu xác nhận dịch vụ...</h3>
-        <p style="color: #718096; font-size: 13px;">Hệ thống đang tải thông tin đặt phòng và con dấu đỏ chính thức của Banla.</p>
+        <h3 style="color: var(--pine); margin-bottom: 8px;">Đang đối chiếu dữ liệu đặt phòng từ máy chủ...</h3>
+        <p style="color: #718096; font-size: 13px;">Hệ thống đang xác thực trạng thái thanh toán thực tế của Banla Boutique Hotel.</p>
       </div>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="banla-config.js"></script>
   <script src="vendor/html2canvas.min.js"></script>
   <script src="phieu.js"></script>
   <script>
     (async function () {
       const urlParams = new URLSearchParams(window.location.search);
       const code = (urlParams.get('ma') || urlParams.get('id') || '').trim();
-      const contact = (urlParams.get('contact') || '').trim();
+      let activeContact = (urlParams.get('contact') || '').trim();
       const key = (urlParams.get('key') || '').trim();
       const contentEl = document.getElementById('slipContent');
       const actionEl = document.getElementById('actionBar');
       const hintEl = document.getElementById('hintPrint');
+      const unlockBannerEl = document.getElementById('pinUnlockBanner');
+      const unlockFormEl = document.getElementById('pinUnlockForm');
+      const unlockInputEl = document.getElementById('pinContactInput');
 
       if (!code) {
         contentEl.innerHTML = `
           <div class="error-state">
             <h3 style="color: #cf222e; margin-bottom: 10px;">Chưa có mã đặt phòng</h3>
-            <p style="color: #4A5568; font-size: 14px; margin-bottom: 14px;">Đường dẫn mở phiếu cần kèm mã đơn hợp lệ (Ví dụ: phieu.html?ma=BL9821).</p>
-            <p style="font-size: 13px; color: #718096;">Quý khách vui lòng nhắn <a href="https://www.facebook.com/Banlaboutiquedalat/" target="_blank" style="color:#1877F2;font-weight:600;">Fanpage Facebook Banla</a> để được cung cấp phiếu.</p>
+            <p style="color: #4A5568; font-size: 14px; margin-bottom: 14px;">Đường dẫn mở phiếu cần kèm mã đơn đặt phòng thực tế từ hệ thống.</p>
+            <p style="font-size: 13px; color: #718096;">Quý khách vui lòng nhắn <a href="https://www.facebook.com/Banlaboutiquedalat/" target="_blank" style="color:#1877F2;font-weight:600;">Fanpage Facebook Banla</a> để được hỗ trợ.</p>
           </div>
         `;
         return;
       }
 
-      let foundBooking = null;
-      let localBooking = null;
       const cleanCode = code.replace(/^#+/, '').toLowerCase();
       const upperCode = cleanCode.toUpperCase();
-      const isDemoMode = urlParams.get('demo') === '1';
-
-      // 1. Đọc tạm từ LocalStorage (nếu vừa tạo trên cùng trình duyệt / GitHub Pages)
-      try {
-        const localRaw = localStorage.getItem('BANLA_BOOKINGS_STORE');
-        if (localRaw) {
-          const list = JSON.parse(localRaw);
-          if (Array.isArray(list)) {
-            localBooking = list.find(b =>
-              String(b.id || '').toLowerCase() === cleanCode ||
-              String(b.booking_code || '').toLowerCase() === cleanCode
-            ) || null;
-          }
-        }
-      } catch (e) {}
-
-      // 2. Ưu tiên kiểm tra Backend API (/api/booking/detail) để nhận trạng thái đã duyệt mới nhất (G2)
-      try {
-        let apiUrl = '/api/booking/detail?id=' + encodeURIComponent(code);
-        if (contact) apiUrl += '&contact=' + encodeURIComponent(contact);
-        if (key) apiUrl += '&key=' + encodeURIComponent(key);
-        const res = await fetch(apiUrl);
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.success && data.booking) {
-            foundBooking = data.booking;
-          }
-        }
-      } catch (e) {}
-
-      // 3. Thử đọc từ Supabase theo đúng mã đơn (G5: dùng .eq('booking_code', ...) thay vì .select('*'))
-      if (!foundBooking && window.supabase) {
+      const adminSessionKey = sessionStorage.getItem('BANLA_ADMIN_KEY') || '';
+      const adminSessionToken = sessionStorage.getItem('BANLA_ADMIN_TOKEN') || '';
+      if (!activeContact) {
         try {
-          const sbCfg = JSON.parse(localStorage.getItem('BANLA_SUPABASE_CONFIG') || '{}');
-          const sbUrl = sbCfg.url || window.BANLA_SUPABASE_URL || '';
-          const sbKey = sbCfg.anonKey || window.BANLA_SUPABASE_ANON_KEY || '';
-          if (sbUrl && sbKey) {
-            const client = window.supabase.createClient(sbUrl, sbKey);
-            const { data } = await client
-              .schema('banla')
-              .from('bookings')
-              .select('*')
-              .eq('booking_code', upperCode)
-              .maybeSingle();
-            if (data) {
-              foundBooking = data;
+          activeContact = (sessionStorage.getItem('BANLA_GUEST_CONTACT_' + upperCode) || '').trim();
+        } catch (_) {}
+      }
+
+      async function fetchVerifiedBooking(contactToVerify) {
+        let serverReachable = false;
+
+        // 1. Nguồn chuẩn #1: Máy chủ Node.js Express (/api/booking/detail)
+        try {
+          let apiUrl = '/api/booking/detail?id=' + encodeURIComponent(upperCode);
+          if (contactToVerify) apiUrl += '&contact=' + encodeURIComponent(contactToVerify);
+          if (key) apiUrl += '&key=' + encodeURIComponent(key);
+
+          const headers = {};
+          if (adminSessionKey) headers['x-admin-key'] = adminSessionKey;
+          if (adminSessionToken) headers['x-admin-token'] = adminSessionToken;
+
+          const res = await fetch(apiUrl, { headers, credentials: 'same-origin' });
+          if (res.status === 200) {
+            const data = await res.json();
+            if (data && data.success && data.booking) {
+              return { source: 'server', booking: data.booking };
+            }
+          } else if (res.status === 403) {
+            const errData = await res.json().catch(() => ({}));
+            return { source: 'auth_failed', message: errData.message || 'Thông tin SĐT/Email xác thực không khớp.' };
+          } else if (res.status === 404) {
+            // Phân biệt 404 JSON từ API (không có đơn) với 404 HTML trên hosting tĩnh (GitHub Pages)
+            const ct = res.headers.get('content-type') || '';
+            if (ct.includes('application/json')) {
+              serverReachable = true;
+              return { source: 'not_found', booking: null };
             }
           }
-        } catch (e) {}
-      }
+        } catch (_) {}
 
-      // 4. Nếu máy chủ / Supabase chưa trả về hoặc đang chạy tĩnh, hợp nhất với bản ghi LocalStorage
-      if (localBooking) {
-        const localPaid = String(localBooking.payment_status || localBooking.paymentStatus || '').toLowerCase() === 'paid';
-        const remotePaid = foundBooking && String(foundBooking.payment_status || foundBooking.paymentStatus || '').toLowerCase() === 'paid';
-        if (!foundBooking || (localPaid && !remotePaid)) {
-          foundBooking = localBooking;
+        // 2. Nguồn chuẩn #2 (chỉ khi chạy tĩnh không có Express): Gọi hàm RPC công khai `banla_booking_status`
+        // TUYỆT ĐỐI KHÔNG gọi .from('bookings').select('*') (G5)
+        if (!serverReachable && contactToVerify && window.BANLA_SUPABASE_URL && window.BANLA_SUPABASE_ANON_KEY) {
+          try {
+            const rpcRes = await fetch(
+              window.BANLA_SUPABASE_URL.replace(/\/+$/, '') + '/rest/v1/rpc/banla_booking_status',
+              {
+                method: 'POST',
+                headers: {
+                  apikey: window.BANLA_SUPABASE_ANON_KEY,
+                  Authorization: 'Bearer ' + window.BANLA_SUPABASE_ANON_KEY,
+                  'Accept-Profile': 'banla',
+                  'Content-Profile': 'banla',
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  p_booking_code: upperCode,
+                  p_guest_phone: contactToVerify
+                })
+              }
+            );
+            if (rpcRes.ok) {
+              const rows = await rpcRes.json();
+              const row = Array.isArray(rows) ? rows[0] : rows;
+              if (row && row.booking_code) {
+                return { source: 'supabase_rpc', booking: row };
+              }
+            }
+          } catch (_) {}
         }
+
+        // 3. Fallback trình duyệt khi hosting tĩnh và chưa có kết nối RPC:
+        // KHẮC PHỤC G2: Bản ghi localStorage KHÔNG BAO GIỜ được phép in Dấu Đỏ ĐÃ THANH TOÁN hay hiện PIN!
+        if (!serverReachable) {
+          try {
+            const localRaw = localStorage.getItem('BANLA_BOOKINGS_STORE');
+            if (localRaw) {
+              const list = JSON.parse(localRaw);
+              if (Array.isArray(list)) {
+                const localItem = list.find(b =>
+                  String(b.id || '').toLowerCase() === cleanCode ||
+                  String(b.booking_code || '').toLowerCase() === cleanCode
+                );
+                if (localItem) {
+                  return {
+                    source: 'unverified_local',
+                    booking: {
+                      ...localItem,
+                      payment_status: 'pending',
+                      paymentStatus: 'UNPAID',
+                      booking_status: 'pending',
+                      status: 'pending',
+                      paid_amount: 0,
+                      paidAmount: 0,
+                      smartlock_pin: '',
+                      smartLockPin: null
+                    }
+                  };
+                }
+              }
+            }
+          } catch (_) {}
+        }
+
+        return { source: 'not_found', booking: null };
       }
 
-      // 5. Fallback mẫu mặc định chỉ khi bật ?demo=1 (G3: tránh in phiếu dấu đỏ mẫu khi không có ?demo=1)
-      if (!foundBooking && isDemoMode) {
-        const defaultSamples = [
-          {
-            id: 'BL9821', booking_code: 'BL9821', guest_name: 'Hoàng Minh Tuấn (Mẫu Demo)', guest_phone: '0988776655',
-            guest_email: 'minhtuan.dalat@gmail.com', room_id: 'Élite Room', guests: 2,
-            check_in: '2026-11-05', check_out: '2026-11-07', total_amount: 2500000, paid_amount: 2500000,
-            payment_status: 'paid', booking_status: 'confirmed', smartlock_pin: '839204',
-            note: 'Bản xem trước mẫu demo — Cần phòng tầng cao, view nhìn trọn thung lũng sương.'
-          },
-          {
-            id: 'BL7342', booking_code: 'BL7342', guest_name: 'Trần Thị Mai Anh (Mẫu Demo)', guest_phone: '0912345678',
-            guest_email: 'maianh.tran@outlook.com', room_id: 'Original Suite', guests: 2,
-            check_in: '2026-11-10', check_out: '2026-11-12', total_amount: 3100000, paid_amount: 3100000,
-            payment_status: 'paid', booking_status: 'confirmed', smartlock_pin: '561829',
-            note: 'Bản xem trước mẫu demo — Kỷ niệm ngày cưới, setup giúp hoa tươi.'
-          },
-          {
-            id: 'BL3519', booking_code: 'BL3519', guest_name: 'Phạm Trần Linh (Mẫu Demo)', guest_phone: '0965555555',
-            guest_email: 'banhfuli1503@gmail.com', room_id: 'Deluxe Twin', guests: 2,
-            check_in: '2027-02-02', check_out: '2027-02-04', total_amount: 1900000, paid_amount: 0,
-            payment_status: 'pending', booking_status: 'pending', smartlock_pin: '',
-            note: 'Đặt trực tuyến từ website Banla.'
-          }
-        ];
-        foundBooking = defaultSamples.find(b => b.booking_code.toLowerCase() === cleanCode);
+      const initialResult = await fetchVerifiedBooking(activeContact);
+      if (initialResult.source === 'auth_failed') {
+        // Nếu URL có contact sai, thử tải lại bản che PII để khách nhập lại SĐT đúng
+        activeContact = '';
       }
+      const finalLookup = initialResult.booking ? initialResult : await fetchVerifiedBooking('');
+      let foundBooking = finalLookup.booking;
 
       if (!foundBooking) {
         contentEl.innerHTML = `
           <div class="error-state">
-            <h3 style="color: #cf222e; margin-bottom: 10px;">Không tìm thấy đơn #${code}</h3>
-            <p style="color: #4A5568; font-size: 14px; margin-bottom: 12px;">Vui lòng kiểm tra lại mã đặt phòng hoặc liên hệ Hotline <strong>0296.9996.999 - 0352554863</strong> / Fanpage Facebook để được hỗ trợ.</p>
+            <h3 style="color: #cf222e; margin-bottom: 10px;">Không tìm thấy đơn đặt phòng #${upperCode}</h3>
+            <p style="color: #4A5568; font-size: 14px; margin-bottom: 12px;">Đơn đặt phòng này không tồn tại trên cơ sở dữ liệu hoặc mã đơn chưa chính xác. Vui lòng liên hệ Hotline <strong>0296.9996.999 - 0352554863</strong> hoặc Fanpage Facebook để được hỗ trợ.</p>
           </div>
         `;
         return;
       }
 
-      const displayCode = foundBooking.booking_code || foundBooking.id || code;
-      contentEl.innerHTML = window.BanlaSlip(foundBooking);
-      actionEl.style.display = 'flex';
-      hintEl.style.display = 'block';
-      document.title = 'Phiếu xác nhận #' + displayCode + ' | Banla Boutique Hotel Đà Lạt';
+      function renderCurrentSlip(bookingObj) {
+        const displayCode = bookingObj.booking_code || bookingObj.bookingCode || bookingObj.id || upperCode;
+        contentEl.innerHTML = window.BanlaSlip(bookingObj);
+        actionEl.style.display = 'flex';
+        hintEl.style.display = 'block';
+        document.title = 'Phiếu xác nhận #' + displayCode + ' | Banla Boutique Hotel Đà Lạt';
+
+        if (bookingObj.pinProtected) {
+          unlockBannerEl.style.display = 'flex';
+        } else {
+          unlockBannerEl.style.display = 'none';
+        }
+        return displayCode;
+      }
+
+      let displayCode = renderCurrentSlip(foundBooking);
+
+      unlockFormEl.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const entered = unlockInputEl.value.trim();
+        if (!entered) return;
+        const verified = await fetchVerifiedBooking(entered);
+        if (verified.source === 'auth_failed' || !verified.booking) {
+          alert(verified.message || 'Số điện thoại hoặc Email không khớp với thông tin đặt phòng.');
+          return;
+        }
+        foundBooking = verified.booking;
+        displayCode = renderCurrentSlip(foundBooking);
+      });
 
       document.getElementById('btnPrint').addEventListener('click', function () {
         window.print();

@@ -3,54 +3,103 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Banla Boutique Hotel Đà Lạt — Thanh Toán Ưu Tiên</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,450;500&display=swap" rel="stylesheet">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Banla Boutique Hotel Đà Lạt — Cổng Thanh Toán VietQR</title>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;700&display=swap" rel="stylesheet">
   <style>
-    body { background-color: #eef2f3; color: #1a2428; font-family: 'Figtree', sans-serif; }
-    h1, h2, h3 { font-family: 'Fraunces', serif; }
+    body { background-color: #eef2f3; color: #1a2428; font-family: 'Figtree', sans-serif; margin: 0; padding: 24px; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .card { max-width: 520px; width: 100%; background: #fff; padding: 28px; border-radius: 18px; border: 1px solid #dfe6e8; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+    h1 { font-family: 'Fraunces', serif; font-size: 24px; margin: 4px 0 12px; color: #2a3f38; }
+    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #334155; }
+    input { width: 100%; box-sizing: border-box; padding: 11px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 14px; margin-bottom: 14px; font-family: inherit; }
+    button { width: 100%; padding: 14px; border-radius: 12px; background: #2a3f38; color: #fff; border: none; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    button:hover { background: #192622; }
   </style>
 </head>
-<body class="p-4 sm:p-8 flex items-center justify-center min-h-screen">
-  <div class="max-w-xl w-full bg-white p-6 sm:p-8 rounded-2xl border border-[#dfe6e8] shadow-sm">
-    <div class="flex items-center justify-between border-b border-[#dfe6e8] pb-4 mb-6">
-      <div>
-        <p class="text-xs uppercase tracking-widest text-[#b8612e] font-semibold">Banla Boutique Hotel</p>
-        <h1 class="text-2xl font-bold text-[#1a2428] mt-1">Élite Room · Gác Mái</h1>
-      </div>
-      <span class="text-xs px-3 py-1 bg-[#2a3f38]/10 text-[#2a3f38] font-semibold rounded-full">Đã xác minh</span>
-    </div>
-    
-    <p class="text-sm text-[#5c6b72] mb-6 leading-relaxed">
-      Ngoài lạnh. Trong ấm. Quý khách vui lòng xác nhận đặt phòng và chuyển khoản qua cổng thanh toán MB Bank Priority (VietQR tự động). Hệ thống sẽ xác nhận ngay lập tức qua kênh thời gian thực.
+<body>
+  <div class="card">
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#b8612e;font-weight:700;">Banla Boutique Hotel Đà Lạt</div>
+    <h1>Mở Phiên Thanh Toán VietQR / Thẻ Tín Dụng Visa</h1>
+    <p style="font-size:13.5px;color:#5c6b72;line-height:1.5;margin-bottom:18px;">
+      Nhập mã đặt phòng thực tế đã khởi tạo trên hệ thống để lấy số tiền chuẩn từ CSDL và chọn thanh toán qua <strong>VietQR (MB Bank 0352554863)</strong> hoặc <strong>Thẻ Tín Dụng Quốc Tế (Visa · Mastercard · JCB · Amex)</strong>.
     </p>
-
-    <div class="flex justify-between items-center bg-[#f4f7f8] p-4 rounded-xl border border-[#dfe6e8] mb-6">
-      <span class="text-xs uppercase tracking-wider text-[#5c6b72] font-semibold">Số tiền đặt cọc</span>
-      <span class="text-xl font-bold text-[#b8612e]">200.000 đ</span>
-    </div>
-
-    <button onclick="startCheckout()" class="w-full py-4 rounded-xl bg-[#b8612e] hover:bg-[#8f4520] text-white font-semibold transition shadow-md">
-      Mở Cổng Thanh Toán Banla Priority →
-    </button>
+    <form id="lookupSessionForm">
+      <label for="bookingCodeInput">Mã đặt phòng (VD: BL8A9F12)</label>
+      <input id="bookingCodeInput" required placeholder="Nhập mã đơn thật..." />
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <button type="submit" id="btnOpenVietQr">Quét Mã VietQR →</button>
+        <button type="button" id="btnPayVisaDirect" style="background:#b8612e;">💳 Thanh Toán Thẻ Visa →</button>
+      </div>
+    </form>
   </div>
 
-  <!-- Nhúng SDK thanh toán Banla độc lập -->
   <script src="./banla-priority-modal.js"></script>
   <script>
-    function startCheckout() {
-      BanlaPayment.open({
-        bookingId: 'BALA-2026-9821',
-        amount: 200000,
-        memo: 'BALA9821',
-        accountNo: '0965999999',
-        accountName: 'BANLA BOUTIQUE HOTEL',
-        bankName: 'MB Bank',
-        onSuccess: function(res) {
-          console.log('Thanh toán hoàn tất:', res);
+    document.getElementById('btnPayVisaDirect').addEventListener('click', async function () {
+      const code = document.getElementById('bookingCodeInput').value.trim();
+      if (!code) {
+        alert('Vui lòng nhập mã đặt phòng.');
+        return;
+      }
+      const btn = this;
+      const orig = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Đang kết nối OnePay...';
+      try {
+        const res = await fetch('/api/payments/visa/create-intent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ booking_id: code })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.redirect_url) {
+          window.location.assign(data.redirect_url);
+          return;
         }
+        alert(data.message || 'Không thể khởi tạo phiên thanh toán thẻ Visa.');
+      } catch (_) {
+        alert('Lỗi kết nối máy chủ thanh toán thẻ.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = orig;
+      }
+    });
+
+    document.getElementById('lookupSessionForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const code = document.getElementById('bookingCodeInput').value.trim();
+      if (!code) return;
+
+      const detailRes = await fetch('/api/booking/detail?id=' + encodeURIComponent(code));
+      if (!detailRes.ok) {
+        alert('Không tìm thấy mã đơn đặt phòng #' + code + ' trên hệ thống.');
+        return;
+      }
+      const sessionRes = await fetch('/api/banla/session/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId: code })
       });
-    }
+      const sData = await sessionRes.json();
+      if (!sessionRes.ok) {
+        alert(sData.message || 'Không thể khởi tạo phiên thanh toán.');
+        return;
+      }
+      BanlaPayment.open({
+        bookingId: sData.bookingId,
+        sessionId: sData.sessionId,
+        amount: sData.amount,
+        totalAmount: sData.totalAmount,
+        discountAmount: sData.discountAmount,
+        remainingAmount: sData.remainingAmount,
+        paymentOption: sData.paymentOption,
+        memo: sData.memo,
+        vietQrUrl: sData.vietQrUrl,
+        bankId: sData.bankDetails.bankCode,
+        accountNo: sData.bankDetails.accountNumber,
+        accountName: sData.bankDetails.accountName
+      });
+    });
   </script>
 </body>
 </html>

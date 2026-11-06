@@ -11,17 +11,75 @@ process.env.ADMIN_KEY = 'TEST_ADMIN_KEY_2026_xyz';
 process.env.BANLA_WEBHOOK_SECRET = 'test_webhook_secret_2026';
 
 const { app, buildSmartConciergeReply } = require('../server');
-let server;
-let base;
+const { Duplex } = require('node:stream');
+const http = require('node:http');
 
-before(() => new Promise((resolve) => {
-  server = app.listen(0, () => {
-    base = `http://127.0.0.1:${server.address().port}`;
-    resolve();
+const base = 'http://127.0.0.1';
+
+function fetch(input, init = {}) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(String(input), 'http://127.0.0.1');
+    const method = (init.method || 'GET').toUpperCase();
+    const rawBody = init.body !== undefined && init.body !== null ? String(init.body) : '';
+    const socket = new Duplex({
+      read() {},
+      write(_c, _e, cb) { cb(); }
+    });
+    socket.remoteAddress = '127.0.0.1';
+
+    const headers = {};
+    if (init.headers) {
+      for (const [k, v] of Object.entries(init.headers)) {
+        headers[k.toLowerCase()] = String(v);
+      }
+    }
+    headers.host = headers.host || u.host || '127.0.0.1';
+    if (rawBody && !headers['content-length']) {
+      headers['content-length'] = String(Buffer.byteLength(rawBody));
+    }
+
+    const req = new http.IncomingMessage(socket);
+    req.method = method;
+    req.url = u.pathname + u.search;
+    req.headers = headers;
+
+    const res = new http.ServerResponse(req);
+    const chunks = [];
+    const origWrite = res.write.bind(res);
+    const origEnd = res.end.bind(res);
+
+    res.write = (chunk, enc, cb) => {
+      if (chunk) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk), enc));
+      return origWrite(chunk, enc, cb);
+    };
+    res.end = (chunk, enc, cb) => {
+      if (chunk) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk), enc));
+      origEnd(chunk, enc, cb);
+      const textStr = Buffer.concat(chunks).toString('utf8');
+      const resHeaders = res.getHeaders();
+      resolve({
+        status: res.statusCode,
+        ok: res.statusCode >= 200 && res.statusCode < 300,
+        headers: {
+          get(name) {
+            const v = resHeaders[String(name || '').toLowerCase()];
+            return Array.isArray(v) ? v.join(', ') : (v !== undefined ? String(v) : null);
+          }
+        },
+        text: async () => textStr,
+        json: async () => JSON.parse(textStr)
+      });
+    };
+
+    try {
+      app.handle(req, res, reject);
+      if (rawBody) req.push(rawBody);
+      req.push(null);
+    } catch (err) {
+      reject(err);
+    }
   });
-}));
-
-after(() => server.close());
+}
 
 test('Lễ tân AI (POST /api/chat): trả lời chính xác câu hỏi "Phòng nào hợp cho 2 người lớn và 1 bé?" và không bao giờ báo lỗi "tạm thời chưa sẵn sàng"', async () => {
   const res = await fetch(`${base}/api/chat`, {

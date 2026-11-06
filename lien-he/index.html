@@ -86,8 +86,65 @@
               </select>
               <input type="number" name="guests" min="1" max="20" value="2" placeholder="Số khách" aria-label="Số khách">
               <textarea name="note" placeholder="Ghi chú đặc biệt (nhận phòng sớm, kỷ niệm...)" rows="2"></textarea>
+
+              <!-- Lựa chọn phương án thanh toán: Cọc 50% hoặc Thanh toán 100% giảm 10% -->
+              <div class="payment-options-group" role="radiogroup" aria-label="Phương thức thanh toán">
+                <label class="payment-option-card">
+                  <input type="radio" name="payment_option" value="deposit_50" checked>
+                  <div class="payment-option-content">
+                    <div class="payment-option-header">
+                      <span class="payment-option-title">Đặt cọc 50% giữ phòng</span>
+                      <span class="payment-option-badge">Tiêu chuẩn</span>
+                    </div>
+                    <p class="payment-option-desc">Thanh toán trước 50% tổng đơn. 50% còn lại thanh toán tại quầy khi check-in.</p>
+                  </div>
+                </label>
+
+                <label class="payment-option-card">
+                  <input type="radio" name="payment_option" value="pay_100">
+                  <div class="payment-option-content">
+                    <div class="payment-option-header">
+                      <span class="payment-option-title">Thanh toán 100% nhận ưu đãi</span>
+                      <span class="payment-option-badge highlight">Giảm 10%</span>
+                    </div>
+                    <p class="payment-option-desc">Giảm ngay 10% tổng hóa đơn phòng + Ưu tiên nhận mã Smart-Lock tự động.</p>
+                  </div>
+                </label>
+              </div>
+
+              <!-- Lựa chọn kênh thanh toán: VietQR hoặc Thẻ Tín Dụng Quốc Tế (Visa / Mastercard / JCB) -->
+              <div class="payment-methods-group" role="radiogroup" aria-label="Kênh thanh toán">
+                <label class="payment-method-card">
+                  <input type="radio" name="payment_method" value="vietqr" checked>
+                  <div class="payment-method-body">
+                    <div class="payment-method-top">
+                      <span class="payment-method-name">Chuyển khoản VietQR</span>
+                      <span class="payment-method-tag">Tức thì · 0% phí</span>
+                    </div>
+                    <span class="payment-method-sub">Quét mã QR ngân hàng MB Bank · Đối soát nhanh 24/7</span>
+                  </div>
+                </label>
+
+                <label class="payment-method-card">
+                  <input type="radio" name="payment_method" value="visa">
+                  <div class="payment-method-body">
+                    <div class="payment-method-top">
+                      <span class="payment-method-name">Thẻ Tín Dụng / Quốc Tế (OnePay)</span>
+                      <span class="payment-method-brands" aria-label="Visa Mastercard JCB Amex">
+                        <span class="card-brand-pill">VISA</span>
+                        <span class="card-brand-pill">MC</span>
+                        <span class="card-brand-pill">JCB</span>
+                      </span>
+                    </div>
+                    <span class="payment-method-sub">Cổng bảo mật 3D Secure · Không lưu thông tin thẻ trên Banla</span>
+                  </div>
+                </label>
+              </div>
+
+              <div class="visa-gateway-alert" hidden role="status" aria-live="polite"></div>
+
               <button type="submit" class="btn btn-primary">Tiếp tục Thanh Toán VietQR &amp; Nhận Phiếu Dấu Đỏ</button>
-              <p class="form-note">Hệ thống sẽ mở mã VietQR và cấp ngay Phiếu xác nhận có dấu đỏ của Banla.</p>
+              <p class="form-note">Hệ thống sẽ mở mã VietQR hoặc kết nối cổng Thẻ Quốc Tế OnePay và cấp ngay Phiếu xác nhận có dấu đỏ của Banla.</p>
             </form>
           </div>
         </div>

@@ -826,9 +826,9 @@
             </select>
             <input type="number" name="guests" min="1" max="20" value="2" placeholder="Số khách lưu trú" aria-label="Số khách">
             <textarea name="message" placeholder="Ghi chú đặc biệt (nhận phòng sớm, kỷ niệm, yêu cầu tầng...)" rows="2"></textarea>
-            <!-- Cụm chọn hình thức thanh toán (Cọc 50% hoặc Thanh toán 100% giảm 10%) -->
+            <!-- Cụm chọn hình thức giữ phòng (Cọc 50% hoặc Thanh toán 100% giảm 10%) -->
             <div class="payment-option-selector">
-              <p class="payment-option-label">Phương thức thanh toán &amp; Ưu đãi:</p>
+              <p class="payment-option-label">1. Hình thức giữ phòng &amp; Ưu đãi:</p>
               <div class="payment-option-grid">
                 <label class="payment-option-card">
                   <input type="radio" name="payment_option" value="deposit_50" checked>
@@ -848,8 +848,34 @@
                 </label>
               </div>
             </div>
-            <button type="submit" class="btn btn-primary">Tiếp tục Thanh Toán VietQR &amp; Nhận Phiếu Dấu Đỏ</button>
-            <p class="form-note">Sau khi chuyển khoản VietQR, quý khách <strong>hãy gửi biên lai qua Facebook Banla</strong> để được đối soát nhanh và nhận mã Smart-Lock PIN chính thức.</p>
+
+            <!-- Cụm chọn phương thức thanh toán (VietQR nội địa hoặc Thẻ Quốc Tế Visa/Mastercard/Amex/JCB qua OnePay) -->
+            <div class="payment-option-selector payment-method-selector">
+              <p class="payment-option-label">2. Chọn phương thức thanh toán:</p>
+              <div class="payment-option-grid">
+                <label class="payment-option-card">
+                  <input type="radio" name="payment_method" value="vietqr" checked>
+                  <div class="payment-option-content">
+                    <div class="payment-option-title">
+                      VietQR Ngân hàng <span class="payment-option-badge badge-pine">Nội địa</span>
+                    </div>
+                    <div class="payment-option-description">Quét mã QR MB Bank · Nhận phiếu dấu đỏ</div>
+                  </div>
+                </label>
+                <label class="payment-option-card payment-card-visa">
+                  <input type="radio" name="payment_method" value="visa">
+                  <div class="payment-option-content">
+                    <div class="payment-option-title">
+                      Thẻ Visa · Mastercard · JCB <span class="payment-option-badge badge-ember">3D Secure</span>
+                    </div>
+                    <div class="payment-option-description">Cổng bảo mật OnePay (Amex/Visa/MC) · Duyệt tức thì</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+            <div class="visa-gateway-alert" id="visaGatewayAlert" hidden role="alert"></div>
+            <button type="submit" class="btn btn-primary" id="bookingSubmitBtn">Tiếp tục Thanh Toán VietQR &amp; Nhận Phiếu Dấu Đỏ</button>
+            <p class="form-note" id="bookingFormNote">Sau khi chuyển khoản VietQR, quý khách <strong>hãy gửi biên lai qua Facebook Banla</strong> để được đối soát nhanh và nhận mã Smart-Lock PIN chính thức.</p>
           </form>
         </div>
       </div>

@@ -5,8 +5,27 @@
 
 const isProd = process.env.NODE_ENV === 'production';
 
-// Mask các trường nhạy cảm nếu vô tình in ra
-const SENSITIVE_KEYS = ['key', 'admin_key', 'token', 'secret', 'password', 'pin', 'smartlock_pin', 'authorization'];
+// Mask các trường nhạy cảm nếu vô tình in ra (bao gồm trường thẻ PCI DSS & khóa OnePay)
+const SENSITIVE_KEYS = [
+  'key',
+  'admin_key',
+  'token',
+  'secret',
+  'password',
+  'pin',
+  'smartlock_pin',
+  'smart_lock_pin',
+  'authorization',
+  'card_number',
+  'cardnumber',
+  'pan',
+  'cvv',
+  'cvc',
+  'expiry',
+  'vpc_securehash',
+  'onepay_secure_secret',
+  'secure_secret'
+];
 
 function redactSensitiveData(data) {
   if (!data || typeof data !== 'object') return data;

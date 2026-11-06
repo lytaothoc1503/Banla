@@ -44,11 +44,6 @@
   }
 
   /**
-   * Tạo Con dấu mộc tròn vector SVG màu đỏ chữ:
-   * "BANLA BOUTIQUE HOTEL - ĐÃ THANH TOÁN" xoay góc nghiêng 12 độ chân thực
-   */
-  
-  /**
    * Tạo Con dấu MỘC NƯỚC MỜ (Màu xám/cam):
    * "BANLA BOUTIQUE HOTEL - CHỜ ĐỐI SOÁT" (PENDING)
    * Tuyệt đối KHÔNG DÙNG DẤU ĐỎ khi CSDL chưa chứng minh thanh toán thành công!
@@ -89,6 +84,10 @@
     `;
   }
 
+  /**
+   * Tạo Con dấu mộc tròn vector SVG màu đỏ chữ:
+   * "BANLA BOUTIQUE HOTEL - ĐÃ THANH TOÁN" xoay góc nghiêng 12 độ chân thực
+   */
   function renderRedSealSvg(bookingCode, dateStr) {
     const today = dateStr || new Date().toLocaleDateString('vi-VN');
     const cleanCode = String(bookingCode || 'BANLA').replace(/^#+/, '').toUpperCase();
@@ -368,32 +367,56 @@
   window.BanlaSlip = function (d = {}) {
     injectSlipStyles();
 
-    const code = d.booking_code || d.code || d.id || d.bookingId || 'BL8888';
+    const code = d.booking_code || d.bookingCode || d.code || d.id || d.bookingId || 'CHƯA_CẤP';
     const guestName = d.guest_name || d.name || 'Quý khách';
     const guestPhone = d.guest_phone || d.phone || d.phoneMasked || '0296.9996.999';
     const guestEmail = d.guest_email || d.email || d.emailMasked || 'Chưa cung cấp';
-    const roomName = d.room_id || d.room || 'Deluxe Room';
+    const roomName = d.room_id || d.room || 'Banla Signature';
     const checkInRaw = d.check_in || d.checkin || '';
     const checkOutRaw = d.check_out || d.checkout || '';
     const checkInStr = formatDateDisplay(checkInRaw);
     const checkOutStr = formatDateDisplay(checkOutRaw);
-    const nights = calculateNights(checkInRaw, checkOutRaw);
+    const nights = Number(d.nights) > 0 ? Number(d.nights) : calculateNights(checkInRaw, checkOutRaw);
     const guests = d.guests || 2;
     const note = d.note || d.message || 'Không có';
     const pin = d.smartlock_pin || d.smartLockPin || '';
+    const pinProtected = Boolean(d.pinProtected || d.pin_protected);
 
     const total = Number(d.total_amount ?? d.totalPrice ?? d.total) || 1500000;
-    const payStatus = String(d.payment_status || d.paymentStatus || 'pending').toLowerCase();
-    const paidAmountNum = Number(d.paid_amount ?? d.paidAmount ?? 0);
-    // CƠ SỞ DỮ LIỆU CHỨNG MINH THỰC TẾ:
-    // Phải có payment_status = 'paid' hoặc đã nhận được khoản thanh toán/đối soát thật
-    const isPaid = payStatus === 'paid' || (paidAmountNum > 0 && d.booking_status === 'confirmed');
-    const isFullPaid = isPaid && (paidAmountNum >= total || d.payment_option === 'pay_100' || d.paymentOption === 'pay_100');
-    const isDepositPaid = isPaid && !isFullPaid;
+    const payOption = d.payment_option || d.paymentOption || 'deposit_50';
+    const rawDiscount = d.discount_amount ?? d.discountAmount;
+    const discount =
+      rawDiscount !== undefined && rawDiscount !== null
+        ? Math.max(0, Number(rawDiscount) || 0)
+        : (payOption === 'pay_100' ? Math.round(total * 0.10) : 0);
+    const netTotal = Math.max(0, total - discount);
 
-    const paid = isPaid ? (paidAmountNum > 0 ? paidAmountNum : total) : 0;
-    const remain = Math.max(0, total - paid);
+    const payStatus = String(d.payment_status || d.paymentStatus || 'pending').toLowerCase();
+    const bookingStatus = String(d.booking_status || d.status || 'pending').toLowerCase();
+    const paidAmountNum = Number(d.paid_amount ?? d.paidAmount ?? 0);
+
+    // CƠ SỞ DỮ LIỆU CHỨNG MINH THỰC TẾ:
+    // Phải có payment_status = 'paid' / 'deposit_paid' hoặc đã nhận khoản thanh toán đối soát thật
+    const isPaid =
+      payStatus === 'paid' ||
+      payStatus === 'deposit_paid' ||
+      (paidAmountNum > 0 && bookingStatus === 'confirmed');
+
+    const paid = isPaid
+      ? (paidAmountNum > 0
+          ? paidAmountNum
+          : (payStatus === 'deposit_paid' ? Math.round(total * 0.5) : netTotal))
+      : 0;
+
+    const isFullPaid = isPaid && paid >= netTotal;
+    const isDepositPaid = isPaid && !isFullPaid;
+    const remain = isPaid ? Math.max(0, netTotal - paid) : netTotal;
     const refCode = d.reference_code || `BANLA_${String(code).replace(/^#+/, '').toUpperCase()}`;
+    const rawPayMethod = String(d.payment_method || d.paymentMethod || 'vietqr').toLowerCase();
+    const payMethodLabel =
+      rawPayMethod === 'visa' || rawPayMethod === 'card' || rawPayMethod === 'onepay'
+        ? '💳 Thẻ Quốc Tế (Visa/OnePay)'
+        : '🏦 Chuyển khoản VietQR (MB Bank)';
 
     let slipMainTitle = 'PHIẾU XÁC NHẬN DỊCH VỤ';
     let slipSubTitle = 'BOOKING CONFIRMATION SLIP';
@@ -420,6 +443,24 @@
 
     // CHỈ ĐÓNG DẤU ĐỎ KHI VÀ CHỈ KHI CSDL ĐÃ XÁC THỰC LÀ ĐÃ THANH TOÁN (PAID)!
     const sealSvg = isPaid ? renderRedSealSvg(code, d.verifiedDate) : renderPendingSealSvg(code);
+
+    let pinCellHtml = '';
+    if (isPaid && pin) {
+      pinCellHtml = `
+        <strong style="font-size:16px;letter-spacing:2px;font-family:monospace;color:#15803d;">${esc(pin)}</strong>
+        <span style="font-size:10.5px;color:#15803d;display:block;font-weight:600;">✓ Đã kích hoạt (Hiệu lực: ${esc(checkInStr)} 14:00 → ${esc(checkOutStr)} 12:00)</span>
+      `;
+    } else if (isPaid && pinProtected) {
+      pinCellHtml = `
+        <strong style="font-size:13px;color:#15803d;font-family:sans-serif;">🔒 Đã kích hoạt — Đang ẩn bảo mật</strong>
+        <span style="font-size:10.5px;color:#4A5568;display:block;">Nhập SĐT hoặc Email đặt phòng tại thanh xác thực phía trên để hiển thị mã PIN 6 số.</span>
+      `;
+    } else {
+      pinCellHtml = `
+        <strong style="font-size:13px;color:#cf222e;font-family:sans-serif;">⏳ Chưa kích hoạt (Chờ đối soát thanh toán)</strong>
+        <span style="font-size:10.5px;color:#718096;display:block;">Mã PIN 6 số sẽ tự động kích hoạt ngay sau khi đối soát thanh toán thành công trên hệ thống.</span>
+      `;
+    }
 
     return `
       <div class="banla-slip-container" id="banlaSlipPrint">
@@ -498,13 +539,7 @@
                 <tr>
                   <td class="col-label" style="background:#FFF8E1;color:#b8612e;font-weight:700;">Mã Smart-Lock PIN:</td>
                   <td class="col-val" style="background:#FFFDF5;color:#b8612e;">
-                    ${isPaid && pin ? `
-                      <strong style="font-size:16px;letter-spacing:2px;font-family:monospace;color:#15803d;">${esc(pin)}</strong>
-                      <span style="font-size:10.5px;color:#15803d;display:block;font-weight:600;">✓ Đã kích hoạt (Hiệu lực: ${esc(checkInStr)} 14:00 → ${esc(checkOutStr)} 12:00)</span>
-                    ` : `
-                      <strong style="font-size:13px;color:#cf222e;font-family:sans-serif;">⏳ Chưa kích hoạt (Chờ đối soát thanh toán)</strong>
-                      <span style="font-size:10.5px;color:#718096;display:block;">Mã PIN 6 số sẽ tự động kích hoạt ngay sau khi gửi biên lai qua Facebook Banla & được duyệt.</span>
-                    `}
+                    ${pinCellHtml}
                   </td>
                 </tr>
               </table>
@@ -512,25 +547,31 @@
           </div>
 
           <div class="slip-box" style="margin-top: 14px;">
-            <h3 class="slip-box-title">03. CHI TIẾT THANH TOÁN & ĐỐI SOÁT VIETQR</h3>
+            <h3 class="slip-box-title">03. CHI TIẾT THANH TOÁN & ĐỐI SOÁT</h3>
             <div class="finance-grid">
               <div class="finance-item">
                 <span class="f-label">Tổng chi phí lưu trú:</span>
-                <span class="f-val"><strong>${vnd(total)}</strong></span>
+                <span class="f-val">
+                  <strong>${vnd(netTotal)}</strong>
+                  ${discount > 0 ? `<small style="display:block;font-size:10.5px;color:#15803d;font-weight:600;">(Gốc ${vnd(total)} · Giảm 10%: -${vnd(discount)})</small>` : ''}
+                </span>
               </div>
               <div class="finance-item">
-                <span class="f-label">Đã thanh toán:</span>
+                <span class="f-label">Khoản thực nhận:</span>
                 <span class="f-val" style="color: #15803d;"><strong>${vnd(paid)}</strong></span>
               </div>
               <div class="finance-item">
                 <span class="f-label">Còn lại khi nhận phòng:</span>
                 <span class="f-val" style="color: ${remain > 0 ? '#cf222e' : '#15803d'};">
-                  <strong>${remain > 0 ? vnd(remain) : '0 đ (Đã thanh toán đủ)'}</strong>
+                  <strong>${remain > 0 ? vnd(remain) : '0 đ (Đã hoàn tất 100%)'}</strong>
                 </span>
               </div>
               <div class="finance-item">
-                <span class="f-label">Mã đối soát giao dịch:</span>
-                <span class="f-val"><strong style="font-family:monospace;color:#2a3f38;">${esc(refCode)}</strong></span>
+                <span class="f-label">Mã đối soát & Kênh TT:</span>
+                <span class="f-val">
+                  <strong style="font-family:monospace;color:#2a3f38;">${esc(refCode)}</strong>
+                  <small style="display:block;font-size:10.5px;color:#4A5568;margin-top:2px;">${payMethodLabel}</small>
+                </span>
               </div>
             </div>
           </div>

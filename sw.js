@@ -1,9 +1,12 @@
 // Banla Service Worker — network-first cho tài nguyên cùng domain, cache làm dự phòng khi offline.
 // Đổi CACHE mỗi khi muốn xoá sạch cache cũ trên máy khách.
-const CACHE = 'banla-v5';
+const CACHE = 'banla-v6';
 const ASSETS = [
   './',
   './index.html',
+  './payment-result.html',
+  './phieu.html',
+  './phieu.js',
   './styles.css',
   './script.js',
   './effects.css',
@@ -32,7 +35,13 @@ self.addEventListener('fetch', (e) => {
   // Chỉ xử lý GET cùng domain; API, Supabase, Google Fonts... đi thẳng ra mạng.
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  if (url.origin !== self.location.origin || url.pathname.includes('/api/')) return;
+  if (
+    url.origin !== self.location.origin ||
+    url.pathname.includes('/api/') ||
+    url.pathname.includes('/onepay-return')
+  ) {
+    return;
+  }
 
   e.respondWith(
     fetch(req)

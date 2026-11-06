@@ -406,7 +406,7 @@
     .modal-card {
       background: #fff;
       width: 100%;
-      max-width: 520px;
+      max-width: 540px;
       border-radius: 12px;
       padding: 22px 24px;
       box-shadow: 0 20px 45px rgba(0,0,0,0.25);
@@ -517,12 +517,12 @@
     <div class="auth-card">
       <div class="auth-brand">BANLA</div>
       <p style="font-size: 11px; letter-spacing: 1.5px; color: var(--ember); font-weight: 700; margin-bottom: 8px;">BOUTIQUE HOTEL · ĐÀ LẠT</p>
-      <p class="auth-desc">Hệ thống Quản trị, Đối soát VietQR & Cấp khóa Smart-Lock</p>
+      <p class="auth-desc">Hệ thống Quản trị Dữ liệu Thật, Đối soát VietQR / OnePay & Cấp khóa Smart-Lock</p>
       <form id="authForm">
         <input type="password" id="authPin" class="auth-input" placeholder="Nhập mã quản trị (ADMIN_KEY)" autofocus required autocomplete="off">
         <button type="submit" class="auth-btn">Đăng Nhập Quản Trị</button>
       </form>
-      <p class="auth-hint">Mã quản trị được cấu hình trên máy chủ (biến ADMIN_KEY trong .env). Trang này cần chạy cùng server Node.</p>
+      <p class="auth-hint">Mã quản trị được bảo mật trên máy chủ (<code>ADMIN_KEY</code> trong <code>.env</code>). Mọi dữ liệu đồng bộ trực tiếp từ CSDL thật.</p>
     </div>
   </div>
 
@@ -531,11 +531,11 @@
     <header class="topbar">
       <div class="topbar-left">
         <a href="index.html" style="text-decoration:none;"><div class="topbar-title">BANLA · Quản Trị & Đối Soát</div></a>
-        <span class="topbar-badge" id="dbModeBadge">● Schema: banla (Ready)</span>
+        <span class="topbar-badge" id="dbModeBadge">● Đang kiểm tra kết nối CSDL...</span>
       </div>
       <div class="topbar-right">
         <button type="button" class="btn btn-pine" id="btnNewBooking">+ Tạo đơn mới</button>
-        <button type="button" class="btn btn-outline" id="btnConfigDb">Cấu hình Supabase / VietQR</button>
+        <button type="button" class="btn btn-outline" id="btnConfigDb">Cấu hình VietQR</button>
         <button type="button" class="btn btn-outline" id="btnRefresh">Làm mới</button>
         <a href="https://www.facebook.com/Banlaboutiquedalat/" target="_blank" rel="noopener" class="btn btn-outline" style="color: #1877F2;">Fanpage 24/7</a>
         <button type="button" class="btn btn-outline" id="btnLogout" style="color: var(--danger);">Đăng xuất</button>
@@ -545,14 +545,14 @@
     <!-- Thẻ Thống Kê Tài Chính & Đối Soát -->
     <section class="stats-grid">
       <div class="stat-card">
-        <div class="stat-header"><span class="stat-title">Doanh Thu Gross (Đã thu)</span></div>
+        <div class="stat-header"><span class="stat-title">Doanh Thu Thực Thu (Gross)</span></div>
         <div class="stat-val" id="statGross">0 đ</div>
-        <div class="stat-sub">Tổng thanh toán VietQR & tiền cọc</div>
+        <div class="stat-sub">Tổng tiền cọc & thanh toán đã đối soát</div>
       </div>
       <div class="stat-card">
-        <div class="stat-header"><span class="stat-title">Phí Cổng / Đối Soát (1.5%)</span></div>
+        <div class="stat-header"><span class="stat-title">Phí Cổng Giao Dịch</span></div>
         <div class="stat-val" id="statFee" style="color: var(--danger);">0 đ</div>
-        <div class="stat-sub">Chi phí xử lý giao dịch trực tuyến</div>
+        <div class="stat-sub">Phí thực tế theo sổ cái giao dịch</div>
       </div>
       <div class="stat-card">
         <div class="stat-header"><span class="stat-title">Doanh Thu Net (Thực Nhận)</span></div>
@@ -560,7 +560,7 @@
         <div class="stat-sub">Thực nhận về tài khoản Banla</div>
       </div>
       <div class="stat-card">
-        <div class="stat-header"><span class="stat-title">Tổng Đơn Đặt Phòng</span></div>
+        <div class="stat-header"><span class="stat-title">Tổng Đơn Đặt Phòng Thật</span></div>
         <div class="stat-val" id="statBookings">0</div>
         <div class="stat-sub" id="statBookingSub">0 chờ thanh toán · 0 đã duyệt</div>
       </div>
@@ -604,7 +604,7 @@
           </thead>
           <tbody id="bookingsTableBody">
             <tr>
-              <td colspan="8" style="text-align: center; padding: 36px; color: var(--muted);">Đang tải dữ liệu đặt phòng...</td>
+              <td colspan="8" style="text-align: center; padding: 36px; color: var(--muted);">Đang tải dữ liệu đặt phòng thực tế từ máy chủ...</td>
             </tr>
           </tbody>
         </table>
@@ -640,12 +640,12 @@
         <div style="font-size:13px;color:var(--ink);line-height:1.6;">
           <div>Ngân hàng: <strong id="qrBankName">MB Bank</strong> · STK: <strong id="qrAccountNo" style="color:var(--ember);">0352554863</strong></div>
           <div>Chủ TK: <strong id="qrAccountHolder">BANLA BOUTIQUE HOTEL</strong></div>
-          <div>Số tiền: <strong id="qrAmountText" style="color:var(--success);font-size:15px;">0 đ</strong></div>
-          <div>Nội dung CK: <strong id="qrMemoText" style="background:#fef3c7;padding:2px 8px;border-radius:4px;font-family:monospace;color:#92400e;">BANLA_BL0000</strong></div>
+          <div>Số tiền cần thu: <strong id="qrAmountText" style="color:var(--success);font-size:15px;">0 đ</strong></div>
+          <div>Nội dung CK: <strong id="qrMemoText" style="background:#fef3c7;padding:2px 8px;border-radius:4px;font-family:monospace;color:#92400e;">BANLA_</strong></div>
         </div>
       </div>
       <div class="form-actions" style="justify-content:center;flex-wrap:wrap;">
-        <button type="button" class="btn btn-success" id="btnConfirmPaidFromQr">✓ Xác nhận Đã thanh toán & Duyệt</button>
+        <button type="button" class="btn btn-success" id="btnConfirmPaidFromQr">✓ Xác nhận Đã thu tiền & Duyệt</button>
         <button type="button" class="btn btn-outline" id="btnCopyQrLink">Copy Link QR</button>
         <button type="button" class="btn btn-outline" data-close="vietQrModal">Đóng</button>
       </div>
@@ -656,7 +656,7 @@
   <div class="modal-backdrop" id="slipPreviewModal">
     <div class="modal-card modal-card-wide">
       <div class="modal-header" style="background:#fff;padding:12px 18px;border-radius:8px;margin-bottom:12px;">
-        <span class="modal-title">Xem Trước Phiếu Xác Nhận Dịch Vụ Có Dấu Đỏ (A4)</span>
+        <span class="modal-title">Xem Trước Phiếu Xác Nhận Dịch Vụ (A4)</span>
         <div class="preview-toolbar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
           <button type="button" class="btn btn-pine btn-sm" id="btnModalPrintSlip">In / Xuất PDF A4</button>
           <button type="button" class="btn btn-ember btn-sm" id="btnModalDownloadPng">Tải ảnh PNG</button>
@@ -680,7 +680,7 @@
         <div class="form-row-2">
           <div class="form-group">
             <label>Mã Booking:</label>
-            <input type="text" id="fBookingCode" class="form-control" placeholder="Tự động (VD: BL8899)">
+            <input type="text" id="fBookingCode" class="form-control" placeholder="Để trống = tự sinh mã chuẩn">
           </div>
           <div class="form-group">
             <label>Số điện thoại khách (*):</label>
@@ -712,7 +712,7 @@
           </div>
           <div class="form-group">
             <label>Số lượng khách:</label>
-            <input type="number" id="fGuests" class="form-control" value="2" min="1" max="20">
+            <input type="number" id="fGuests" class="form-control" value="2" min="1" max="10">
           </div>
         </div>
         <div class="form-row-2">
@@ -727,12 +727,28 @@
         </div>
         <div class="form-row-2">
           <div class="form-group">
-            <label>Tổng tiền (VND):</label>
-            <input type="number" id="fTotalAmount" class="form-control" required value="1500000">
+            <label>Hình thức thanh toán:</label>
+            <select id="fPaymentOption" class="form-control">
+              <option value="deposit_50">Đặt cọc 50% giữ phòng</option>
+              <option value="pay_100">Thanh toán 100% (-10% ưu đãi)</option>
+            </select>
           </div>
           <div class="form-group">
-            <label>Đã thanh toán (VND):</label>
-            <input type="number" id="fPaidAmount" class="form-control" value="0">
+            <label>Kênh thanh toán:</label>
+            <select id="fPaymentMethod" class="form-control">
+              <option value="vietqr">🏦 Chuyển khoản VietQR (MB Bank)</option>
+              <option value="visa">💳 Thẻ Tín Dụng Visa / Quốc Tế (OnePay)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Tổng tiền gốc (VND):</label>
+            <input type="number" id="fTotalAmount" class="form-control" required value="1150000">
+          </div>
+          <div class="form-group">
+            <label>Thực nhận vào sổ cái (VND):</label>
+            <input type="number" id="fPaidAmount" class="form-control" value="0" min="0">
           </div>
         </div>
         <div class="form-row-2">
@@ -740,7 +756,7 @@
             <label>Trạng thái thanh toán:</label>
             <select id="fPaymentStatus" class="form-control">
               <option value="pending">Chờ thanh toán (pending)</option>
-              <option value="paid">Đã thanh toán (paid)</option>
+              <option value="paid">Đã thanh toán / Đã cọc (paid)</option>
               <option value="refunded">Đã hoàn tiền (refunded)</option>
             </select>
           </div>
@@ -760,34 +776,26 @@
             <input type="text" id="fSmartLockPin" class="form-control" maxlength="6" placeholder="Để trống = tự cấp khi duyệt">
           </div>
           <div class="form-group">
-            <label>Ghi chú:</label>
+            <label>Ghi chú lễ tân / Yêu cầu khách:</label>
             <input type="text" id="fNote" class="form-control" placeholder="Yêu cầu đặc biệt...">
           </div>
         </div>
         <div class="form-actions">
           <button type="button" class="btn btn-outline" data-close="bookingFormModal">Hủy</button>
-          <button type="submit" class="btn btn-pine">Lưu đơn đặt phòng</button>
+          <button type="submit" class="btn btn-pine" id="btnSaveBookingSubmit">Lưu vào CSDL</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- 4. Modal Cấu Hình Supabase (Schema `banla`) & Ngân hàng VietQR -->
+  <!-- 4. Modal Cấu Hình Ngân hàng VietQR -->
   <div class="modal-backdrop" id="configModal">
     <div class="modal-card">
       <div class="modal-header">
-        <span class="modal-title">Cấu Hình Kết Nối Supabase (`banla`) & VietQR</span>
+        <span class="modal-title">Cấu Hình Tài Khoản VietQR & Hướng Dẫn Cloud</span>
         <button type="button" class="modal-close" data-close="configModal">&times;</button>
       </div>
       <form id="configForm">
-        <div class="form-group">
-          <label>Supabase Project URL (Tùy chọn — Cách ly trong schema `banla`):</label>
-          <input type="url" id="cfgSbUrl" class="form-control" placeholder="https://xxxx.supabase.co">
-        </div>
-        <div class="form-group">
-          <label>Supabase Anon Public Key:</label>
-          <input type="text" id="cfgSbKey" class="form-control" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
-        </div>
         <div class="form-row-2">
           <div class="form-group">
             <label>Mã Ngân hàng VietQR (BANK_ID):</label>
@@ -802,12 +810,12 @@
           <label>Tên chủ tài khoản:</label>
           <input type="text" id="cfgAccountName" class="form-control" value="BANLA BOUTIQUE HOTEL">
         </div>
-        <p style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">
-          * Lưu ý: Chạy file <code>supabase_schema.sql</code> trong Supabase SQL Editor để tạo schema <code>banla</code> (bảng <code>banla.bookings</code> và <code>banla.transactions</code>) tách biệt 100% với <code>webmoi</code>.
+        <p style="font-size:12px;color:var(--muted);line-height:1.55;background:#f8fafc;padding:10px 12px;border-radius:6px;border:1px solid #e2e8f0;margin-bottom:10px;">
+          <strong>Bảo mật CSDL:</strong> Mọi thao tác quản trị chạy qua máy chủ Node với khóa <code>SUPABASE_SERVICE_ROLE_KEY</code> (không bao giờ lưu khóa nhạy cảm trên trình duyệt). Để kích hoạt Supabase PostgreSQL (<code>schema: banla</code> tách biệt hoàn toàn với <code>webmoi</code>), chạy tệp <code>supabase/sql/banla_production_master.sql</code> trong Supabase SQL Editor và khai báo <code>SUPABASE_SERVICE_ROLE_KEY</code> trong tệp <code>.env</code>.
         </p>
         <div class="form-actions">
           <button type="button" class="btn btn-outline" data-close="configModal">Đóng</button>
-          <button type="submit" class="btn btn-pine">Lưu cấu hình</button>
+          <button type="submit" class="btn btn-pine">Lưu cấu hình VietQR</button>
         </div>
       </form>
     </div>
@@ -815,7 +823,6 @@
 
   <div id="toast">Thông báo</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="vendor/html2canvas.min.js"></script>
   <script src="phieu.js"></script>
   <script>
@@ -823,75 +830,32 @@
       'use strict';
 
       const AUTH_STORAGE_KEY = 'BANLA_ADMIN_KEY';
-      const LOCAL_BOOKINGS_KEY = 'BANLA_BOOKINGS_STORE';
-      const LOCAL_TX_KEY = 'BANLA_TRANSACTIONS_STORE';
-      const CONFIG_STORAGE_KEY = 'BANLA_SUPABASE_CONFIG';
-      // Không còn mã mặc định phía trình duyệt: chỉ server (/api/admin/login) xác nhận mã quản trị.
+      const TOKEN_STORAGE_KEY = 'BANLA_ADMIN_TOKEN';
+      const CONFIG_STORAGE_KEY = 'BANLA_VIETQR_CONFIG';
+
+      const ROOM_RATES = {
+        'Banla Signature': 1150000,
+        'Élite Room': 1250000,
+        'Highland Room': 1100000,
+        'Connecting Room': 1850000,
+        'Deluxe Twin': 950000,
+        'Original Suite': 1550000,
+        'Deluxe Balcony': 980000
+      };
+
+      // Dọn dẹp triệt để tàn dư dữ liệu mẫu giả từ phiên cũ trong trình duyệt
+      try {
+        localStorage.removeItem('BANLA_TRANSACTIONS_STORE');
+      } catch (_) {}
 
       let adminKey = sessionStorage.getItem(AUTH_STORAGE_KEY) || '';
+      let adminToken = sessionStorage.getItem(TOKEN_STORAGE_KEY) || '';
       let allBookings = [];
+      let serverStats = null;
       let currentFilter = 'all';
       let currentPage = 1;
       let pageSize = 10;
       let activeQrBookingId = null;
-      let sbClient = null;
-
-      const INITIAL_BOOKINGS = [
-        {
-          id: 'b1000000-0000-4000-8000-000000009821',
-          booking_code: 'BL9821',
-          guest_name: 'Hoàng Minh Tuấn',
-          guest_phone: '0988776655',
-          guest_email: 'minhtuan.dalat@gmail.com',
-          room_id: 'Élite Room',
-          guests: 2,
-          check_in: '2026-11-05',
-          check_out: '2026-11-07',
-          total_amount: 2400000,
-          paid_amount: 2400000,
-          payment_status: 'paid',
-          booking_status: 'confirmed',
-          smartlock_pin: '839204',
-          note: 'Cần phòng tầng cao, view nhìn trọn thung lũng sương.',
-          created_at: '2026-11-02T10:15:30.000Z'
-        },
-        {
-          id: 'b1000000-0000-4000-8000-000000007342',
-          booking_code: 'BL7342',
-          guest_name: 'Trần Thị Mai Anh',
-          guest_phone: '0912345678',
-          guest_email: 'maianh.tran@outlook.com',
-          room_id: 'Original Suite',
-          guests: 2,
-          check_in: '2026-11-10',
-          check_out: '2026-11-12',
-          total_amount: 3200000,
-          paid_amount: 3200000,
-          payment_status: 'paid',
-          booking_status: 'confirmed',
-          smartlock_pin: '561829',
-          note: 'Kỷ niệm ngày cưới, nhờ khách sạn chuẩn bị hoa tươi.',
-          created_at: '2026-11-02T14:20:10.000Z'
-        },
-        {
-          id: 'b1000000-0000-4000-8000-000000003519',
-          booking_code: 'BL3519',
-          guest_name: 'Phạm Trần Linh',
-          guest_phone: '0965555555',
-          guest_email: 'banhfuli1503@gmail.com',
-          room_id: 'Deluxe Twin',
-          guests: 2,
-          check_in: '2027-02-02',
-          check_out: '2027-02-04',
-          total_amount: 2700000,
-          paid_amount: 0,
-          payment_status: 'pending',
-          booking_status: 'pending',
-          smartlock_pin: '',
-          note: 'Đặt phòng trực tuyến từ website Banla.',
-          created_at: '2026-11-02T18:05:45.000Z'
-        }
-      ];
 
       const esc = (x) =>
         String(x ?? '').replace(/[&<>"']/g, (c) => ({
@@ -922,36 +886,41 @@
         return String(Math.floor(100000 + Math.random() * 900000));
       }
 
+      function adminHeaders(withJson) {
+        const h = {};
+        if (withJson) h['Content-Type'] = 'application/json';
+        if (adminKey) h['x-admin-key'] = adminKey;
+        if (adminToken) h['x-admin-token'] = adminToken;
+        return h;
+      }
+
       function getConfig() {
         try {
           const parsed = JSON.parse(localStorage.getItem(CONFIG_STORAGE_KEY) || '{}');
           return {
-            url: parsed.url || '',
-            anonKey: parsed.anonKey || '',
             bankId: parsed.bankId || 'MB',
             accountNo: parsed.accountNo || '0352554863',
             accountName: parsed.accountName || 'BANLA BOUTIQUE HOTEL'
           };
         } catch {
-          return { url: '', anonKey: '', bankId: 'MB', accountNo: '0352554863', accountName: 'BANLA BOUTIQUE HOTEL' };
+          return { bankId: 'MB', accountNo: '0352554863', accountName: 'BANLA BOUTIQUE HOTEL' };
         }
       }
 
-      function initSupabaseClient() {
-        const cfg = getConfig();
+      function updateStorageBadge(mode) {
         const badge = document.getElementById('dbModeBadge');
-        if (cfg.url && cfg.anonKey && window.supabase) {
-          try {
-            sbClient = window.supabase.createClient(cfg.url, cfg.anonKey);
-            if (badge) badge.textContent = '● Supabase: schema banla (Connected)';
-            return sbClient;
-          } catch (e) {
-            console.warn('Supabase init error:', e);
-          }
+        if (!badge) return;
+        if (mode === 'supabase_banla') {
+          badge.textContent = '● CSDL Thật: Supabase PostgreSQL (schema banla)';
+          badge.style.background = '#ecfdf5';
+          badge.style.color = '#047857';
+          badge.style.borderColor = '#a7f3d0';
+        } else {
+          badge.textContent = '● CSDL Thật: Máy chủ Banla (Atomic JSON)';
+          badge.style.background = '#eff6ff';
+          badge.style.color = '#1d4ed8';
+          badge.style.borderColor = '#bfdbfe';
         }
-        sbClient = null;
-        if (badge) badge.textContent = '● Chế độ: Hybrid (Local + API)';
-        return null;
       }
 
       function showToast(msg) {
@@ -962,160 +931,135 @@
       }
 
       function normalizeBookingRecord(r) {
-        const code = String(r.booking_code || r.code || r.id || '').replace(/^#+/, '').toUpperCase() || ('BL' + Math.floor(1000 + Math.random() * 9000));
-        const total = Number(r.total_amount ?? r.totalPrice ?? 1500000);
-        const rawPay = String(r.payment_status || r.paymentStatus || 'pending').toLowerCase();
+        const code = String(r.bookingCode || r.booking_code || r.code || r.id || '')
+          .replace(/^#+/, '')
+          .toUpperCase();
+        const total = Number(r.totalPrice ?? r.total_amount ?? 0);
+        const rawPay = String(r.paymentStatus || r.payment_status || 'UNPAID').toLowerCase();
         let payment_status = 'pending';
         if (rawPay === 'paid' || rawPay === 'deposit_paid') payment_status = 'paid';
         else if (rawPay === 'refunded') payment_status = 'refunded';
 
-        const rawStatus = String(r.booking_status || r.status || 'pending').toLowerCase();
-        const booking_status = ['pending', 'confirmed', 'completed', 'cancelled'].includes(rawStatus) ? rawStatus : 'pending';
+        const rawStatus = String(r.status || r.booking_status || 'pending').toLowerCase();
+        const booking_status = ['pending', 'confirmed', 'completed', 'cancelled'].includes(rawStatus)
+          ? rawStatus
+          : 'pending';
 
-        const payment_option = r.payment_option || r.paymentOption || 'deposit_50';
-        const discount_amount = Number(r.discount_amount ?? r.discountAmount ?? (payment_option === 'pay_100' ? Math.round(total * 0.1) : 0));
-        const deposit_amount = Number(r.deposit_amount ?? r.depositAmount ?? (payment_option === 'pay_100' ? (total - discount_amount) : Math.round(total * 0.5)));
-        const paid = Number(r.paid_amount ?? r.paidAmount ?? (payment_status === 'paid' ? deposit_amount : 0));
-        const rawPin = String(r.smartlock_pin || r.smartLockPin || '').replace(/[^0-9]/g, '');
-        const smartlock_pin = rawPin ? rawPin.slice(0, 6).padStart(6, '0') : '';
+        const payment_option = r.paymentOption || r.payment_option || 'deposit_50';
+        const discount_amount = Number(
+          r.discountAmount ?? r.discount_amount ?? (payment_option === 'pay_100' ? Math.round(total * 0.1) : 0)
+        );
+        const net_total = Math.max(0, total - discount_amount);
+        const deposit_amount = Number(
+          r.depositAmount ?? r.deposit_amount ?? (payment_option === 'pay_100' ? net_total : Math.round(total * 0.5))
+        );
+        const paid = Math.max(0, Number(r.paidAmount ?? r.paid_amount ?? 0));
+        const remaining_amount = Number(
+          r.remainingAmount ?? r.remaining_amount ?? Math.max(0, net_total - paid)
+        );
+
+        const rawPin = String(r.smartLockPin || r.smartlock_pin || '').trim();
 
         return {
-          id: r.id || code,
-          booking_code: code.length > 10 ? code.slice(0, 8) : code,
-          guest_name: r.guest_name || r.name || 'Khách hàng',
-          guest_phone: r.guest_phone || r.phone || '',
-          guest_email: r.guest_email || r.email || '',
-          room_id: r.room_id || r.room || 'Deluxe Room',
+          id: code || r.id,
+          booking_code: code,
+          guest_name: r.name || r.guest_name || 'Khách hàng',
+          guest_phone: r.phone || r.guest_phone || '',
+          guest_email: r.email || r.guest_email || '',
+          room_id: r.room || r.room_id || 'Banla Signature',
           guests: Number(r.guests) || 2,
-          check_in: String(r.check_in || r.checkin || '2026-11-10').slice(0, 10),
-          check_out: String(r.check_out || r.checkout || '2026-11-12').slice(0, 10),
+          check_in: String(r.checkin || r.check_in || '').slice(0, 10),
+          check_out: String(r.checkout || r.check_out || '').slice(0, 10),
+          nights: Number(r.nights) || 1,
           total_amount: total,
           payment_option,
+          payment_method: r.paymentMethod || r.payment_method || 'vietqr',
           discount_amount,
           deposit_amount,
           paid_amount: paid,
+          remaining_amount,
           payment_status,
+          raw_payment_status: rawPay,
           booking_status,
-          smartlock_pin,
-          note: r.note || r.message || '',
-          created_at: r.created_at || r.createdAt || new Date().toISOString()
+          smartlock_pin: rawPin,
+          note: r.message || r.note || '',
+          created_at: r.createdAt || r.created_at || new Date().toISOString()
         };
       }
 
-      function readLocalBookings() {
-        try {
-          const raw = localStorage.getItem(LOCAL_BOOKINGS_KEY);
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              return parsed.map(normalizeBookingRecord);
-            }
-          }
-        } catch {}
-        localStorage.setItem(LOCAL_BOOKINGS_KEY, JSON.stringify(INITIAL_BOOKINGS));
-        return INITIAL_BOOKINGS.map(normalizeBookingRecord);
-      }
-
-      function saveLocalBookings(list) {
-        try {
-          localStorage.setItem(LOCAL_BOOKINGS_KEY, JSON.stringify(list));
-        } catch {}
-      }
-
-      function recordLocalTransaction(booking, bankCode) {
-        try {
-          const txs = JSON.parse(localStorage.getItem(LOCAL_TX_KEY) || '[]');
-          txs.unshift({
-            id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('tx_' + Date.now()),
-            booking_id: booking.id,
-            reference_code: `BANLA_${booking.booking_code}`,
-            amount_paid: booking.total_amount,
-            bank_code: bankCode || 'MB',
-            status: 'completed',
-            paid_at: new Date().toISOString()
-          });
-          localStorage.setItem(LOCAL_TX_KEY, JSON.stringify(txs));
-        } catch {}
+      function handleUnauthorized() {
+        sessionStorage.removeItem(AUTH_STORAGE_KEY);
+        sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+        adminKey = '';
+        adminToken = '';
+        document.getElementById('adminApp').style.display = 'none';
+        document.getElementById('authOverlay').style.display = 'flex';
       }
 
       async function loadAllBookings() {
-        initSupabaseClient();
-        let list = null;
+        try {
+          const [bookingsRes, statsRes] = await Promise.all([
+            fetch('/api/admin/bookings', { headers: adminHeaders(false), credentials: 'same-origin' }),
+            fetch('/api/admin/stats', { headers: adminHeaders(false), credentials: 'same-origin' })
+          ]);
 
-        if (sbClient) {
-          try {
-            const { data, error } = await sbClient
-              .schema('banla')
-              .from('bookings')
-              .select('*')
-              .order('created_at', { ascending: false });
-            if (!error && Array.isArray(data)) {
-              list = data.map(normalizeBookingRecord);
-            } else {
-              const rpcRes = await sbClient.rpc('banla_list_bookings');
-              if (!rpcRes.error && Array.isArray(rpcRes.data)) {
-                list = rpcRes.data.map(normalizeBookingRecord);
-              }
-            }
-          } catch (e) {
-            console.warn('Supabase fetch fallback:', e);
+          if (bookingsRes.status === 401) {
+            handleUnauthorized();
+            return;
           }
-        }
 
-        if (!list) {
-          try {
-            const res = await fetch('/api/admin/bookings', {
-              headers: { 'x-admin-key': adminKey || '' }
-            });
-            if (res.ok) {
-              const data = await res.json();
-              if (data && data.success && Array.isArray(data.bookings)) {
-                const apiList = data.bookings.map(normalizeBookingRecord);
-                const localList = readLocalBookings();
-                const mergedMap = new Map();
-                [...localList, ...apiList].forEach(item => mergedMap.set(item.booking_code, item));
-                list = Array.from(mergedMap.values());
-              }
-            }
-          } catch {}
-        }
+          if (!bookingsRes.ok) {
+            throw new Error('HTTP ' + bookingsRes.status);
+          }
 
-        if (!list) {
-          list = readLocalBookings();
-        } else {
-          saveLocalBookings(list);
-        }
+          const data = await bookingsRes.json();
+          updateStorageBadge(data.storageMode);
+          const list = Array.isArray(data.bookings) ? data.bookings.map(normalizeBookingRecord) : [];
+          list.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+          allBookings = list;
 
-        list.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-        allBookings = list;
-        renderStats();
-        renderTable();
+          if (statsRes.ok) {
+            const stJson = await statsRes.json();
+            serverStats = stJson && stJson.stats ? stJson.stats : null;
+          } else {
+            serverStats = null;
+          }
+
+          renderStats();
+          renderTable();
+        } catch (err) {
+          console.error('Admin load error:', err);
+          showToast('Không thể kết nối API máy chủ để tải dữ liệu thật.');
+        }
       }
 
       function renderStats() {
         let gross = 0;
+        let fee = 0;
+        let net = 0;
         let pendingCount = 0;
         let confirmedCount = 0;
         let pinCount = 0;
 
-        allBookings.forEach(b => {
+        allBookings.forEach((b) => {
           if (b.booking_status !== 'cancelled' && b.payment_status !== 'refunded') {
-            if (b.payment_status === 'paid') {
-              gross += Number(b.paid_amount || b.total_amount || 0);
-            } else if (Number(b.paid_amount) > 0) {
-              gross += Number(b.paid_amount);
-            }
+            gross += Number(b.paid_amount || 0);
           }
           if (b.payment_status === 'pending' && b.booking_status !== 'cancelled') pendingCount++;
           if (b.booking_status === 'confirmed' || b.booking_status === 'completed') confirmedCount++;
           if (b.smartlock_pin && b.booking_status !== 'cancelled') pinCount++;
         });
 
-        const fee = Math.round(gross * 0.015);
-        const net = Math.max(0, gross - fee);
+        if (serverStats) {
+          gross = Number(serverStats.grossRevenue || 0);
+          fee = Number(serverStats.gatewayFee || 0);
+          net = Number(serverStats.netRevenue || Math.max(0, gross - fee));
+        } else {
+          net = Math.max(0, gross - fee);
+        }
 
         document.getElementById('statGross').textContent = vnd(gross);
-        document.getElementById('statFee').textContent = '-' + vnd(fee);
+        document.getElementById('statFee').textContent = fee > 0 ? '-' + vnd(fee) : '0 đ';
         document.getElementById('statNet').textContent = vnd(net);
         document.getElementById('statBookings').textContent = allBookings.length;
         document.getElementById('statBookingSub').textContent = `${pendingCount} chờ thanh toán · ${confirmedCount} đã duyệt`;
@@ -1124,14 +1068,20 @@
 
       function getFilteredBookings() {
         const q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
-        return allBookings.filter(b => {
+        return allBookings.filter((b) => {
           if (currentFilter === 'pending_pay' && b.payment_status !== 'pending') return false;
           if (currentFilter === 'paid' && b.payment_status !== 'paid') return false;
           if (currentFilter === 'confirmed' && b.booking_status !== 'confirmed') return false;
-          if (currentFilter === 'refunded_cancelled' && b.payment_status !== 'refunded' && b.booking_status !== 'cancelled') return false;
+          if (
+            currentFilter === 'refunded_cancelled' &&
+            b.payment_status !== 'refunded' &&
+            b.booking_status !== 'cancelled'
+          ) {
+            return false;
+          }
 
           if (q) {
-            const hay = `${b.booking_code} ${b.id} ${b.guest_name} ${b.guest_phone} ${b.guest_email} ${b.room_id}`.toLowerCase();
+            const hay = `${b.booking_code} ${b.guest_name} ${b.guest_phone} ${b.guest_email} ${b.room_id}`.toLowerCase();
             if (!hay.includes(q)) return false;
           }
           return true;
@@ -1151,8 +1101,8 @@
 
         document.getElementById('pageInfoText').textContent =
           totalItems > 0
-            ? `Hiển thị ${startIdx + 1} – ${Math.min(startIdx + pageSize, totalItems)} trên tổng ${totalItems} đơn`
-            : 'Không có đơn đặt phòng nào';
+            ? `Hiển thị ${startIdx + 1} – ${Math.min(startIdx + pageSize, totalItems)} trên tổng ${totalItems} đơn thật`
+            : 'Chưa có đơn đặt phòng nào trong CSDL';
         document.getElementById('pageNumberIndicator').textContent = `Trang ${currentPage} / ${totalPages}`;
         document.getElementById('btnPrevPage').disabled = currentPage <= 1;
         document.getElementById('btnNextPage').disabled = currentPage >= totalPages;
@@ -1161,178 +1111,147 @@
           tbody.innerHTML = `
             <tr>
               <td colspan="8" style="text-align:center;padding:38px;color:var(--muted);">
-                Không có đơn đặt phòng nào khớp với bộ lọc hiện tại.
+                Chưa có đơn đặt phòng nào khớp với bộ lọc hiện tại (CSDL sạch 100% — không chứa đơn ảo).
               </td>
             </tr>
           `;
           return;
         }
 
-        tbody.innerHTML = pageItems.map(b => {
-          let payBadge = `<span class="badge badge-unpaid">Chờ thanh toán</span>`;
-          if (b.payment_status === 'paid' && (b.paid_amount >= b.total_amount || b.payment_option === 'pay_100')) {
-            payBadge = `<span class="badge badge-paid">✓ Đã thanh toán 100%</span>`;
-          } else if (b.payment_status === 'paid' || (Number(b.paid_amount) > 0 && Number(b.paid_amount) < Number(b.total_amount))) {
-            payBadge = `<span class="badge" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-weight:600;">Cọc 50% (${vnd(b.paid_amount)})</span>`;
-          } else if (b.payment_status === 'refunded') {
-            payBadge = `<span class="badge badge-refunded">Đã hoàn tiền</span>`;
-          }
+        tbody.innerHTML = pageItems
+          .map((b) => {
+            const netPayable = Math.max(0, b.total_amount - (b.discount_amount || 0));
+            let payBadge = `<span class="badge badge-unpaid">Chờ thanh toán (Cần thu ${vnd(b.deposit_amount)})</span>`;
+            if (b.payment_status === 'paid' && b.paid_amount >= netPayable && netPayable > 0) {
+              payBadge = `<span class="badge badge-paid">✓ Đã thu đủ (${vnd(b.paid_amount)})</span>`;
+            } else if (b.payment_status === 'paid' || b.paid_amount > 0) {
+              payBadge = `<span class="badge" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-weight:600;">Đã thu cọc ${vnd(b.paid_amount)} · Còn ${vnd(b.remaining_amount)}</span>`;
+            } else if (b.payment_status === 'refunded') {
+              payBadge = `<span class="badge badge-refunded">Đã hoàn tiền</span>`;
+            }
 
-          let statusBadge = `<span class="badge badge-pending">Chờ duyệt</span>`;
-          if (b.booking_status === 'confirmed') statusBadge = `<span class="badge badge-confirmed">Đã duyệt</span>`;
-          else if (b.booking_status === 'completed') statusBadge = `<span class="badge badge-completed">Hoàn thành</span>`;
-          else if (b.booking_status === 'cancelled') statusBadge = `<span class="badge badge-cancelled">Đã hủy</span>`;
+            let statusBadge = `<span class="badge badge-pending">Chờ duyệt</span>`;
+            if (b.booking_status === 'confirmed') statusBadge = `<span class="badge badge-confirmed">Đã duyệt</span>`;
+            else if (b.booking_status === 'completed') statusBadge = `<span class="badge badge-completed">Hoàn thành</span>`;
+            else if (b.booking_status === 'cancelled') statusBadge = `<span class="badge badge-cancelled">Đã hủy</span>`;
 
-          const checkInFmt = formatDateShort(b.check_in);
-          const checkOutFmt = formatDateShort(b.check_out);
+            const checkInFmt = formatDateShort(b.check_in);
+            const checkOutFmt = formatDateShort(b.check_out);
 
-          const pinHtml = b.smartlock_pin
-            ? `<div class="pin-box">${esc(b.smartlock_pin)}</div>
-               <div class="pin-validity">Hiệu lực: ${esc(checkInFmt)} → ${esc(checkOutFmt)}</div>`
-            : `<span style="font-size:11.5px;color:#94a3b8;">Chưa cấp (Bấm Duyệt đơn)</span>`;
+            const pinHtml = b.smartlock_pin
+              ? `<div class="pin-box">${esc(b.smartlock_pin)}</div>
+                 <div class="pin-validity">Hiệu lực: ${esc(checkInFmt)} → ${esc(checkOutFmt)}</div>`
+              : `<span style="font-size:11.5px;color:#94a3b8;">Chưa cấp (Bấm Duyệt đơn)</span>`;
 
-          return `
-            <tr data-id="${esc(b.id)}">
-              <td>
-                <strong style="color:var(--ember);font-family:monospace;font-size:13.5px;">#${esc(b.booking_code)}</strong>
-                <div style="font-size:11px;color:var(--muted);">Ref: BANLA_${esc(b.booking_code)}</div>
-              </td>
-              <td>
-                <div style="font-weight:700;color:var(--pine);">${esc(b.guest_name)}</div>
-                <div style="font-size:12px;color:var(--muted);">${esc(b.guest_phone)}</div>
-                ${b.guest_email ? `<div style="font-size:11px;color:#94a3b8;">${esc(b.guest_email)}</div>` : ''}
-              </td>
-              <td>
-                <strong style="color:var(--pine);">${esc(b.room_id)}</strong>
-                <div style="font-size:11.5px;color:var(--muted);">${esc(b.guests)} khách</div>
-              </td>
-              <td>
-                <div style="font-weight:600;">${esc(checkInFmt)} → ${esc(checkOutFmt)}</div>
-                <div style="font-size:11px;color:var(--muted);">14:00 Check-in · 12:00 Check-out</div>
-              </td>
-              <td>
-                <div style="font-weight:700;">${vnd(b.total_amount)}</div>
-                <div style="margin-top:3px;">${payBadge}</div>
-              </td>
-              <td>${pinHtml}</td>
-              <td>${statusBadge}</td>
-              <td style="text-align:right;">
-                <div class="btn-action-group">
-                  <button type="button" class="btn btn-sm btn-success" data-action="approve" data-id="${esc(b.id)}" title="Duyệt đơn & Tự động sinh mã Smart-Lock PIN 6 số">
-                    ✓ Duyệt đơn
-                  </button>
-                  <button type="button" class="btn btn-sm btn-pine" data-action="vietqr" data-id="${esc(b.id)}" title="Xem mã QR thanh toán VietQR động">
-                    VietQR
-                  </button>
-                  <button type="button" class="btn btn-sm btn-ember" data-action="preview-slip" data-id="${esc(b.id)}" title="Xem trước & In Phiếu xác nhận có dấu đỏ">
-                    Phiếu Dấu Đỏ
-                  </button>
-                  <button type="button" class="btn btn-sm btn-outline" data-action="copy-fb" data-id="${esc(b.id)}" title="Sao chép tin nhắn gửi khách qua Facebook">
-                    Copy FB
-                  </button>
-                  <button type="button" class="btn btn-sm btn-outline" data-action="edit" data-id="${esc(b.id)}">
-                    Sửa
-                  </button>
-                </div>
-              </td>
-            </tr>
-          `;
-        }).join('');
+            const methodBadge =
+              b.payment_method === 'visa'
+                ? `<span class="badge" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-size:10.5px;">💳 Thẻ Visa/OnePay</span>`
+                : `<span class="badge" style="background:#f8fafc;color:#475569;border:1px solid #e2e8f0;font-size:10.5px;">🏦 VietQR</span>`;
+
+            return `
+              <tr data-id="${esc(b.booking_code)}">
+                <td>
+                  <strong style="color:var(--ember);font-family:monospace;font-size:13.5px;">#${esc(b.booking_code)}</strong>
+                  <div style="font-size:11px;color:var(--muted);">Ref: BANLA_${esc(b.booking_code)}</div>
+                  <div style="margin-top:3px;">${methodBadge}</div>
+                </td>
+                <td>
+                  <div style="font-weight:700;color:var(--pine);">${esc(b.guest_name)}</div>
+                  <div style="font-size:12px;color:var(--muted);">${esc(b.guest_phone)}</div>
+                  ${b.guest_email ? `<div style="font-size:11px;color:#94a3b8;">${esc(b.guest_email)}</div>` : ''}
+                </td>
+                <td>
+                  <strong style="color:var(--pine);">${esc(b.room_id)}</strong>
+                  <div style="font-size:11.5px;color:var(--muted);">${esc(b.guests)} khách · ${esc(b.nights)} đêm</div>
+                </td>
+                <td>
+                  <div style="font-weight:600;">${esc(checkInFmt)} → ${esc(checkOutFmt)}</div>
+                  <div style="font-size:11px;color:var(--muted);">14:00 Check-in · 12:00 Check-out</div>
+                </td>
+                <td>
+                  <div style="font-weight:700;">${vnd(netPayable)}${b.discount_amount > 0 ? ` <small style="color:#15803d;">(-10%)</small>` : ''}</div>
+                  <div style="margin-top:3px;">${payBadge}</div>
+                </td>
+                <td>${pinHtml}</td>
+                <td>${statusBadge}</td>
+                <td style="text-align:right;">
+                  <div class="btn-action-group">
+                    <button type="button" class="btn btn-sm btn-success" data-action="approve" data-id="${esc(b.booking_code)}" title="Đối soát thực thu & Cấp mã Smart-Lock PIN 6 số">
+                      ✓ Duyệt đơn
+                    </button>
+                    <button type="button" class="btn btn-sm btn-pine" data-action="vietqr" data-id="${esc(b.booking_code)}" title="Xem mã QR thanh toán VietQR đúng số tiền cần thu">
+                      VietQR
+                    </button>
+                    <button type="button" class="btn btn-sm btn-ember" data-action="preview-slip" data-id="${esc(b.booking_code)}" title="Xem trước & In Phiếu xác nhận">
+                      Phiếu Dấu Đỏ
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline" data-action="copy-fb" data-id="${esc(b.booking_code)}" title="Sao chép tin nhắn gửi khách qua Facebook">
+                      Copy FB
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline" data-action="edit" data-id="${esc(b.booking_code)}">
+                      Sửa
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          })
+          .join('');
       }
 
-      async function approveBookingAndIssuePin(bookingId) {
-        const idx = allBookings.findIndex(x => String(x.id) === String(bookingId));
-        if (idx === -1) return;
-
-        const target = allBookings[idx];
-        const newPin = target.smartlock_pin && target.smartlock_pin.length === 6
-          ? target.smartlock_pin
-          : generateSecure6DigitPin();
-
-        const expectedPay = Number(target.paid_amount) > 0
-          ? Number(target.paid_amount)
-          : (Number(target.deposit_amount) > 0
-              ? Number(target.deposit_amount)
-              : (target.payment_option === 'pay_100'
-                  ? Math.round(target.total_amount * 0.9)
-                  : Math.round(target.total_amount * 0.5)));
-
-        target.smartlock_pin = newPin;
-        target.booking_status = 'confirmed';
-        target.payment_status = 'paid';
-        target.paid_amount = expectedPay;
+      async function approveBookingAndIssuePin(bookingCode) {
+        const target = allBookings.find((x) => String(x.booking_code) === String(bookingCode));
+        if (!target) return;
 
         const cfg = getConfig();
-
-        if (sbClient) {
-          try {
-            const { error } = await sbClient
-              .schema('banla')
-              .from('bookings')
-              .update({
-                booking_status: 'confirmed',
-                payment_status: 'paid',
-                paid_amount: target.paid_amount,
-                smartlock_pin: newPin
-              })
-              .eq('id', target.id);
-
-            if (!error) {
-              await sbClient.schema('banla').from('transactions').insert({
-                booking_id: target.id,
-                reference_code: `BANLA_${target.booking_code}`,
-                amount_paid: target.paid_amount,
-                bank_code: cfg.bankId || 'MB',
-                status: 'completed'
-              });
-            } else {
-              await sbClient.rpc('banla_approve_booking', {
-                p_id: target.id,
-                p_pin: newPin,
-                p_mark_paid: true,
-                p_bank_code: cfg.bankId || 'MB'
-              });
-            }
-          } catch (e) {
-            console.warn('Supabase approve warning:', e);
-          }
-        }
+        const unpaidDeposit = Math.max(0, Number(target.deposit_amount || 0) - Number(target.paid_amount || 0));
 
         try {
-          await fetch('/api/admin/booking/smartlock', {
+          const res = await fetch('/api/admin/booking/approve', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey || '' },
-            body: JSON.stringify({ id: target.id, customPin: newPin })
-          });
-          await fetch('/api/admin/booking/update', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey || '' },
+            headers: adminHeaders(true),
+            credentials: 'same-origin',
             body: JSON.stringify({
-              id: target.id,
-              status: 'confirmed',
-              paymentStatus: 'PAID',
-              paidAmount: target.paid_amount
+              id: target.booking_code,
+              amountReceived: unpaidDeposit,
+              bankCode: cfg.bankId || 'MB',
+              customPin: target.smartlock_pin && target.smartlock_pin.length === 6 ? target.smartlock_pin : undefined
             })
           });
-        } catch {}
 
-        saveLocalBookings(allBookings);
-        recordLocalTransaction(target, cfg.bankId);
+          if (res.status === 401) {
+            handleUnauthorized();
+            return;
+          }
 
-        renderStats();
-        renderTable();
-        showToast(`Đã duyệt đơn #${target.booking_code} & cấp mã Smart-Lock PIN 6 số: ${newPin}`);
+          const out = await res.json().catch(() => ({}));
+          if (!res.ok || !out.success) {
+            alert(out.message || 'Không thể duyệt đơn trên máy chủ.');
+            return;
+          }
+
+          await loadAllBookings();
+          showToast(out.message || `Đã duyệt đơn #${target.booking_code} & cấp mã PIN: ${out.pin}`);
+        } catch (err) {
+          alert('Lỗi kết nối máy chủ khi duyệt đơn.');
+        }
       }
 
-      function openVietQrModal(bookingId) {
-        const b = allBookings.find(x => String(x.id) === String(bookingId));
+      function openVietQrModal(bookingCode) {
+        const b = allBookings.find((x) => String(x.booking_code) === String(bookingCode));
         if (!b) return;
-        activeQrBookingId = b.id;
+        activeQrBookingId = b.booking_code;
 
         const cfg = getConfig();
         const bankId = encodeURIComponent(cfg.bankId || 'MB');
         const accNo = encodeURIComponent(cfg.accountNo || '0352554863');
-        const amount = Math.round(Number(b.total_amount) || 0);
+
+        // Thu đúng khoản cọc/thanh toán còn thiếu thay vì thu nhầm 100% tổng đơn
+        const dueDeposit = Math.max(0, Number(b.deposit_amount || 0) - Number(b.paid_amount || 0));
+        const netTotal = Math.max(0, Number(b.total_amount || 0) - Number(b.discount_amount || 0));
+        const dueRemaining = Math.max(0, netTotal - Number(b.paid_amount || 0));
+        const amount = dueDeposit > 0 ? dueDeposit : dueRemaining;
+
         const memo = `BANLA_${b.booking_code}`;
         const qrUrl = `https://img.vietqr.io/image/${bankId}-${accNo}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(memo)}&accountName=${encodeURIComponent(cfg.accountName || 'BANLA BOUTIQUE HOTEL')}`;
 
@@ -1347,8 +1266,8 @@
         document.getElementById('vietQrModal').classList.add('open');
       }
 
-      function openSlipPreviewModal(bookingId) {
-        const b = allBookings.find(x => String(x.id) === String(bookingId));
+      function openSlipPreviewModal(bookingCode) {
+        const b = allBookings.find((x) => String(x.booking_code) === String(bookingCode));
         if (!b) return;
 
         const container = document.getElementById('slipPreviewContainer');
@@ -1357,12 +1276,13 @@
         document.getElementById('slipPreviewModal').classList.add('open');
       }
 
-      function copyFbConfirmationMessage(bookingId) {
-        const b = allBookings.find(x => String(x.id) === String(bookingId));
+      function copyFbConfirmationMessage(bookingCode) {
+        const b = allBookings.find((x) => String(x.booking_code) === String(bookingCode));
         if (!b) return;
 
         const checkInFmt = formatDateShort(b.check_in);
         const checkOutFmt = formatDateShort(b.check_out);
+        const netTotal = Math.max(0, b.total_amount - (b.discount_amount || 0));
         const pinLine = b.smartlock_pin
           ? `\n🔑 Mã Smart-Lock PIN (6 số): ${b.smartlock_pin} (Hiệu lực: ${checkInFmt} 14:00 → ${checkOutFmt} 12:00)`
           : '';
@@ -1370,35 +1290,58 @@
 
         const msg =
 `Dạ Banla Boutique Hotel Đà Lạt kính chào Quý khách ${b.guest_name}!
-Khách sạn xác nhận đơn đặt phòng #${b.booking_code} của Quý khách đã hoàn tất:
-- Hạng phòng: ${b.room_id} (${b.guests} khách)
+Khách sạn xác nhận đơn đặt phòng #${b.booking_code} của Quý khách:
+- Hạng phòng: ${b.room_id} (${b.guests} khách · ${b.nights} đêm)
 - Thời gian lưu trú: ${checkInFmt} → ${checkOutFmt}${pinLine}
-- Tổng thanh toán: ${vnd(b.total_amount)} (${b.payment_status === 'paid' ? 'ĐÃ THANH TOÁN' : 'Chờ thanh toán'})
+- Tổng chi phí: ${vnd(netTotal)} (Đã thu: ${vnd(b.paid_amount)} · Còn lại khi check-in: ${vnd(b.remaining_amount)})
 
-📄 Phiếu xác nhận dịch vụ chính thức có dấu đỏ của Banla:
+📄 Phiếu xác nhận điện tử của Banla:
 ${slipUrl}
 
 Banla rất hân hạnh được đón tiếp Quý khách!
 Hotline 24/7: 0296.9996.999 - 0352554863`;
 
-        navigator.clipboard.writeText(msg).then(() => {
-          showToast(`Đã sao chép tin nhắn xác nhận cho đơn #${b.booking_code}`);
-        }).catch(() => {
-          prompt('Sao chép tin nhắn gửi khách:', msg);
-        });
+        navigator.clipboard
+          .writeText(msg)
+          .then(() => {
+            showToast(`Đã sao chép tin nhắn xác nhận cho đơn #${b.booking_code}`);
+          })
+          .catch(() => {
+            prompt('Sao chép tin nhắn gửi khách:', msg);
+          });
       }
 
-      function openBookingModal(bookingId) {
+      function autoRecalculateModalTotal() {
+        const existingId = document.getElementById('fBookingId').value.trim();
+        if (existingId) return; // Không tự ghi đè giá đã thỏa thuận khi đang sửa đơn cũ
+        const room = document.getElementById('fRoomId').value;
+        const ci = document.getElementById('fCheckIn').value;
+        const co = document.getElementById('fCheckOut').value;
+        const unit = ROOM_RATES[room] || 1150000;
+        let nights = 1;
+        if (ci && co) {
+          const diff = Math.round((new Date(co) - new Date(ci)) / 86400000);
+          if (diff > 0 && diff <= 60) nights = diff;
+        }
+        document.getElementById('fTotalAmount').value = unit * nights;
+      }
+
+      ['fRoomId', 'fCheckIn', 'fCheckOut'].forEach((id) => {
+        document.getElementById(id).addEventListener('change', autoRecalculateModalTotal);
+      });
+
+      function openBookingModal(bookingCode) {
         const modal = document.getElementById('bookingFormModal');
         const form = document.getElementById('bookingEditForm');
         form.reset();
 
-        if (bookingId) {
-          const b = allBookings.find(x => String(x.id) === String(bookingId));
+        if (bookingCode) {
+          const b = allBookings.find((x) => String(x.booking_code) === String(bookingCode));
           if (!b) return;
           document.getElementById('bookingModalTitle').textContent = `Cập Nhật Đơn #${b.booking_code}`;
-          document.getElementById('fBookingId').value = b.id;
+          document.getElementById('fBookingId').value = b.booking_code;
           document.getElementById('fBookingCode').value = b.booking_code;
+          document.getElementById('fBookingCode').readOnly = true;
           document.getElementById('fGuestName').value = b.guest_name;
           document.getElementById('fGuestPhone').value = b.guest_phone;
           document.getElementById('fGuestEmail').value = b.guest_email || '';
@@ -1406,6 +1349,8 @@ Hotline 24/7: 0296.9996.999 - 0352554863`;
           document.getElementById('fGuests').value = b.guests || 2;
           document.getElementById('fCheckIn').value = b.check_in;
           document.getElementById('fCheckOut').value = b.check_out;
+          document.getElementById('fPaymentOption').value = b.payment_option || 'deposit_50';
+          document.getElementById('fPaymentMethod').value = b.payment_method || 'vietqr';
           document.getElementById('fTotalAmount').value = b.total_amount;
           document.getElementById('fPaidAmount').value = b.paid_amount;
           document.getElementById('fPaymentStatus').value = b.payment_status;
@@ -1413,15 +1358,18 @@ Hotline 24/7: 0296.9996.999 - 0352554863`;
           document.getElementById('fSmartLockPin').value = b.smartlock_pin || '';
           document.getElementById('fNote').value = b.note || '';
         } else {
-          document.getElementById('bookingModalTitle').textContent = 'Tạo Đơn Đặt Phòng Mới';
+          document.getElementById('bookingModalTitle').textContent = 'Tạo Đơn Đặt Phòng Thật Mới';
           document.getElementById('fBookingId').value = '';
-          document.getElementById('fBookingCode').value = 'BL' + Math.floor(1000 + Math.random() * 9000);
-          const today = new Date();
-          const tomorrow = new Date(Date.now() + 2 * 86400000);
-          document.getElementById('fCheckIn').value = today.toISOString().slice(0, 10);
-          document.getElementById('fCheckOut').value = tomorrow.toISOString().slice(0, 10);
-          document.getElementById('fTotalAmount').value = 1500000;
+          document.getElementById('fBookingCode').value = '';
+          document.getElementById('fBookingCode').readOnly = false;
+          const tomorrow = new Date(Date.now() + 86400000);
+          const nextDay = new Date(Date.now() + 2 * 86400000);
+          document.getElementById('fCheckIn').value = tomorrow.toISOString().slice(0, 10);
+          document.getElementById('fCheckOut').value = nextDay.toISOString().slice(0, 10);
+          document.getElementById('fPaymentOption').value = 'deposit_50';
+          document.getElementById('fPaymentMethod').value = 'vietqr';
           document.getElementById('fPaidAmount').value = 0;
+          autoRecalculateModalTotal();
         }
         modal.classList.add('open');
       }
@@ -1432,7 +1380,7 @@ Hotline 24/7: 0296.9996.999 - 0352554863`;
         loadAllBookings();
       }
 
-      if (adminKey) {
+      if (adminKey || adminToken) {
         enterDashboard();
       }
 
@@ -1441,36 +1389,41 @@ Hotline 24/7: 0296.9996.999 - 0352554863`;
         const pin = document.getElementById('authPin').value.trim();
         if (!pin) return;
 
-        let valid = false;
         try {
           const res = await fetch('/api/admin/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
             body: JSON.stringify({ key: pin })
           });
-          if (res.ok) {
-            const d = await res.json();
-            if (d && d.success) valid = true;
+          const d = await res.json().catch(() => ({}));
+          if (res.ok && d && d.success) {
+            adminKey = pin;
+            adminToken = d.token || '';
+            sessionStorage.setItem(AUTH_STORAGE_KEY, adminKey);
+            if (adminToken) sessionStorage.setItem(TOKEN_STORAGE_KEY, adminToken);
+            if (d.storage && d.storage.mode) updateStorageBadge(d.storage.mode);
+            enterDashboard();
+            return;
           }
-        } catch {}
-
-        if (valid) {
-          adminKey = pin;
-          sessionStorage.setItem(AUTH_STORAGE_KEY, adminKey);
-          enterDashboard();
-        } else {
-          alert('Mã quản trị không chính xác, hoặc không kết nối được máy chủ.');
+          alert(d.message || 'Mã quản trị không chính xác.');
+        } catch {
+          alert('Không kết nối được máy chủ Node để xác thực quyền quản trị.');
         }
       });
 
-      document.getElementById('btnLogout').addEventListener('click', function () {
+      document.getElementById('btnLogout').addEventListener('click', async function () {
+        try {
+          await fetch('/api/admin/logout', { method: 'POST', credentials: 'same-origin' });
+        } catch (_) {}
         sessionStorage.removeItem(AUTH_STORAGE_KEY);
+        sessionStorage.removeItem(TOKEN_STORAGE_KEY);
         location.reload();
       });
 
       document.getElementById('btnRefresh').addEventListener('click', function () {
         loadAllBookings();
-        showToast('Đã cập nhật dữ liệu mới nhất');
+        showToast('Đã đồng bộ dữ liệu thật mới nhất từ máy chủ');
       });
 
       document.getElementById('btnNewBooking').addEventListener('click', function () {
@@ -1492,7 +1445,7 @@ Hotline 24/7: 0296.9996.999 - 0352554863`;
       document.getElementById('filterGroup').addEventListener('click', function (e) {
         const btn = e.target.closest('.filter-btn');
         if (!btn) return;
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
         currentFilter = btn.getAttribute('data-filter');
         currentPage = 1;
@@ -1522,7 +1475,7 @@ Hotline 24/7: 0296.9996.999 - 0352554863`;
         renderTable();
       });
 
-      document.querySelectorAll('[data-close]').forEach(btn => {
+      document.querySelectorAll('[data-close]').forEach((btn) => {
         btn.addEventListener('click', function () {
           const targetId = this.getAttribute('data-close');
           document.getElementById(targetId).classList.remove('open');
@@ -1553,8 +1506,9 @@ Hotline 24/7: 0296.9996.999 - 0352554863`;
         const orig = this.textContent;
         this.textContent = 'Đang tạo ảnh...';
         this.disabled = true;
-        window.html2canvas(el, { scale: 2, backgroundColor: '#FAF7F2', useCORS: true })
-          .then(canvas => {
+        window
+          .html2canvas(el, { scale: 2, backgroundColor: '#FAF7F2', useCORS: true })
+          .then((canvas) => {
             const a = document.createElement('a');
             a.download = 'Phieu-Xac-Nhan-Banla.png';
             a.href = canvas.toDataURL('image/png');
@@ -1568,17 +1522,19 @@ Hotline 24/7: 0296.9996.999 - 0352554863`;
 
       document.getElementById('bookingEditForm').addEventListener('submit', async function (e) {
         e.preventDefault();
-        const existingId = document.getElementById('fBookingId').value.trim();
-        const code = (document.getElementById('fBookingCode').value.trim() || ('BL' + Math.floor(1000 + Math.random() * 9000))).toUpperCase();
-        let pin = document.getElementById('fSmartLockPin').value.trim().replace(/[^0-9]/g, '').slice(0, 6);
+        const saveBtn = document.getElementById('btnSaveBookingSubmit');
+        const existingCode = document.getElementById('fBookingId').value.trim();
+        const codeInput = document.getElementById('fBookingCode').value.trim().toUpperCase();
         const bStatus = document.getElementById('fBookingStatus').value;
-        if (bStatus === 'confirmed' && !pin) {
+        const pStatus = document.getElementById('fPaymentStatus').value;
+        let pin = document.getElementById('fSmartLockPin').value.trim().replace(/[^0-9]/g, '').slice(0, 6);
+        if (bStatus === 'confirmed' && pStatus === 'paid' && !pin) {
           pin = generateSecure6DigitPin();
         }
 
-        const record = normalizeBookingRecord({
-          id: existingId || ((window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('bk_' + Date.now())),
-          booking_code: code,
+        const payload = {
+          id: existingCode || undefined,
+          booking_code: codeInput || undefined,
           guest_name: document.getElementById('fGuestName').value.trim(),
           guest_phone: document.getElementById('fGuestPhone').value.trim(),
           guest_email: document.getElementById('fGuestEmail').value.trim(),
@@ -1586,42 +1542,49 @@ Hotline 24/7: 0296.9996.999 - 0352554863`;
           guests: Number(document.getElementById('fGuests').value) || 2,
           check_in: document.getElementById('fCheckIn').value,
           check_out: document.getElementById('fCheckOut').value,
+          payment_option: document.getElementById('fPaymentOption').value,
+          payment_method: document.getElementById('fPaymentMethod').value || 'vietqr',
           total_amount: Number(document.getElementById('fTotalAmount').value) || 0,
           paid_amount: Number(document.getElementById('fPaidAmount').value) || 0,
-          payment_status: document.getElementById('fPaymentStatus').value,
+          payment_status: pStatus,
           booking_status: bStatus,
-          smartlock_pin: pin,
-          note: document.getElementById('fNote').value.trim(),
-          created_at: existingId
-            ? (allBookings.find(x => String(x.id) === existingId)?.created_at || new Date().toISOString())
-            : new Date().toISOString()
-        });
+          smartlock_pin: pin || null,
+          note: document.getElementById('fNote').value.trim()
+        };
 
-        if (sbClient) {
-          try {
-            if (existingId) {
-              await sbClient.schema('banla').from('bookings').update(record).eq('id', existingId);
-            } else {
-              await sbClient.schema('banla').from('bookings').insert(record);
-            }
-          } catch {}
+        saveBtn.disabled = true;
+        try {
+          const endpoint = existingCode ? '/api/admin/booking/update' : '/api/admin/booking/create';
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: adminHeaders(true),
+            credentials: 'same-origin',
+            body: JSON.stringify(payload)
+          });
+
+          if (res.status === 401) {
+            handleUnauthorized();
+            return;
+          }
+
+          const out = await res.json().catch(() => ({}));
+          if (!res.ok || !out.success) {
+            alert(out.message || 'Không thể lưu đơn đặt phòng.');
+            return;
+          }
+
+          document.getElementById('bookingFormModal').classList.remove('open');
+          await loadAllBookings();
+          showToast(out.message || 'Đã lưu đơn đặt phòng vào CSDL!');
+        } catch (err) {
+          alert('Lỗi kết nối máy chủ khi lưu đơn đặt phòng.');
+        } finally {
+          saveBtn.disabled = false;
         }
-
-        const idx = allBookings.findIndex(x => String(x.id) === String(existingId));
-        if (idx >= 0) allBookings[idx] = record;
-        else allBookings.unshift(record);
-
-        saveLocalBookings(allBookings);
-        document.getElementById('bookingFormModal').classList.remove('open');
-        renderStats();
-        renderTable();
-        showToast(`Đã lưu đơn đặt phòng #${record.booking_code}`);
       });
 
       document.getElementById('btnConfigDb').addEventListener('click', function () {
         const cfg = getConfig();
-        document.getElementById('cfgSbUrl').value = cfg.url;
-        document.getElementById('cfgSbKey').value = cfg.anonKey;
         document.getElementById('cfgBankId').value = cfg.bankId;
         document.getElementById('cfgAccountNo').value = cfg.accountNo;
         document.getElementById('cfgAccountName').value = cfg.accountName;
@@ -1631,16 +1594,13 @@ Hotline 24/7: 0296.9996.999 - 0352554863`;
       document.getElementById('configForm').addEventListener('submit', function (e) {
         e.preventDefault();
         const cfg = {
-          url: document.getElementById('cfgSbUrl').value.trim(),
-          anonKey: document.getElementById('cfgSbKey').value.trim(),
           bankId: document.getElementById('cfgBankId').value.trim() || 'MB',
           accountNo: document.getElementById('cfgAccountNo').value.trim() || '0352554863',
           accountName: document.getElementById('cfgAccountName').value.trim() || 'BANLA BOUTIQUE HOTEL'
         };
         localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(cfg));
         document.getElementById('configModal').classList.remove('open');
-        loadAllBookings();
-        showToast('Đã lưu cấu hình Supabase (`banla`) & VietQR');
+        showToast('Đã lưu cấu hình tài khoản nhận thanh toán VietQR');
       });
     })();
   </script>
