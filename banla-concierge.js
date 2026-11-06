@@ -15,11 +15,10 @@
   var FANPAGE = (knowledge && knowledge.FANPAGE) || 'https://www.facebook.com/Banlaboutiquedalat/';
   var STORE_KEY = 'banla_concierge_history_v1';
   var SUGGESTIONS = [
-    'Phòng nào hợp cho 2 người lớn và 1 bé?',
-    'Bảng giá 7 hạng phòng tại Banla?',
-    'Giờ mở cửa và ưu đãi The Roof?',
-    'Cách đặt cọc VietQR & nhận mã PIN Smart-Lock?',
-    'Từ sân bay Liên Khương về khách sạn bao xa?'
+    'Chị Mya dự kiến',
+    'Chị Mya đang tìm phòng tại?',
+    'Chị Mya ăn cơm chưa',
+    'Chị Mya giàu chưa'
   ];
 
   /* Tri thức lễ tân dùng chung với /api/chat (banla-concierge-knowledge.js). */
