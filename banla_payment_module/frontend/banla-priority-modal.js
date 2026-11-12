@@ -27,6 +27,8 @@
 
   let currentSession = null;
   let sseConnection = null;
+  let ninepayOn = false;
+  let renderToken = 0;
 
   function injectStyles() {
     if (document.getElementById('banla-priority-css')) return;
@@ -115,7 +117,9 @@
         || host === 'www.sandbox.paypal.com'
         || host === 'sandbox.paypal.com'
         || host === 'mtf.onepay.vn'
-        || host === 'onepay.vn';
+        || host === 'onepay.vn'
+        || host === 'sand-payment.9pay.vn'
+        || host === 'payment.9pay.vn';
     } catch (err) {
       return false;
     }
@@ -199,9 +203,31 @@
     return null;
   }
 
+  async function loadNinePayFlag() {
+    const endpoints = ['/api/payments/card/providers'];
+    const remote = window.BANLA_PAYMENT_ENDPOINT || 'https://hcikbpvzbzottxoitujl.supabase.co/functions/v1/banla-payment';
+    if (remote) endpoints.push(`${remote}${remote.includes('?') ? '&' : '?'}action=providers`);
+    for (let i = 0; i < endpoints.length; i++) {
+      try {
+        const headers = { Accept: 'application/json' };
+        if (i > 0 && window.BANLA_GEMINI_KEY) {
+          headers.apikey = window.BANLA_GEMINI_KEY;
+          headers.Authorization = 'Bearer ' + window.BANLA_GEMINI_KEY;
+        }
+        const res = await fetch(endpoints[i], { method: 'GET', headers, cache: 'no-store' });
+        if (!res.ok) continue;
+        const data = await res.json();
+        if (data && typeof data.ninepay === 'boolean') return data.ninepay === true;
+      } catch (err) {}
+    }
+    return false;
+  }
+
   function openModal(options = {}) {
     injectStyles();
     stopPolling();
+    const token = ++renderToken;
+    ninepayOn = false;
 
     const bankCfg = getSavedBankConfig();
     const rawCode = String(options.bookingId || 'BL9821').replace(/^#+/, '').toUpperCase();
@@ -309,11 +335,12 @@
           ${!isPaid ? `
             <section class="banla-card-pay">
               <h4>Thanh toán bằng thẻ</h4>
-              <p>Bạn sẽ thanh toán trên trang bảo mật của PayPal hoặc OnePay bằng thẻ Visa, thẻ tín dụng hoặc thẻ ghi nợ. Chúng tôi không thu thập hoặc lưu số thẻ, ngày hết hạn hay mã CVV.</p>
+              <p>Bạn sẽ thanh toán trên trang bảo mật của PayPal, OnePay hoặc 9Pay bằng thẻ Visa, Mastercard, JCB, Amex (nội địa và quốc tế), Apple Pay, Google Pay, Samsung Pay hoặc QR. Chúng tôi không thu thập hoặc lưu số thẻ, ngày hết hạn hay mã CVV.</p>
               <p>Số tiền: ${escHtml(formatCardAmount(currentSession.amount))} · Mã đơn: ${escHtml(currentSession.bookingId)}</p>
               <div class="banla-card-actions">
                 <button type="button" class="banla-gold-btn" data-card-provider="paypal">Thanh toán an toàn qua PayPal</button>
                 <button type="button" class="banla-card-secondary" data-card-provider="onepay">Thanh toán an toàn qua OnePay</button>
+                ${ninepayOn ? '<button type="button" class="banla-card-secondary" data-card-provider="ninepay">Thanh toán an toàn qua 9Pay</button>' : ''}
               </div>
               <p id="banlaCardMsg" style="display:none;margin-top:8px;"></p>
             </section>
@@ -387,6 +414,11 @@
     }
 
     renderModalContent(false);
+    loadNinePayFlag().then((on) => {
+      if (!on || token !== renderToken || !currentSession || currentSession.bookingId !== bookingId || currentSession.isVerifiedPaid) return;
+      ninepayOn = true;
+      renderModalContent(false);
+    });
 
     // Bắt đầu lắng nghe / polling CSDL thời gian thực
     pollInterval = setInterval(async () => {
@@ -444,7 +476,7 @@
         if (data && data.message) lastMessage = data.message;
       }
       if (msg) {
-        msg.textContent = lastMessage || 'Chưa mở được trang nhập thẻ. Cổng PayPal/OnePay cần được cấu hình trên máy chủ.';
+        msg.textContent = lastMessage || 'Chưa mở được trang nhập thẻ. Cổng PayPal, OnePay hoặc 9Pay cần được cấu hình trên máy chủ.';
       }
     } catch (err) {
       if (msg) msg.textContent = 'Không kết nối được cổng thanh toán. Quý khách thử lại sau.';
@@ -469,6 +501,8 @@
   }
 
   function closeModal() {
+    renderToken += 1;
+    ninepayOn = false;
     stopPolling();
     const modal = document.getElementById('banlaPriorityModal');
     if (modal) modal.remove();

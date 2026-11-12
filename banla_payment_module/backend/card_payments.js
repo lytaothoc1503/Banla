@@ -1,8 +1,9 @@
 /**
- * Thanh toán thẻ Visa / tín dụng / ghi nợ qua trang host của PayPal và OnePay.
+ * Thanh toán thẻ qua trang host của PayPal, OnePay và 9Pay.
  * Banla không nhận, không log, không lưu số thẻ, ngày hết hạn hay CVV.
  * Chỉ lưu mã đơn cổng, số tiền, loại tiền, trạng thái và metadata không nhạy cảm.
  * Đơn chỉ được ghi nhận đã thanh toán sau khi đối chiếu đúng số tiền, loại tiền và mã đơn.
+ * 9Pay tắt mặc định (NINEPAY_ENABLED). Khách chỉ nhập thẻ trên trang của 9Pay.
  */
 const crypto = require('crypto');
 const fs = require('fs');
@@ -227,7 +228,11 @@ function assertGatewayUrl(raw) {
     ? (host === 'www.paypal.com' || host === 'paypal.com')
     : (host === 'www.sandbox.paypal.com' || host === 'sandbox.paypal.com');
   const onepayOk = live ? host === 'onepay.vn' : host === 'mtf.onepay.vn';
-  if (!paypalOk && !onepayOk) {
+  const ninepayOk = live ? host === 'payment.9pay.vn' : host === 'sand-payment.9pay.vn';
+  if (ninepayOk && url.pathname !== '/portal') {
+    throw new PaymentError('Địa chỉ cổng thanh toán không hợp lệ.', 502);
+  }
+  if (!paypalOk && !onepayOk && !ninepayOk) {
     throw new PaymentError('Địa chỉ cổng thanh toán không hợp lệ.', 502);
   }
   return url.toString();
@@ -383,8 +388,11 @@ function requireBooking(bookingId) {
 
 async function createCheckout({ provider, bookingId, clientIp }) {
   const normalized = String(provider || '').trim().toLowerCase();
-  if (normalized !== 'paypal' && normalized !== 'onepay') {
-    throw new PaymentError('Chọn PayPal hoặc OnePay. Banla không nhận số thẻ trên website.');
+  if (normalized !== 'paypal' && normalized !== 'onepay' && normalized !== 'ninepay') {
+    throw new PaymentError('Chọn PayPal, OnePay hoặc 9Pay. Banla không nhận số thẻ trên website.');
+  }
+  if (normalized === 'ninepay' && !ninepayEnabled()) {
+    throw new PaymentError('Cổng 9Pay chưa được bật. Banla không nhận số thẻ trên website.', 403);
   }
   const prepared = await withLock(() => {
     const { booking, amount, currency } = requireBooking(bookingId);
@@ -409,7 +417,9 @@ async function createCheckout({ provider, bookingId, clientIp }) {
 
   const redirect = normalized === 'paypal'
     ? await createPayPalCheckout(prepared, clientIp)
-    : createOnePayCheckout(prepared, clientIp);
+    : normalized === 'onepay'
+      ? createOnePayCheckout(prepared, clientIp)
+      : createNinePayCheckout(prepared);
 
   return withLock(() => {
     const again = requireBooking(prepared.booking.id);
@@ -824,6 +834,216 @@ async function settleOnePay(params) {
   return withLock(() => markPaid(payment.id, params.vpc_TransactionNo));
 }
 
+function ninepayEnabled() {
+  return /^(1|true|on|yes)$/i.test(String(process.env.NINEPAY_ENABLED || '').trim());
+}
+
+function ninepayCreds() {
+  const live = paymentMode() === 'live';
+  const merchantKey = String(process.env[live ? 'NINEPAY_LIVE_MERCHANT_KEY' : 'NINEPAY_SANDBOX_MERCHANT_KEY'] || '').trim();
+  const secretKey = String(process.env[live ? 'NINEPAY_LIVE_SECRET_KEY' : 'NINEPAY_SANDBOX_SECRET_KEY'] || '').trim();
+  const checksumKey = String(process.env[live ? 'NINEPAY_LIVE_CHECKSUM_KEY' : 'NINEPAY_SANDBOX_CHECKSUM_KEY'] || '').trim();
+  if (!merchantKey || !secretKey || !checksumKey) {
+    throw new PaymentError('Cổng 9Pay chưa được cấu hình. Banla không thu thập số thẻ.', 503);
+  }
+  return { merchantKey, secretKey, checksumKey };
+}
+
+function ninepayEndpoint() {
+  const live = paymentMode() === 'live';
+  const fallback = live ? 'https://payment.9pay.vn' : 'https://sand-payment.9pay.vn';
+  const override = String(process.env[live ? 'NINEPAY_LIVE_URL' : 'NINEPAY_SANDBOX_URL'] || '').trim();
+  let url;
+  try {
+    url = new URL(override || fallback);
+  } catch {
+    throw new PaymentError('Địa chỉ 9Pay không hợp lệ.', 503);
+  }
+  const host = url.hostname.toLowerCase();
+  const allowed = live ? host === 'payment.9pay.vn' : host === 'sand-payment.9pay.vn';
+  if (url.protocol !== 'https:' || !allowed || url.username || url.password || (url.pathname && url.pathname !== '/')) {
+    throw new PaymentError('Địa chỉ 9Pay không hợp lệ.', 503);
+  }
+  return url.origin;
+}
+
+function canonicalQuery(params) {
+  const query = new URLSearchParams();
+  for (const key of Object.keys(params).sort()) {
+    const value = params[key];
+    if (value === undefined || value === null || value === '') continue;
+    query.append(key, String(value));
+  }
+  return query.toString();
+}
+
+function ninepaySign(message, secret) {
+  return crypto.createHmac('sha256', secret).update(message).digest('base64');
+}
+
+function createNinePayCheckout(prepared) {
+  const creds = ninepayCreds();
+  const endpoint = ninepayEndpoint();
+  const base = publicBase();
+  if (!Number.isSafeInteger(prepared.amount) || prepared.amount < 10000 || prepared.amount > 100000000) {
+    throw new PaymentError('Số tiền hóa đơn không nằm trong hạn mức 9Pay (10.000–100.000.000 VND).', 409);
+  }
+  if (!/^[A-Za-z0-9]{1,30}$/.test(prepared.paymentId)) {
+    throw new PaymentError('Mã giao dịch 9Pay không hợp lệ.', 500);
+  }
+  const time = Math.floor(Date.now() / 1000);
+  const params = {
+    merchantKey: creds.merchantKey,
+    time,
+    invoice_no: prepared.paymentId,
+    amount: prepared.amount,
+    description: `Banla ${prepared.orderInfo}`.slice(0, 255),
+    return_url: `${base}/api/payments/ninepay/return`,
+    back_url: `${base}/api/payments/ninepay/cancel?invoice=${prepared.paymentId}`,
+    currency: CURRENCY,
+    lang: 'vi'
+  };
+  const message = `POST\n${endpoint}/payments/create\n${time}\n${canonicalQuery(params)}`;
+  const signature = ninepaySign(message, creds.secretKey);
+  const baseEncode = Buffer.from(JSON.stringify(params)).toString('base64');
+  const redirectUrl = `${endpoint}/portal?${canonicalQuery({ baseEncode, signature })}`;
+  return {
+    providerOrderId: prepared.paymentId,
+    redirectUrl: assertGatewayUrl(redirectUrl)
+  };
+}
+
+function ninepayChecksum(result, checksumKey) {
+  return crypto.createHash('sha256').update(`${result}${checksumKey}`).digest('hex').toUpperCase();
+}
+
+function ninepayResultMatchingChecksum(result, checksum, checksumKey) {
+  if (safeEqualHex(checksum, ninepayChecksum(result, checksumKey))) return result;
+  if (result.includes(' ')) {
+    const plus = result.replace(/ /g, '+');
+    if (safeEqualHex(checksum, ninepayChecksum(plus, checksumKey))) return plus;
+  }
+  return null;
+}
+
+function fieldsFromJsonText(text) {
+  if (!text || text.length > 20000 || !text.includes('"invoice_no"')) return null;
+  const invoiceNo = (text.match(/"invoice_no"\s*:\s*"([A-Za-z0-9]{1,40})"/) || [])[1] || '';
+  const currency = ((text.match(/"currency"\s*:\s*"([A-Za-z]{3})"/) || [])[1] || '').toUpperCase();
+  const statusRaw = (text.match(/"status"\s*:\s*"?(\d{1,3})"?/) || [])[1];
+  const amount = (text.match(/"amount"\s*:\s*"?(\d{1,12})"?/) || [])[1] || '';
+  const paymentNo = (text.match(/"payment_no"\s*:\s*"?(\d{1,24})"?/) || [])[1] || '';
+  if (!invoiceNo || statusRaw === undefined) return null;
+  const status = Number(statusRaw);
+  if (!Number.isInteger(status)) return null;
+  return { invoiceNo, currency, status, amount, paymentNo };
+}
+
+function decodeNinePayResult(result) {
+  try {
+    const normalized = String(result).replace(/-/g, '+').replace(/_/g, '/');
+    const pad = normalized.length % 4 === 0 ? '' : '='.repeat(4 - (normalized.length % 4));
+    const text = Buffer.from(normalized + pad, 'base64').toString('utf8');
+    if (!text.startsWith('{')) return null;
+    return fieldsFromJsonText(text);
+  } catch {
+    return null;
+  }
+}
+
+async function inquireNinePay(invoiceNo) {
+  if (!/^[A-Za-z0-9]{1,30}$/.test(invoiceNo)) return null;
+  let creds;
+  let endpoint;
+  try {
+    creds = ninepayCreds();
+    endpoint = ninepayEndpoint();
+  } catch {
+    return null;
+  }
+  const time = Math.floor(Date.now() / 1000);
+  const uri = `${endpoint}/v2/payments/${invoiceNo}/inquire`;
+  const signature = ninepaySign(`GET\n${uri}\n${time}`, creds.secretKey);
+  let res;
+  try {
+    res = await payFetch(uri, {
+      method: 'GET',
+      redirect: 'error',
+      headers: {
+        Date: String(time),
+        Accept: 'application/json',
+        Authorization: `Signature Algorithm=HS256,Credential=${creds.merchantKey},SignedHeaders=,Signature=${signature}`
+      }
+    });
+  } catch {
+    return null;
+  }
+  const text = await res.text().catch(() => '');
+  if (!res.ok) return null;
+  return fieldsFromJsonText(text);
+}
+
+async function applyNinePayPaid(payment, decoded) {
+  const amountOk = decoded.currency === CURRENCY
+    && /^[0-9]+$/.test(decoded.paymentNo || '')
+    && amountsEqual(payment.amount, payment.currency, decoded.amount, decoded.currency);
+  if (!amountOk) {
+    const updated = await withLock(() => setPaymentStatus(payment.id, 'AMOUNT_MISMATCH'));
+    return { outcome: 'mismatch', payment: updated };
+  }
+  return withLock(() => markPaid(payment.id, decoded.paymentNo));
+}
+
+async function settleNinePay(source) {
+  if (!ninepayEnabled()) return { outcome: 'unconfigured' };
+  let creds;
+  try {
+    creds = ninepayCreds();
+  } catch (err) {
+    if (err.isUserError) return { outcome: 'unconfigured' };
+    throw err;
+  }
+  const result = typeof source?.result === 'string' ? source.result.trim() : '';
+  const checksum = typeof source?.checksum === 'string' ? source.checksum.trim() : '';
+  if (!result || result.length > 12000 || !/^[A-Za-z0-9+/=_\-\s]+$/.test(result)) return { outcome: 'invalid' };
+  if (!/^[0-9a-fA-F]{64}$/.test(checksum)) return { outcome: 'invalid' };
+  const signed = ninepayResultMatchingChecksum(result, checksum, creds.checksumKey);
+  if (!signed) return { outcome: 'invalid' };
+  const decoded = decodeNinePayResult(signed);
+  if (!decoded) return { outcome: 'invalid' };
+  const payment = await withLock(() => loadPayment(decoded.invoiceNo));
+  if (!payment || payment.provider !== 'ninepay') return { outcome: 'invalid' };
+  if (payment.status === 'PAID') return { outcome: 'paid', payment };
+  if (decoded.status === 5) return applyNinePayPaid(payment, decoded);
+  if (decoded.status === 8) {
+    const updated = await withLock(() => setPaymentStatus(payment.id, 'CANCELLED'));
+    return { outcome: 'cancel', payment: updated };
+  }
+  if (decoded.status === 6 || decoded.status === 15) {
+    const updated = await withLock(() => setPaymentStatus(payment.id, 'FAILED'));
+    return { outcome: 'failed', payment: updated };
+  }
+  if (decoded.status === 2 || decoded.status === 4) {
+    const inquired = await inquireNinePay(payment.id);
+    if (inquired && inquired.status === 5 && inquired.invoiceNo === payment.id && inquired.currency === CURRENCY) {
+      return applyNinePayPaid(payment, inquired);
+    }
+    return { outcome: 'pending', payment };
+  }
+  return { outcome: 'pending', payment };
+}
+
+async function cancelNinePay(invoice) {
+  if (!/^[A-Za-z0-9]+$/.test(String(invoice || ''))) return { outcome: 'cancel' };
+  await withLock(() => {
+    const payment = loadPayment(invoice);
+    if (payment && payment.provider === 'ninepay' && payment.status === 'PENDING') {
+      setPaymentStatus(payment.id, 'CANCELLED');
+    }
+  });
+  return { outcome: 'cancel' };
+}
+
 function applyVerdict(paymentId, verdict) {
   if (verdict.type === 'paid') return markPaid(paymentId, verdict.captureId);
   if (verdict.type === 'mismatch') {
@@ -839,6 +1059,9 @@ module.exports = {
   PaymentError,
   createCheckout,
   settleOnePay,
+  settleNinePay,
+  cancelNinePay,
+  ninepayEnabled,
   settlePayPalReturn,
   cancelPayPal,
   settlePayPalWebhook,

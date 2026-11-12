@@ -14,12 +14,26 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(origin) });
   try {
     const url = new URL(req.url);
+    if (req.method === "GET" && url.searchParams.get("action") === "providers") {
+      return json({ success: true, paypal: true, onepay: true, ninepay: ninepayEnabled() }, 200, origin);
+    }
     if (req.method === "GET" && url.searchParams.has("vpc_SecureHash")) return await finishOnePay(url.searchParams);
     if (req.method === "GET" && url.searchParams.get("flow") === "paypal-return") return await finishPayPal(url.searchParams.get("token") || "");
     if (req.method === "GET" && url.searchParams.get("flow") === "paypal-cancel") return redirectResult("cancel", "", 0);
+    if (req.method === "GET" && url.searchParams.get("flow") === "ninepay-cancel") return redirectResult("cancel", "", 0);
+    if (req.method === "GET" && url.searchParams.has("result") && url.searchParams.has("checksum")) {
+      return await finishNinePay({ result: url.searchParams.get("result") || "", checksum: url.searchParams.get("checksum") || "" }, false);
+    }
+    if (req.method === "POST") {
+      const type = req.headers.get("content-type") || "";
+      if (type.includes("application/x-www-form-urlencoded")) {
+        const form = await req.formData();
+        return await finishNinePay({ result: String(form.get("result") || ""), checksum: String(form.get("checksum") || "") }, true);
+      }
+    }
     if (req.method !== "POST") return json({ success: false, message: "Phương thức không được hỗ trợ." }, 405, origin);
     const body = await readJson(req);
-    if (containsForbidden(body)) return json({ success: false, message: "Banla không nhận số thẻ, ngày hết hạn hay mã CVV. Quý khách nhập thẻ trên trang PayPal hoặc OnePay." }, 400, origin);
+    if (containsForbidden(body)) return json({ success: false, message: "Banla không nhận số thẻ, ngày hết hạn hay mã CVV. Quý khách nhập thẻ trên trang PayPal, OnePay hoặc 9Pay." }, 400, origin);
     const action = String(body.action || "checkout");
     if (action === "admin-login") return json(await adminLogin(String(body.key || "")), 200, origin);
     if (action === "admin-payments") {
@@ -78,7 +92,10 @@ function allowedGateway(raw: string) {
   try {
     const url = new URL(raw);
     const host = url.hostname.toLowerCase();
-    return url.protocol === "https:" && ["www.paypal.com", "www.sandbox.paypal.com", "mtf.onepay.vn", "onepay.vn"].includes(host);
+    const ninepayHost = mode() === "live" ? "payment.9pay.vn" : "sand-payment.9pay.vn";
+    const ninepayOk = host === ninepayHost && url.pathname === "/portal";
+    const cardHost = ["www.paypal.com", "www.sandbox.paypal.com", "mtf.onepay.vn", "onepay.vn"].includes(host);
+    return url.protocol === "https:" && (cardHost || ninepayOk);
   } catch { return false; }
 }
 async function signOnePay(params: Record<string, string>, secret: string) {
@@ -115,13 +132,18 @@ async function markPaid(paymentId: string, captureId: string, paidAmount: number
 }
 async function createCheckout(body: Record<string, unknown>) {
   const provider = String(body.provider || "").toLowerCase();
-  if (provider !== "paypal" && provider !== "onepay") return { status: 400, body: { success: false, message: "Chọn PayPal hoặc OnePay. Thẻ được nhập trên trang của cổng thanh toán." } };
+  if (provider !== "paypal" && provider !== "onepay" && provider !== "ninepay") return { status: 400, body: { success: false, message: "Chọn PayPal, OnePay hoặc 9Pay. Thẻ được nhập trên trang của cổng thanh toán." } };
+  if (provider === "ninepay" && !ninepayEnabled()) return { status: 403, body: { success: false, message: "Cổng 9Pay chưa được bật. Banla không nhận số thẻ trên website." } };
   const bookingId = String(body.bookingId || "").replace(/[^A-Za-z0-9]/g, "").slice(0, 34);
   if (!bookingId) return { status: 400, body: { success: false, message: "Thiếu mã đơn." } };
   const paymentOption = body.paymentOption === "pay_100" ? "pay_100" : "deposit_50";
   const amount = amountDue(String(body.roomName || body.room || ""), String(body.checkin || ""), String(body.checkout || ""), paymentOption);
   const paymentId = `p${Date.now().toString(36)}${crypto.randomUUID().replace(/-/g, "").slice(0, 6)}`;
-  const redirect = provider === "paypal" ? await paypalRedirect(paymentId, bookingId, amount) : await onepayRedirect(paymentId, bookingId, amount);
+  const redirect = provider === "paypal"
+    ? await paypalRedirect(paymentId, bookingId, amount)
+    : provider === "onepay"
+    ? await onepayRedirect(paymentId, bookingId, amount)
+    : await ninepayRedirect(paymentId, bookingId, amount);
   await savePayment({ id: paymentId, booking_id: bookingId, provider, provider_order_id: redirect.providerOrderId, amount, currency: "VND", status: "PENDING", room_name: String(body.roomName || body.room || "") });
   return { status: 201, body: { success: true, provider, redirectUrl: redirect.redirectUrl, amount, currency: "VND", bookingId, paymentId } };
 }
@@ -161,6 +183,156 @@ async function onepayRedirect(paymentId: string, bookingId: string, amount: numb
   const target = new URL(endpoint);
   for (const [key, value] of Object.entries(params)) target.searchParams.set(key, value);
   return { providerOrderId: paymentId, redirectUrl: target.toString() };
+}
+function ninepayEnabled() {
+  return /^(1|true|on|yes)$/i.test((Deno.env.get("NINEPAY_ENABLED") || "").trim());
+}
+function ninepayEnv(name: string) {
+  const live = mode() === "live";
+  return (Deno.env.get(live ? `NINEPAY_LIVE_${name}` : `NINEPAY_SANDBOX_${name}`) || "").trim();
+}
+function ninepayOrigin() {
+  const live = mode() === "live";
+  const fallback = live ? "https://payment.9pay.vn" : "https://sand-payment.9pay.vn";
+  const raw = (Deno.env.get(live ? "NINEPAY_LIVE_URL" : "NINEPAY_SANDBOX_URL") || fallback).trim();
+  const url = new URL(raw);
+  const host = url.hostname.toLowerCase();
+  const allowed = live ? host === "payment.9pay.vn" : host === "sand-payment.9pay.vn";
+  if (url.protocol !== "https:" || !allowed || url.username || url.password || (url.pathname && url.pathname !== "/")) {
+    fail("Địa chỉ 9Pay không hợp lệ.", 503);
+  }
+  return url.origin;
+}
+function canonicalQuery(params: Record<string, string | number>) {
+  const query = new URLSearchParams();
+  for (const key of Object.keys(params).sort()) {
+    const value = params[key];
+    if (value === undefined || value === null || value === "") continue;
+    query.append(key, String(value));
+  }
+  return query.toString();
+}
+async function hmacBase64(secret: string, message: string) {
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(message));
+  let bin = "";
+  for (const b of new Uint8Array(sig)) bin += String.fromCharCode(b);
+  return btoa(bin);
+}
+async function sha256Hex(text: string) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("").toUpperCase();
+}
+function utf8ToBase64(text: string) {
+  const bytes = new TextEncoder().encode(text);
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin);
+}
+async function ninepayRedirect(paymentId: string, bookingId: string, amount: number) {
+  if (amount < 10000 || amount > 100000000) fail("Số tiền hóa đơn không nằm trong hạn mức 9Pay (10.000–100.000.000 VND).", 409);
+  const merchantKey = ninepayEnv("MERCHANT_KEY");
+  const secretKey = ninepayEnv("SECRET_KEY");
+  if (!merchantKey || !secretKey || !ninepayEnv("CHECKSUM_KEY")) fail("Cổng 9Pay chưa được cấu hình trên máy chủ. Banla không mở form nhập thẻ tại website.", 503);
+  const endpoint = ninepayOrigin();
+  const fn = functionUrl();
+  const time = Math.floor(Date.now() / 1000);
+  const params = {
+    merchantKey,
+    time,
+    invoice_no: paymentId,
+    amount,
+    description: `Banla ${bookingId}`.slice(0, 255),
+    return_url: `${fn}?flow=ninepay-return`,
+    back_url: `${fn}?flow=ninepay-cancel`,
+    currency: "VND",
+    lang: "vi",
+  };
+  const message = `POST\n${endpoint}/payments/create\n${time}\n${canonicalQuery(params)}`;
+  const signature = await hmacBase64(secretKey, message);
+  const target = `${endpoint}/portal?${canonicalQuery({ baseEncode: utf8ToBase64(JSON.stringify(params)), signature })}`;
+  if (!allowedGateway(target)) fail("Địa chỉ 9Pay không hợp lệ.", 502);
+  return { providerOrderId: paymentId, redirectUrl: target };
+}
+function ninepayFields(text: string) {
+  if (!text || text.length > 20000 || !text.includes('"invoice_no"')) return null;
+  const invoiceNo = (text.match(/"invoice_no"\s*:\s*"([A-Za-z0-9]{1,40})"/) || [])[1] || "";
+  const currency = ((text.match(/"currency"\s*:\s*"([A-Za-z]{3})"/) || [])[1] || "").toUpperCase();
+  const statusRaw = (text.match(/"status"\s*:\s*"?(\d{1,3})"?/) || [])[1];
+  const amount = Number((text.match(/"amount"\s*:\s*"?(\d{1,12})"?/) || [])[1] || "");
+  const paymentNo = (text.match(/"payment_no"\s*:\s*"?(\d{1,24})"?/) || [])[1] || "";
+  if (!invoiceNo || statusRaw === undefined) return null;
+  return { invoiceNo, currency, status: Number(statusRaw), amount, paymentNo };
+}
+function decodeNinePayResult(result: string) {
+  try {
+    const normalized = result.replace(/-/g, "+").replace(/_/g, "/");
+    const pad = normalized.length % 4 === 0 ? "" : "=".repeat(4 - (normalized.length % 4));
+    const bin = atob(normalized + pad);
+    const bytes = Uint8Array.from(bin, (ch) => ch.charCodeAt(0));
+    const text = new TextDecoder().decode(bytes);
+    return text.startsWith("{") ? ninepayFields(text) : null;
+  } catch { return null; }
+}
+async function inquireNinePay(invoiceNo: string) {
+  if (!/^[A-Za-z0-9]{1,30}$/.test(invoiceNo)) return null;
+  const merchantKey = ninepayEnv("MERCHANT_KEY");
+  const secretKey = ninepayEnv("SECRET_KEY");
+  if (!merchantKey || !secretKey) return null;
+  const endpoint = ninepayOrigin();
+  const time = Math.floor(Date.now() / 1000);
+  const uri = `${endpoint}/v2/payments/${invoiceNo}/inquire`;
+  const signature = await hmacBase64(secretKey, `GET\n${uri}\n${time}`);
+  const res = await fetch(uri, { method: "GET", redirect: "error", headers: { Date: String(time), Accept: "application/json", Authorization: `Signature Algorithm=HS256,Credential=${merchantKey},SignedHeaders=,Signature=${signature}` } });
+  if (!res.ok) return null;
+  return ninepayFields(await res.text());
+}
+async function finishNinePay(notice: { result: string; checksum: string }, ipn: boolean) {
+  const invalid = () => ipn ? new Response("invalid", { status: 400 }) : redirectResult("failed", "", 0);
+  const unconfigured = () => ipn ? new Response("unconfigured", { status: 503 }) : redirectResult("failed", "", 0);
+  if (!ninepayEnabled()) return unconfigured();
+  const checksumKey = ninepayEnv("CHECKSUM_KEY");
+  if (!checksumKey) return unconfigured();
+  const result = notice.result.trim();
+  const checksum = notice.checksum.trim();
+  if (!result || result.length > 12000 || !/^[0-9a-fA-F]{64}$/.test(checksum)) return invalid();
+  let signed = "";
+  const direct = await sha256Hex(result + checksumKey);
+  if (direct === checksum.toUpperCase()) signed = result;
+  else if (result.includes(" ")) {
+    const plus = result.replace(/ /g, "+");
+    if ((await sha256Hex(plus + checksumKey)) === checksum.toUpperCase()) signed = plus;
+  }
+  if (!signed) return invalid();
+  const decoded = decodeNinePayResult(signed);
+  const payment = decoded ? await loadPayment(decoded.invoiceNo) : null;
+  if (!decoded || !payment || payment.provider !== "ninepay") return invalid();
+  const reply = async (state: string) => ipn ? new Response("success") : redirectResult(state, payment.booking_id, Number(payment.amount) || 0);
+  if (payment.status === "PAID") return reply("success");
+  if (decoded.status === 5 && decoded.currency === "VND" && decoded.paymentNo && decoded.amount === Number(payment.amount)) {
+    const marked = await markPaid(payment.id, decoded.paymentNo, decoded.amount, "VND");
+    return marked.ok ? reply("success") : reply("mismatch");
+  }
+  if (decoded.status === 5) {
+    await savePayment({ id: payment.id, status: "AMOUNT_MISMATCH" });
+    return reply("mismatch");
+  }
+  if (decoded.status === 8) {
+    await savePayment({ id: payment.id, status: "CANCELLED" });
+    return reply("cancel");
+  }
+  if (decoded.status === 6 || decoded.status === 15) {
+    await savePayment({ id: payment.id, status: "FAILED" });
+    return reply("failed");
+  }
+  if (decoded.status === 2 || decoded.status === 4) {
+    const inquired = await inquireNinePay(payment.id);
+    if (inquired && inquired.status === 5 && inquired.invoiceNo === payment.id && inquired.currency === "VND" && inquired.amount === Number(payment.amount) && inquired.paymentNo) {
+      const marked = await markPaid(payment.id, inquired.paymentNo, inquired.amount, "VND");
+      return marked.ok ? reply("success") : reply("mismatch");
+    }
+  }
+  return reply("pending");
 }
 async function finishOnePay(params: URLSearchParams, ipn = false) {
   const hashKey = Deno.env.get(mode() === "live" ? "ONEPAY_LIVE_HASH_KEY" : "ONEPAY_SANDBOX_HASH_KEY") || "";
