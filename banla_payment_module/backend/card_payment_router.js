@@ -1,6 +1,6 @@
 /**
- * HTTP cho thanh toán thẻ: tạo phiên rồi chuyển khách sang PayPal hoặc OnePay.
- * Không có form nhập thẻ.
+ * HTTP cho thanh toán thẻ: tạo phiên rồi chuyển khách sang PayPal, OnePay hoặc 9Pay.
+ * Không có form nhập thẻ. Nút 9Pay chỉ mở khi NINEPAY_ENABLED bật trên máy chủ.
  */
 const express = require('express');
 
@@ -83,17 +83,30 @@ function sendPage(res, result) {
   } else if (result && result.outcome === 'already_settled') {
     title = 'Đơn đã được thanh toán';
     message = 'Đơn đã được thanh toán trước đó. Giao dịch thẻ này không được ghi thêm.';
+  } else if (result && result.outcome === 'pending') {
+    title = 'Thanh toán đang xử lý';
+    message = 'Cổng thanh toán đang xử lý giao dịch. Đơn chưa được thanh toán cho đến khi số tiền được xác nhận.';
   }
   res.set('Cache-Control', 'no-store');
   res.type('html').send(page(title, message, result && result.outcome === 'paid' ? bookingId : bookingId));
 }
+
+router.get('/card/providers', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({
+    success: true,
+    paypal: true,
+    onepay: true,
+    ninepay: payments.ninepayEnabled()
+  });
+});
 
 router.post('/card/checkout', async (req, res) => {
   try {
     if (payments.containsForbiddenCardField(req.body)) {
       return res.status(400).json({
         success: false,
-        message: 'Banla không nhận số thẻ, ngày hết hạn hay mã CVV. Quý khách nhập thẻ trên trang PayPal hoặc OnePay.'
+        message: 'Banla không nhận số thẻ, ngày hết hạn hay mã CVV. Quý khách nhập thẻ trên trang PayPal, OnePay hoặc 9Pay.'
       });
     }
     const result = await payments.createCheckout({
@@ -178,5 +191,57 @@ router.get('/onepay/return', async (req, res) => {
 
 router.get('/onepay/ipn', onepayIpn);
 router.post('/onepay/ipn', onepayIpn);
+
+function ninepayNotice(req) {
+  const source = req.method === 'POST'
+    && req.body
+    && typeof req.body === 'object'
+    && !Buffer.isBuffer(req.body)
+    ? req.body
+    : req.query;
+  const result = typeof source.result === 'string' ? source.result : '';
+  const checksum = typeof source.checksum === 'string' ? source.checksum : '';
+  if (!result || !checksum) return null;
+  return { result, checksum };
+}
+
+async function ninepayIpn(req, res) {
+  try {
+    const notice = ninepayNotice(req);
+    if (!notice) return res.status(400).type('text/plain').send('invalid');
+    const result = await payments.settleNinePay(notice);
+    if (result.outcome === 'invalid') return res.status(400).type('text/plain').send('invalid');
+    if (result.outcome === 'unconfigured') return res.status(503).type('text/plain').send('unconfigured');
+    return res.status(200).type('text/plain').send('success');
+  } catch (err) {
+    logger.error('9Pay IPN lỗi', err);
+    return res.status(500).type('text/plain').send('error');
+  }
+}
+
+router.get('/ninepay/return', async (req, res) => {
+  try {
+    const notice = ninepayNotice(req);
+    const result = notice ? await payments.settleNinePay(notice) : { outcome: 'invalid' };
+    return sendPage(res, result);
+  } catch (err) {
+    logger.error('9Pay return lỗi', err);
+    return sendPage(res, { outcome: 'failed' });
+  }
+});
+
+router.get('/ninepay/cancel', async (req, res) => {
+  try {
+    const invoice = typeof req.query.invoice === 'string' ? req.query.invoice : '';
+    const result = await payments.cancelNinePay(invoice);
+    return sendPage(res, result);
+  } catch (err) {
+    logger.error('9Pay cancel lỗi', err);
+    return sendPage(res, { outcome: 'cancel' });
+  }
+});
+
+router.get('/ninepay/ipn', ninepayIpn);
+router.post('/ninepay/ipn', ninepayIpn);
 
 module.exports = router;

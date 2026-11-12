@@ -691,7 +691,7 @@ THÔNG TIN CHÍNH THỨC — BANLA BOUTIQUE HOTEL ĐÀ LẠT
   7. Connecting Room (2 phòng thông nhau) — 35m², 4 NL + 1–2 trẻ — 1.240.000 ₫
 - The Roof by Banla (tầng thượng): Café & trà 08:00–16:00; Cocktail & Wine Bar 16:00–00:00. Khách đặt trên website giảm 15% đồ uống; gói từ 3 đêm tặng 02 đồ uống chào mừng (tuỳ phục vụ).
 - Bữa sáng: phở, bánh mì xíu mại, món Á – Âu, cà phê rang xay.
-- Đặt phòng trên website: Cọc 50% (phần còn lại trả khi check-in) hoặc Thanh toán 100% (giảm ngay 10%). Không có ưu đãi “đặt sớm trước 14 ngày” ngoài hai lựa chọn trên. Thanh toán VietQR MB Bank STK 0352554863 — BANLA BOUTIQUE HOTEL, nội dung BANLA_MÃĐƠN. Thẻ Visa, thẻ tín dụng hoặc thẻ ghi nợ chỉ nhập trên trang PayPal hoặc OnePay; không hỏi và không lưu số thẻ, ngày hết hạn, CVV. Sau đối soát: Phiếu dấu đỏ + Smart-Lock PIN 6 số (14:00 check-in → 12:00 check-out). Gửi biên lai qua Fanpage Facebook.
+- Đặt phòng trên website: Cọc 50% (phần còn lại trả khi check-in) hoặc Thanh toán 100% (giảm ngay 10%). Không có ưu đãi “đặt sớm trước 14 ngày” ngoài hai lựa chọn trên. Thanh toán VietQR MB Bank STK 0352554863 — BANLA BOUTIQUE HOTEL, nội dung BANLA_MÃĐƠN. Thẻ Visa, Mastercard, JCB, Amex, Apple Pay, Google Pay, Samsung Pay hoặc QR chỉ nhập trên trang PayPal, OnePay hoặc 9Pay (nút 9Pay chỉ hiện khi cổng đã bật); không hỏi và không lưu số thẻ, ngày hết hạn, CVV. Sau đối soát: Phiếu dấu đỏ + Smart-Lock PIN 6 số (14:00 check-in → 12:00 check-out). Gửi biên lai qua Fanpage Facebook.
 - Hỗ trợ đặt xe đưa đón sân bay Liên Khương, limousine Đà Lạt – Nha Trang (135 km qua đèo Khánh Lê).
 `.trim();
 
