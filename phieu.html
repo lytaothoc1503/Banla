@@ -130,6 +130,11 @@
       const code = (urlParams.get('ma') || urlParams.get('id') || '').trim();
       const contact = (urlParams.get('contact') || '').trim();
       const key = (urlParams.get('key') || '').trim();
+      if (key && window.history && typeof window.history.replaceState === 'function') {
+        const cleanUrl = new URL(window.location.href);
+        cleanUrl.searchParams.delete('key');
+        window.history.replaceState(null, '', cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+      }
       const contentEl = document.getElementById('slipContent');
       const actionEl = document.getElementById('actionBar');
       const hintEl = document.getElementById('hintPrint');
@@ -171,8 +176,9 @@
         const contactForApi = contact || String(localContact || '').trim();
         let apiUrl = '/api/booking/detail?id=' + encodeURIComponent(code);
         if (contactForApi) apiUrl += '&contact=' + encodeURIComponent(contactForApi);
-        if (key) apiUrl += '&key=' + encodeURIComponent(key);
-        const res = await fetch(apiUrl);
+        const apiHeaders = {};
+        if (key) apiHeaders['x-admin-key'] = key;
+        const res = await fetch(apiUrl, { headers: apiHeaders });
         if (res.ok) {
           const data = await res.json();
           if (data && data.success && data.booking) {

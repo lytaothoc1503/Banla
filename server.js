@@ -387,8 +387,9 @@ app.get('/api/booking/detail', lookupLimiter, (req, res) => {
   const id = rawId.replace(/^#+/, '').trim();
   const rawContact = typeof req.query.contact === 'string' ? req.query.contact.trim() : '';
   const contact = rawContact.toLowerCase();
-  const adminKey = req.headers['x-admin-key'] || req.query.key;
-  const adminToken = req.headers['x-admin-token'];
+  const adminKey = typeof req.headers['x-admin-key'] === 'string' ? req.headers['x-admin-key'] : '';
+  const headerToken = typeof req.headers['x-admin-token'] === 'string' ? req.headers['x-admin-token'] : '';
+  const adminToken = headerToken || readCookie(req, 'banla_admin_session');
 
   const isKeyValid = adminKey && ADMIN_CONFIGURED && safeTimingCompare(String(adminKey), ADMIN_SECRET_KEY);
   const isTokenValid = adminToken && verifyExpiringToken(adminToken, ADMIN_SESSION_SECRET).valid;
@@ -472,10 +473,28 @@ function adminNotConfigured(res) {
   });
 }
 
+function readCookie(req, name) {
+  const header = req.headers.cookie;
+  if (!header || typeof header !== 'string') return '';
+  for (const part of header.split(';')) {
+    const idx = part.indexOf('=');
+    if (idx < 0) continue;
+    if (part.slice(0, idx).trim() !== name) continue;
+    const raw = part.slice(idx + 1).trim();
+    try {
+      return decodeURIComponent(raw);
+    } catch (err) {
+      return raw;
+    }
+  }
+  return '';
+}
+
 function requireAdminAuth(req, res, next) {
   if (!ADMIN_CONFIGURED) return adminNotConfigured(res);
-  const reqKey = req.headers['x-admin-key'] || req.query.key || (req.body && req.body.key);
-  const reqToken = req.headers['x-admin-token'];
+  const reqKey = typeof req.headers['x-admin-key'] === 'string' ? req.headers['x-admin-key'] : '';
+  const headerToken = typeof req.headers['x-admin-token'] === 'string' ? req.headers['x-admin-token'] : '';
+  const reqToken = headerToken || readCookie(req, 'banla_admin_session');
 
   const isKeyValid = reqKey && safeTimingCompare(String(reqKey), ADMIN_SECRET_KEY);
   const isTokenValid = reqToken && verifyExpiringToken(reqToken, ADMIN_SESSION_SECRET).valid;

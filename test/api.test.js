@@ -281,6 +281,25 @@ test('Admin Auth: truy cập không có hoặc sai key -> 401', async () => {
   assert.strictEqual(resWrongKey.status, 401);
 });
 
+test('Admin Auth: mã trên query string không được chấp nhận', async () => {
+  const res = await fetch(`${base}/api/admin/bookings?key=${encodeURIComponent(ADMIN_KEY)}`);
+  assert.strictEqual(res.status, 401);
+});
+
+test('Admin Auth: cookie HttpOnly của phiên đăng nhập được chấp nhận', async () => {
+  const login = await fetch(`${base}/api/admin/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: ADMIN_KEY })
+  });
+  assert.strictEqual(login.status, 200);
+  const cookies = typeof login.headers.getSetCookie === 'function' ? login.headers.getSetCookie() : [];
+  const cookie = (cookies[0] || '').split(';')[0];
+  assert.match(cookie, /^banla_admin_session=/);
+  const res = await fetch(`${base}/api/admin/bookings`, { headers: { cookie } });
+  assert.strictEqual(res.status, 200);
+});
+
 test('Admin Auth: POST /api/admin/login đúng key -> 200', async () => {
   const res = await fetch(`${base}/api/admin/login`, {
     method: 'POST',
@@ -388,7 +407,12 @@ test('Booking Detail: GET /api/booking/detail hỗ trợ admin key xem toàn b�
   });
   const { id } = await postRes.json();
 
-  const res = await fetch(`${base}/api/booking/detail?id=${id}&key=${ADMIN_KEY}`);
+  const leaked = await fetch(`${base}/api/booking/detail?id=${encodeURIComponent(id)}&key=${encodeURIComponent(ADMIN_KEY)}`);
+  assert.strictEqual(leaked.status, 400);
+
+  const res = await fetch(`${base}/api/booking/detail?id=${encodeURIComponent(id)}`, {
+    headers: { 'x-admin-key': ADMIN_KEY }
+  });
   assert.strictEqual(res.status, 200);
   const data = await res.json();
   assert.strictEqual(data.success, true);
