@@ -200,14 +200,10 @@
         } catch (e) {}
       }
 
-      // 4. Nếu máy chủ / Supabase chưa trả về hoặc đang chạy tĩnh, hợp nhất với bản ghi LocalStorage
-      if (localBooking) {
-        const localPaid = String(localBooking.payment_status || localBooking.paymentStatus || '').toLowerCase() === 'paid';
-        const remotePaid = foundBooking && String(foundBooking.payment_status || foundBooking.paymentStatus || '').toLowerCase() === 'paid';
-        if (!foundBooking || (localPaid && !remotePaid)) {
-          foundBooking = localBooking;
-        }
-      }
+      // 4. LocalStorage chỉ điền phiếu khi máy chủ không có bản ghi, và không được mang trạng thái đã thanh toán.
+      foundBooking = window.BanlaBookingForSlip
+        ? window.BanlaBookingForSlip(foundBooking, localBooking)
+        : foundBooking;
 
       // 5. Fallback mẫu mặc định chỉ khi bật ?demo=1 (G3: tránh in phiếu dấu đỏ mẫu khi không có ?demo=1)
       if (!foundBooking && isDemoMode) {

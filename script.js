@@ -396,17 +396,8 @@ document.querySelectorAll('form.booking-form').forEach((form) => {
         checkin: data.checkin,
         checkout: data.checkout,
         memo: 'BANLA_' + cleanCode,
-        onSuccess: function (payRes) {
-          bookingRecord.paymentStatus = 'PAID';
-          bookingRecord.payment_status = 'paid';
-          bookingRecord.status = 'confirmed';
-          bookingRecord.booking_status = 'confirmed';
-          bookingRecord.paidAmount = summary.payAmount;
-          if (payRes && payRes.smartLockPin) {
-            bookingRecord.smartLockPin = payRes.smartLockPin;
-            bookingRecord.smartlock_pin = payRes.smartLockPin;
-          }
-          saveBookingToLocalStore(bookingRecord);
+        onSuccess: function () {
+          // Không ghi payment_status = paid vào localStorage. Phiếu chỉ đóng dấu khi máy chủ xác nhận.
         }
       });
     } else {

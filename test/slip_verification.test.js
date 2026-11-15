@@ -45,6 +45,49 @@ test('Xác thực logic Phiếu: Đơn chưa thanh toán (Pending) TUYỆT ĐỐ
   assert.ok(html.includes('Chưa kích hoạt (Chờ đối soát thanh toán)'), 'Mã Smart-Lock PIN không được cấp khi chưa thanh toán');
 });
 
+test('Phiếu không lấy trạng thái đã thanh toán từ localStorage', () => {
+  const localPaid = {
+    id: 'BLFAKE',
+    booking_code: 'BLFAKE',
+    guest_name: 'Khách tự sửa',
+    room_id: 'Banla Signature',
+    check_in: '2026-11-10',
+    check_out: '2026-11-12',
+    total_amount: 2300000,
+    paid_amount: 2300000,
+    payment_status: 'paid',
+    paymentStatus: 'PAID',
+    booking_status: 'confirmed',
+    smartlock_pin: '111111'
+  };
+  const serverUnpaid = {
+    id: 'BLFAKE',
+    booking_code: 'BLFAKE',
+    guest_name: 'Khách thật',
+    room_id: 'Banla Signature',
+    check_in: '2026-11-10',
+    check_out: '2026-11-12',
+    total_amount: 2300000,
+    paid_amount: 0,
+    payment_status: 'pending',
+    booking_status: 'pending',
+    smartlock_pin: ''
+  };
+
+  const overridden = windowMock.BanlaBookingForSlip(serverUnpaid, localPaid);
+  assert.strictEqual(overridden.payment_status, 'pending');
+  assert.strictEqual(overridden.guest_name, 'Khách thật');
+
+  const localOnly = windowMock.BanlaBookingForSlip(null, localPaid);
+  assert.strictEqual(localOnly.payment_status, 'pending');
+  assert.strictEqual(localOnly.paymentStatus, 'UNPAID');
+  assert.strictEqual(localOnly.paid_amount, 0);
+  assert.strictEqual(localOnly.smartlock_pin, '');
+  const html = windowMock.BanlaSlip(localOnly);
+  assert.ok(!html.includes('ĐÃ THANH TOÁN'));
+  assert.ok(!html.includes('111111'));
+});
+
 test('Xác thực logic Phiếu: Đơn ĐÃ XÁC THỰC THANH TOÁN (Paid) trong CSDL được cấp dấu đỏ và mã PIN', () => {
   const paidBooking = {
     id: 'BL_TEST_PAID',

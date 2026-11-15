@@ -155,44 +155,21 @@
     }
   }
 
+  function serverSaysPaid(booking) {
+    if (!booking) return false;
+    const status = String(booking.payment_status || booking.paymentStatus || '').toLowerCase();
+    return status === 'paid';
+  }
+
   async function checkRealtimeStatus(bookingCode) {
     const clean = String(bookingCode).replace(/^#+/, '').toUpperCase();
-    try {
-      // 1. Kiểm tra LocalStorage
-      const raw = localStorage.getItem('BANLA_BOOKINGS_STORE');
-      if (raw) {
-        const list = JSON.parse(raw);
-        const item = list.find(b => String(b.id || b.booking_code).toUpperCase() === clean);
-        if (item && (item.payment_status === 'paid' || item.paymentStatus === 'PAID')) {
-          return item;
-        }
-      }
-    } catch (e) {}
-
-    // 2. Kiểm tra Backend API (/api/booking/detail) nếu có kết nối máy chủ
+    // Chỉ tin phản hồi máy chủ. localStorage khách tự sửa được nên không dùng để đóng dấu.
     try {
       const res = await fetch('/api/booking/detail?id=' + encodeURIComponent(clean));
       if (res.ok) {
         const data = await res.json();
-        const b = data && data.booking;
-        if (b && (b.paymentStatus === 'PAID' || b.payment_status === 'paid')) {
-          try {
-            const raw = localStorage.getItem('BANLA_BOOKINGS_STORE');
-            const list = raw ? JSON.parse(raw) : [];
-            const idx = Array.isArray(list)
-              ? list.findIndex(x => String(x.id || x.booking_code).toUpperCase() === clean)
-              : -1;
-            if (idx !== -1) {
-              list[idx].payment_status = 'paid';
-              list[idx].paymentStatus = 'PAID';
-              list[idx].booking_status = 'confirmed';
-              list[idx].status = 'confirmed';
-              if (b.smartLockPin) list[idx].smartlock_pin = b.smartLockPin;
-              localStorage.setItem('BANLA_BOOKINGS_STORE', JSON.stringify(list));
-            }
-          } catch (err) {}
-          return b;
-        }
+        const booking = data && data.booking;
+        if (serverSaysPaid(booking)) return booking;
       }
     } catch (e) {}
 
