@@ -200,6 +200,20 @@ async function saveBookingToSupabase(bookingObj) {
   return null;
 }
 
+function generateBookingCode() {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = new Uint8Array(8);
+  if (!globalThis.crypto || typeof globalThis.crypto.getRandomValues !== 'function') {
+    throw new Error('Trình duyệt không tạo được mã đặt phòng an toàn.');
+  }
+  globalThis.crypto.getRandomValues(bytes);
+  let code = 'BL';
+  for (let i = 0; i < bytes.length; i += 1) {
+    code += alphabet[bytes[i] % alphabet.length];
+  }
+  return code;
+}
+
 // 2. BOOKING FORMS — Instant Booking + VietQR Payment Modal + Red Stamp Voucher
 document.querySelectorAll('form.booking-form').forEach((form) => {
   // Set default dates if empty
@@ -315,7 +329,17 @@ document.querySelectorAll('form.booking-form').forEach((form) => {
     const nights = summary.nights;
     const totalAmount = summary.totalAmount;
     const depositAmount = summary.payAmount;
-    const generatedCode = 'BL' + Math.random().toString(36).substring(2, 6).toUpperCase();
+    let generatedCode;
+    try {
+      generatedCode = generateBookingCode();
+    } catch (err) {
+      alert('Không tạo được mã đặt phòng an toàn. Vui lòng thử lại.');
+      if (btn) {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+      return;
+    }
     let finalId = generatedCode;
 
     // Try Express API first if running on Node server, otherwise fallback seamlessly on GitHub Pages
