@@ -121,7 +121,7 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
   <script src="vendor/html2canvas.min.js"></script>
   <script src="phieu.js"></script>
   <script>
@@ -130,6 +130,11 @@
       const code = (urlParams.get('ma') || urlParams.get('id') || '').trim();
       const contact = (urlParams.get('contact') || '').trim();
       const key = (urlParams.get('key') || '').trim();
+      if (key && window.history && typeof window.history.replaceState === 'function') {
+        const cleanUrl = new URL(window.location.href);
+        cleanUrl.searchParams.delete('key');
+        window.history.replaceState(null, '', cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+      }
       const contentEl = document.getElementById('slipContent');
       const actionEl = document.getElementById('actionBar');
       const hintEl = document.getElementById('hintPrint');
@@ -167,10 +172,13 @@
 
       // 2. Ưu tiên kiểm tra Backend API (/api/booking/detail) để nhận trạng thái đã duyệt mới nhất (G2)
       try {
+        const localContact = localBooking && (localBooking.phone || localBooking.guest_phone || '');
+        const contactForApi = contact || String(localContact || '').trim();
         let apiUrl = '/api/booking/detail?id=' + encodeURIComponent(code);
-        if (contact) apiUrl += '&contact=' + encodeURIComponent(contact);
-        if (key) apiUrl += '&key=' + encodeURIComponent(key);
-        const res = await fetch(apiUrl);
+        if (contactForApi) apiUrl += '&contact=' + encodeURIComponent(contactForApi);
+        const apiHeaders = {};
+        if (key) apiHeaders['x-admin-key'] = key;
+        const res = await fetch(apiUrl, { headers: apiHeaders });
         if (res.ok) {
           const data = await res.json();
           if (data && data.success && data.booking) {
@@ -200,14 +208,10 @@
         } catch (e) {}
       }
 
-      // 4. Nếu máy chủ / Supabase chưa trả về hoặc đang chạy tĩnh, hợp nhất với bản ghi LocalStorage
-      if (localBooking) {
-        const localPaid = String(localBooking.payment_status || localBooking.paymentStatus || '').toLowerCase() === 'paid';
-        const remotePaid = foundBooking && String(foundBooking.payment_status || foundBooking.paymentStatus || '').toLowerCase() === 'paid';
-        if (!foundBooking || (localPaid && !remotePaid)) {
-          foundBooking = localBooking;
-        }
-      }
+      // 4. LocalStorage chỉ điền phiếu khi máy chủ không có bản ghi, và không được mang trạng thái đã thanh toán.
+      foundBooking = window.BanlaBookingForSlip
+        ? window.BanlaBookingForSlip(foundBooking, localBooking)
+        : foundBooking;
 
       // 5. Fallback mẫu mặc định chỉ khi bật ?demo=1 (G3: tránh in phiếu dấu đỏ mẫu khi không có ?demo=1)
       if (!foundBooking && isDemoMode) {

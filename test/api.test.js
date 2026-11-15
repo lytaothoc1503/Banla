@@ -72,6 +72,7 @@ test('POST /api/booking hợp lệ mặc định source là direct -> lưu file'
   assert.ok(saved);
   assert.strictEqual(saved.source, 'direct');
   assert.strictEqual(saved.paymentStatus, 'UNPAID');
+  assert.match(json.id, /^[A-Za-z0-9_-]{12}$/);
 });
 
 test('POST /api/booking source không hợp lệ -> 400', async () => {
@@ -106,6 +107,22 @@ test('CORS: GET /api/rooms trả header Access-Control-Allow-Origin đúng domai
   });
   assert.strictEqual(res.status, 200);
   assert.strictEqual(res.headers.get('access-control-allow-origin'), 'http://localhost:3001');
+});
+
+test('CORS: thiếu OTA_ALLOWED_ORIGINS thì chỉ mở tên miền Banla, không dùng wildcard', async () => {
+  const previous = process.env.OTA_ALLOWED_ORIGINS;
+  delete process.env.OTA_ALLOWED_ORIGINS;
+  try {
+    const blocked = await fetch(`${base}/api/rooms`, { headers: { Origin: 'https://evil.example' } });
+    assert.strictEqual(blocked.headers.get('access-control-allow-origin'), null);
+    assert.notStrictEqual(blocked.headers.get('access-control-allow-origin'), '*');
+
+    const allowed = await fetch(`${base}/api/rooms`, { headers: { Origin: 'https://banlaboutiquedalat.com' } });
+    assert.strictEqual(allowed.headers.get('access-control-allow-origin'), 'https://banlaboutiquedalat.com');
+    assert.strictEqual(allowed.headers.get('access-control-allow-credentials'), 'true');
+  } finally {
+    process.env.OTA_ALLOWED_ORIGINS = previous;
+  }
 });
 
 test('OTA Auth: POST /api/booking với source ota nhưng thiếu x-api-key -> 401', async () => {
@@ -191,9 +208,13 @@ test('Tra cứu booking: đúng mã + đúng số điện thoại -> 200 và che
   assert.strictEqual(data.booking.paymentStatus, 'UNPAID');
   assert.strictEqual(data.booking.phoneMasked, '090****567');
   assert.ok(!data.booking.phone); // Không trả raw phone
+  assert.ok(!data.booking.smartLockPin);
 });
 
 test('Bảo mật tĩnh: Chặn truy cập file nhạy cảm và backend internals -> 404', async () => {
+  const home = await fetch(`${base}/`);
+  assert.strictEqual(home.status, 200);
+
   const res1 = await fetch(`${base}/server.js`);
   assert.strictEqual(res1.status, 404);
 
@@ -205,6 +226,13 @@ test('Bảo mật tĩnh: Chặn truy cập file nhạy cảm và backend interna
 
   const res4 = await fetch(`${base}/banla_payment_module/backend/banla_payment_router.js`);
   assert.strictEqual(res4.status, 404);
+
+  const res5 = await fetch(`${base}/docs/deploy.md`);
+  assert.strictEqual(res5.status, 404);
+  const res6 = await fetch(`${base}/DFT2_bot/package.json`);
+  assert.strictEqual(res6.status, 404);
+  const res7 = await fetch(`${base}/supabase/sql/banla_schema_v2.sql`);
+  assert.strictEqual(res7.status, 404);
 });
 
 test('Webhook Banla Payment: thiếu chữ ký -> 401', async () => {
@@ -279,6 +307,25 @@ test('Admin Auth: truy cập không có hoặc sai key -> 401', async () => {
   assert.strictEqual(resWrongKey.status, 401);
 });
 
+test('Admin Auth: mã trên query string không được chấp nhận', async () => {
+  const res = await fetch(`${base}/api/admin/bookings?key=${encodeURIComponent(ADMIN_KEY)}`);
+  assert.strictEqual(res.status, 401);
+});
+
+test('Admin Auth: cookie HttpOnly của phiên đăng nhập được chấp nhận', async () => {
+  const login = await fetch(`${base}/api/admin/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: ADMIN_KEY })
+  });
+  assert.strictEqual(login.status, 200);
+  const cookies = typeof login.headers.getSetCookie === 'function' ? login.headers.getSetCookie() : [];
+  const cookie = (cookies[0] || '').split(';')[0];
+  assert.match(cookie, /^banla_admin_session=/);
+  const res = await fetch(`${base}/api/admin/bookings`, { headers: { cookie } });
+  assert.strictEqual(res.status, 200);
+});
+
 test('Admin Auth: POST /api/admin/login đúng key -> 200', async () => {
   const res = await fetch(`${base}/api/admin/login`, {
     method: 'POST',
@@ -338,6 +385,77 @@ test('Admin: POST /api/admin/booking/smartlock cấp mã PIN thành công', asyn
   assert.strictEqual(data.booking.status, 'confirmed');
 });
 
+test('Admin update: từ chối status và paymentStatus ngoài danh sách', async () => {
+  const postRes = await post({
+    name: 'Khách Trạng Thái',
+    phone: '0906666777',
+    room: 'Deluxe Twin'
+  });
+  const { id } = await postRes.json();
+  const res = await fetch(`${base}/api/admin/booking/update`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-admin-key': ADMIN_KEY
+    },
+    body: JSON.stringify({ id, status: 'hacked', paymentStatus: 'PAID' })
+  });
+  assert.strictEqual(res.status, 400);
+  const bookings = JSON.parse(fs.readFileSync(tmp, 'utf8'));
+  const saved = bookings.find((item) => item.id === id);
+  assert.strictEqual(saved.status, 'pending');
+  assert.strictEqual(saved.paymentStatus, 'UNPAID');
+
+  const ok = await fetch(`${base}/api/admin/booking/update`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-admin-key': ADMIN_KEY
+    },
+    body: JSON.stringify({ id, status: 'confirmed', paymentStatus: 'PAID' })
+  });
+  assert.strictEqual(ok.status, 200);
+});
+
+test('Admin smartlock: PIN tự sinh là 6 chữ số từ crypto.randomInt', async () => {
+  const postRes = await post({
+    name: 'Khách PIN Ngẫu Nhiên',
+    phone: '0908888777',
+    room: 'Highland Room'
+  });
+  const { id } = await postRes.json();
+  const res = await fetch(`${base}/api/admin/booking/smartlock`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-admin-key': ADMIN_KEY
+    },
+    body: JSON.stringify({ id })
+  });
+  assert.strictEqual(res.status, 200);
+  const data = await res.json();
+  assert.match(data.pin, /^\*[0-9]{6}#$/);
+});
+
+test('Booking Detail: thiếu contact thì không trả đơn và không lộ PIN', async () => {
+  const postRes = await post({
+    name: 'Khách Giấu PIN',
+    phone: '0903333444',
+    email: 'giupin@example.com',
+    room: 'Banla Signature'
+  });
+  const { id } = await postRes.json();
+  const openRes = await fetch(`${base}/api/booking/detail?id=${encodeURIComponent(id)}`);
+  assert.strictEqual(openRes.status, 400);
+
+  const guestRes = await fetch(`${base}/api/booking/detail?id=${encodeURIComponent(id)}&contact=0903333444`);
+  assert.strictEqual(guestRes.status, 200);
+  const guest = await guestRes.json();
+  assert.strictEqual(guest.booking.name, 'Khách Giấu PIN');
+  assert.strictEqual(guest.booking.smartLockPin, null);
+  assert.ok(!guest.booking.phone || String(guest.booking.phone).includes('*'));
+});
+
 test('Booking Detail: GET /api/booking/detail hỗ trợ admin key xem toàn bộ', async () => {
   const postRes = await post({
     name: 'Khách Test Detail',
@@ -347,7 +465,12 @@ test('Booking Detail: GET /api/booking/detail hỗ trợ admin key xem toàn b�
   });
   const { id } = await postRes.json();
 
-  const res = await fetch(`${base}/api/booking/detail?id=${id}&key=${ADMIN_KEY}`);
+  const leaked = await fetch(`${base}/api/booking/detail?id=${encodeURIComponent(id)}&key=${encodeURIComponent(ADMIN_KEY)}`);
+  assert.strictEqual(leaked.status, 400);
+
+  const res = await fetch(`${base}/api/booking/detail?id=${encodeURIComponent(id)}`, {
+    headers: { 'x-admin-key': ADMIN_KEY }
+  });
   assert.strictEqual(res.status, 200);
   const data = await res.json();
   assert.strictEqual(data.success, true);

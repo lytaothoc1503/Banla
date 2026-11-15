@@ -8,23 +8,23 @@
   <meta name="description" content="Xem hạng phòng tại Banla Boutique Hotel Đà Lạt: diện tích, sức chứa và mô tả từng phòng. Đặt phòng trực tiếp.">
   <meta name="author" content="Banla">
   <meta name="robots" content="index, follow, max-image-preview:large">
-  <link rel="canonical" href="https://lytaothoc1503.github.io/Banla/room.html">
-  <link rel="alternate" hreflang="vi" href="https://lytaothoc1503.github.io/Banla/room.html">
-  <link rel="alternate" hreflang="x-default" href="https://lytaothoc1503.github.io/Banla/room.html">
+  <link rel="canonical" href="https://banlaboutiquedalat.com/room.html">
+  <link rel="alternate" hreflang="vi" href="https://banlaboutiquedalat.com/room.html">
+  <link rel="alternate" hreflang="x-default" href="https://banlaboutiquedalat.com/room.html">
   <meta name="theme-color" content="#B8612E">
   <meta property="og:title" content="Chi tiết phòng — Banla Boutique Hotel">
   <meta property="og:description" content="Xem hạng phòng tại Banla Boutique Hotel Đà Lạt: diện tích, sức chứa và mô tả từng phòng. Đặt phòng trực tiếp.">
-  <meta property="og:image" content="https://lytaothoc1503.github.io/Banla/images/elite.jpg">
+  <meta property="og:image" content="https://banlaboutiquedalat.com/images/elite.jpg">
   <meta property="og:image:width" content="1500">
   <meta property="og:image:height" content="2000">
-  <meta property="og:url" content="https://lytaothoc1503.github.io/Banla/room.html">
+  <meta property="og:url" content="https://banlaboutiquedalat.com/room.html">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="vi_VN">
   <meta property="og:site_name" content="Banla">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Chi tiết phòng — Banla Boutique Hotel">
   <meta name="twitter:description" content="Xem hạng phòng tại Banla Boutique Hotel Đà Lạt: diện tích, sức chứa và mô tả từng phòng. Đặt phòng trực tiếp.">
-  <meta name="twitter:image" content="https://lytaothoc1503.github.io/Banla/images/elite.jpg">
+  <meta name="twitter:image" content="https://banlaboutiquedalat.com/images/elite.jpg">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -250,7 +250,7 @@
       var pageTitle = room.getAttribute('data-title');
       var pageDesc = room.getAttribute('data-description');
       document.title = pageTitle;
-      var canon = 'https://lytaothoc1503.github.io/Banla/phong/' + id + '.html';
+      var canon = 'https://banlaboutiquedalat.com/phong/' + id + '.html';
       var canonical = document.querySelector('link[rel="canonical"]');
       if (canonical) canonical.href = canon;
       document.querySelectorAll('link[rel="alternate"]').forEach(function (link) { link.href = canon; });
@@ -266,7 +266,7 @@
       document.querySelectorAll('meta[property="og:url"]').forEach(function (node) { node.setAttribute('content', canon); });
       var img = room.querySelector('img');
       if (img) {
-        var absolute = 'https://lytaothoc1503.github.io/Banla/' + img.getAttribute('src');
+        var absolute = 'https://banlaboutiquedalat.com/' + img.getAttribute('src');
         document.querySelectorAll('meta[property="og:image"], meta[name="twitter:image"]').forEach(function (node) {
           node.setAttribute('content', absolute);
         });
@@ -279,9 +279,9 @@
         name: room.querySelector('.room-detail-info h2, .room-detail-info h1').textContent,
         description: room.querySelector('.room-detail-info p').textContent,
         url: canon,
-        image: img ? 'https://lytaothoc1503.github.io/Banla/' + img.getAttribute('src') : undefined,
+        image: img ? 'https://banlaboutiquedalat.com/' + img.getAttribute('src') : undefined,
         floorSize: digits ? { '@type': 'QuantitativeValue', value: digits, unitCode: 'MTK' } : undefined,
-        containedInPlace: { '@type': 'Hotel', name: 'Banla Boutique Hotel', url: 'https://lytaothoc1503.github.io/Banla/khach-san/banla-boutique-hotel/' }
+        containedInPlace: { '@type': 'Hotel', name: 'Banla Boutique Hotel', url: 'https://banlaboutiquedalat.com/khach-san/banla-boutique-hotel/' }
       };
       var script = document.createElement('script');
       script.type = 'application/ld+json';
