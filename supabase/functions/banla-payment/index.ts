@@ -184,9 +184,11 @@ async function finishOnePay(params: URLSearchParams, ipn = false) {
   if (received.vpc_TxnResponseCode === "0" && received.vpc_CurrencyCode === "VND" && received.vpc_TransactionNo) {
     const marked = await markPaid(payment.id, received.vpc_TransactionNo, amount, "VND");
     if (marked.ok) return ipn ? new Response("responsecode=1&desc=confirm-success") : redirectResult("success", payment.booking_id, payment.amount);
+    await savePayment({ id: payment.id, status: "AMOUNT_MISMATCH" });
+    return ipn ? new Response("responsecode=1&desc=confirm-success") : redirectResult("mismatch", payment.booking_id, payment.amount);
   }
-  await savePayment({ id: payment.id, status: "AMOUNT_MISMATCH" });
-  return ipn ? new Response("responsecode=1&desc=confirm-success") : redirectResult("mismatch", payment.booking_id, payment.amount);
+  await savePayment({ id: payment.id, status: "FAILED" });
+  return ipn ? new Response("responsecode=1&desc=confirm-success") : redirectResult("failed", payment.booking_id, payment.amount);
 }
 async function finishPayPal(token: string) {
   if (!/^[A-Za-z0-9]+$/.test(token)) return redirectResult("failed", "", 0);
