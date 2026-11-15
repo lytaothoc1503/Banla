@@ -109,6 +109,22 @@ test('CORS: GET /api/rooms trả header Access-Control-Allow-Origin đúng domai
   assert.strictEqual(res.headers.get('access-control-allow-origin'), 'http://localhost:3001');
 });
 
+test('CORS: thiếu OTA_ALLOWED_ORIGINS thì chỉ mở tên miền Banla, không dùng wildcard', async () => {
+  const previous = process.env.OTA_ALLOWED_ORIGINS;
+  delete process.env.OTA_ALLOWED_ORIGINS;
+  try {
+    const blocked = await fetch(`${base}/api/rooms`, { headers: { Origin: 'https://evil.example' } });
+    assert.strictEqual(blocked.headers.get('access-control-allow-origin'), null);
+    assert.notStrictEqual(blocked.headers.get('access-control-allow-origin'), '*');
+
+    const allowed = await fetch(`${base}/api/rooms`, { headers: { Origin: 'https://banlaboutiquedalat.com' } });
+    assert.strictEqual(allowed.headers.get('access-control-allow-origin'), 'https://banlaboutiquedalat.com');
+    assert.strictEqual(allowed.headers.get('access-control-allow-credentials'), 'true');
+  } finally {
+    process.env.OTA_ALLOWED_ORIGINS = previous;
+  }
+});
+
 test('OTA Auth: POST /api/booking với source ota nhưng thiếu x-api-key -> 401', async () => {
   const res = await post({
     name: 'Khách OTA',

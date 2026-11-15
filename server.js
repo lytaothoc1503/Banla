@@ -70,21 +70,29 @@ const adminLoginLimiter = isTestEnv ? (req, res, next) => next() : rateLimit({
 });
 
 // BƯỚC 5: Rule 15 — CORS chỉ cho phép domain cần thiết (whitelist)
+const BANLA_DEFAULT_ORIGINS = [
+  'https://banlaboutiquedalat.com',
+  'https://www.banlaboutiquedalat.com',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000'
+];
+
+function corsOrigins() {
+  const configured = (process.env.OTA_ALLOWED_ORIGINS || '').trim();
+  const source = configured || BANLA_DEFAULT_ORIGINS.join(',');
+  return source.split(',').map((s) => s.trim()).filter((s) => s && s !== '*');
+}
+
 app.use((req, res, next) => {
-  const allowed = process.env.OTA_ALLOWED_ORIGINS || '*';
-  const origins = allowed.split(',').map((s) => s.trim()).filter(Boolean);
+  const origins = corsOrigins();
   const origin = req.headers.origin;
 
-  if (origin) {
+  if (origin && origins.includes(origin)) {
     res.setHeader('Vary', 'Origin');
-    if (origins.includes('*') || origins.includes(origin)) {
-      res.setHeader('Access-Control-Allow-Origin', origins.includes('*') ? '*' : origin);
-      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key, x-admin-key, x-admin-token');
-      res.setHeader('Access-Control-Allow-Credentials', 'true');
-    }
-  } else if (origins.includes('*')) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key, x-admin-key, x-admin-token');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
   }
 
   if (req.method === 'OPTIONS') {
