@@ -340,6 +340,26 @@ test('Admin: POST /api/admin/booking/smartlock cấp mã PIN thành công', asyn
   assert.strictEqual(data.booking.status, 'confirmed');
 });
 
+test('Admin smartlock: PIN tự sinh là 6 chữ số từ crypto.randomInt', async () => {
+  const postRes = await post({
+    name: 'Khách PIN Ngẫu Nhiên',
+    phone: '0908888777',
+    room: 'Highland Room'
+  });
+  const { id } = await postRes.json();
+  const res = await fetch(`${base}/api/admin/booking/smartlock`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-admin-key': ADMIN_KEY
+    },
+    body: JSON.stringify({ id })
+  });
+  assert.strictEqual(res.status, 200);
+  const data = await res.json();
+  assert.match(data.pin, /^\*[0-9]{6}#$/);
+});
+
 test('Booking Detail: thiếu contact thì không trả đơn và không lộ PIN', async () => {
   const postRes = await post({
     name: 'Khách Giấu PIN',

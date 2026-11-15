@@ -644,8 +644,8 @@ app.post('/api/admin/booking/smartlock', requireAdminAuth, (req, res) => {
       if (!pin.startsWith('*')) pin = '*' + pin;
       if (!pin.endsWith('#')) pin = pin + '#';
     } else {
-      const random4 = Math.floor(1000 + Math.random() * 9000);
-      pin = `*${random4}#`;
+      const random6 = crypto.randomInt(100000, 1000000);
+      pin = `*${random6}#`;
     }
 
     list[idx].smartLockPin = pin;
