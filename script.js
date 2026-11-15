@@ -392,6 +392,7 @@ document.querySelectorAll('form.booking-form').forEach((form) => {
         remainingAmount: summary.remainingAmount,
         paymentOption: summary.paymentOption,
         guestName: data.name,
+        guestPhone: data.phone,
         roomName: data.room || 'Banla Signature',
         checkin: data.checkin,
         checkout: data.checkout,

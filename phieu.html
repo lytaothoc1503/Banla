@@ -167,8 +167,10 @@
 
       // 2. Ưu tiên kiểm tra Backend API (/api/booking/detail) để nhận trạng thái đã duyệt mới nhất (G2)
       try {
+        const localContact = localBooking && (localBooking.phone || localBooking.guest_phone || '');
+        const contactForApi = contact || String(localContact || '').trim();
         let apiUrl = '/api/booking/detail?id=' + encodeURIComponent(code);
-        if (contact) apiUrl += '&contact=' + encodeURIComponent(contact);
+        if (contactForApi) apiUrl += '&contact=' + encodeURIComponent(contactForApi);
         if (key) apiUrl += '&key=' + encodeURIComponent(key);
         const res = await fetch(apiUrl);
         if (res.ok) {

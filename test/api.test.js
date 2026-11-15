@@ -72,6 +72,7 @@ test('POST /api/booking hợp lệ mặc định source là direct -> lưu file'
   assert.ok(saved);
   assert.strictEqual(saved.source, 'direct');
   assert.strictEqual(saved.paymentStatus, 'UNPAID');
+  assert.match(json.id, /^[A-Za-z0-9_-]{12}$/);
 });
 
 test('POST /api/booking source không hợp lệ -> 400', async () => {
@@ -191,6 +192,7 @@ test('Tra cứu booking: đúng mã + đúng số điện thoại -> 200 và che
   assert.strictEqual(data.booking.paymentStatus, 'UNPAID');
   assert.strictEqual(data.booking.phoneMasked, '090****567');
   assert.ok(!data.booking.phone); // Không trả raw phone
+  assert.ok(!data.booking.smartLockPin);
 });
 
 test('Bảo mật tĩnh: Chặn truy cập file nhạy cảm và backend internals -> 404', async () => {
@@ -336,6 +338,25 @@ test('Admin: POST /api/admin/booking/smartlock cấp mã PIN thành công', asyn
   assert.strictEqual(data.pin, '*9999#');
   assert.strictEqual(data.booking.smartLockPin, '*9999#');
   assert.strictEqual(data.booking.status, 'confirmed');
+});
+
+test('Booking Detail: thiếu contact thì không trả đơn và không lộ PIN', async () => {
+  const postRes = await post({
+    name: 'Khách Giấu PIN',
+    phone: '0903333444',
+    email: 'giupin@example.com',
+    room: 'Banla Signature'
+  });
+  const { id } = await postRes.json();
+  const openRes = await fetch(`${base}/api/booking/detail?id=${encodeURIComponent(id)}`);
+  assert.strictEqual(openRes.status, 400);
+
+  const guestRes = await fetch(`${base}/api/booking/detail?id=${encodeURIComponent(id)}&contact=0903333444`);
+  assert.strictEqual(guestRes.status, 200);
+  const guest = await guestRes.json();
+  assert.strictEqual(guest.booking.name, 'Khách Giấu PIN');
+  assert.strictEqual(guest.booking.smartLockPin, null);
+  assert.ok(!guest.booking.phone || String(guest.booking.phone).includes('*'));
 });
 
 test('Booking Detail: GET /api/booking/detail hỗ trợ admin key xem toàn bộ', async () => {

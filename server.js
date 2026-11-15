@@ -289,7 +289,7 @@ app.post('/api/booking', bookingLimiter, async (req, res) => {
     : Math.round(totalPrice * 0.5);
 
   const record = {
-    id: Date.now().toString(36),
+    id: crypto.randomBytes(9).toString('base64url'),
     createdAt: new Date().toISOString(),
     status: 'pending',
     paymentStatus: 'UNPAID',
@@ -373,7 +373,6 @@ app.get('/api/booking/lookup', lookupLimiter, (req, res) => {
       guests: found.guests,
       status: found.status || 'pending',
       paymentStatus: found.paymentStatus || 'UNPAID',
-      smartLockPin: found.smartLockPin || null,
       createdAt: found.createdAt,
       source: found.source || 'direct',
       phoneMasked: maskPhoneNumber(found.phone),
@@ -406,22 +405,28 @@ app.get('/api/booking/detail', lookupLimiter, (req, res) => {
     return res.status(404).json({ success: false, message: 'Không tìm thấy thông tin đặt phòng.' });
   }
 
-  // Nếu không phải admin, yêu cầu xác thực contact hoặc che giấu PII
+  // Khách phải đưa đúng số điện thoại hoặc email. Thiếu contact thì không trả đơn.
   if (!isAdmin) {
-    if (contact) {
-      const isEmail = contact.includes('@');
-      const cleanPhone = (p) => (p || '').replace(/[^0-9]/g, '');
-      const targetPhone = cleanPhone(contact);
-      let match = false;
-      if (isEmail) {
-        match = (found.email || '').trim().toLowerCase() === contact;
-      } else if (targetPhone.length >= 8) {
-        const bPhoneClean = cleanPhone(found.phone);
-        match = bPhoneClean === targetPhone || bPhoneClean.endsWith(targetPhone) || targetPhone.endsWith(bPhoneClean);
-      }
-      if (!match) {
-        return res.status(403).json({ success: false, message: 'Thông tin xác thực số điện thoại/email không khớp.' });
-      }
+    if (!contact) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng cung cấp cả Mã đặt phòng (id) và Số điện thoại/Email (contact) để xác thực.'
+      });
+    }
+    const isEmail = contact.includes('@');
+    const cleanPhone = (p) => (p || '').replace(/[^0-9]/g, '');
+    const targetPhone = cleanPhone(contact);
+    let match = false;
+    if (isEmail) {
+      match = (found.email || '').trim().toLowerCase() === contact;
+    } else if (targetPhone.length >= 8) {
+      const bPhoneClean = cleanPhone(found.phone);
+      match = Boolean(bPhoneClean) && (
+        bPhoneClean === targetPhone || bPhoneClean.endsWith(targetPhone) || targetPhone.endsWith(bPhoneClean)
+      );
+    }
+    if (!match) {
+      return res.status(403).json({ success: false, message: 'Thông tin xác thực số điện thoại/email không khớp.' });
     }
   }
 
@@ -440,7 +445,7 @@ app.get('/api/booking/detail', lookupLimiter, (req, res) => {
       paymentStatus: found.paymentStatus || 'UNPAID',
       totalPrice: Number(found.totalPrice) || 1200000,
       paidAmount: Number(found.paidAmount) || (found.paymentStatus === 'PAID' ? (Number(found.totalPrice) || 1200000) : 0),
-      smartLockPin: found.smartLockPin || null,
+      smartLockPin: isAdmin ? (found.smartLockPin || null) : null,
       createdAt: found.createdAt,
       source: found.source || 'direct',
       message: found.message || ''

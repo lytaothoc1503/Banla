@@ -161,11 +161,13 @@
     return status === 'paid';
   }
 
-  async function checkRealtimeStatus(bookingCode) {
+  async function checkRealtimeStatus(bookingCode, contact) {
     const clean = String(bookingCode).replace(/^#+/, '').toUpperCase();
     // Chỉ tin phản hồi máy chủ. localStorage khách tự sửa được nên không dùng để đóng dấu.
     try {
-      const res = await fetch('/api/booking/detail?id=' + encodeURIComponent(clean));
+      const params = new URLSearchParams({ id: clean });
+      if (contact) params.set('contact', String(contact).trim());
+      const res = await fetch('/api/booking/detail?' + params.toString());
       if (res.ok) {
         const data = await res.json();
         const booking = data && data.booking;
@@ -212,6 +214,7 @@
       accountNo,
       accountName,
       sessionId,
+      guestPhone: options.guestPhone || options.phone || '',
       vietQrUrl,
       isVerifiedPaid: false,
       onSuccess: options.onSuccess || function () {}
@@ -367,7 +370,7 @@
 
     // Bắt đầu lắng nghe / polling CSDL thời gian thực
     pollInterval = setInterval(async () => {
-      const verified = await checkRealtimeStatus(bookingId);
+      const verified = await checkRealtimeStatus(bookingId, currentSession.guestPhone);
       if (verified) {
         stopPolling();
         currentSession.isVerifiedPaid = true;
