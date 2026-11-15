@@ -123,7 +123,7 @@ app.use(express.urlencoded({ extended: false, limit: '10kb' }));
 
 // BƯỚC 2: Rule 05 & 08 — Chặn truy cập file mã nguồn và nội bộ nhạy cảm
 app.use((req, res, next) => (
-  /^\/(data|node_modules|test|docs|scripts|utils|banla_payment_module\/(backend|database)|\.)|^\/(server\.js|package(-lock)?\.json|skills-lock\.json|supabase_schema\.sql|skill\.md)$/i.test(req.path)
+  /^\/(data|node_modules|test|docs|scripts|utils|supabase|DFT2_bot|banla_payment_module\/(backend|database)|\.)|^\/(server\.js|package(-lock)?\.json|skills-lock\.json|supabase_schema\.sql|skill\.md|wrangler\.jsonc)$/i.test(req.path)
     ? res.status(404).end()
     : next()
 ));

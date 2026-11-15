@@ -196,6 +196,9 @@ test('Tra cứu booking: đúng mã + đúng số điện thoại -> 200 và che
 });
 
 test('Bảo mật tĩnh: Chặn truy cập file nhạy cảm và backend internals -> 404', async () => {
+  const home = await fetch(`${base}/`);
+  assert.strictEqual(home.status, 200);
+
   const res1 = await fetch(`${base}/server.js`);
   assert.strictEqual(res1.status, 404);
 
@@ -207,6 +210,13 @@ test('Bảo mật tĩnh: Chặn truy cập file nhạy cảm và backend interna
 
   const res4 = await fetch(`${base}/banla_payment_module/backend/banla_payment_router.js`);
   assert.strictEqual(res4.status, 404);
+
+  const res5 = await fetch(`${base}/docs/deploy.md`);
+  assert.strictEqual(res5.status, 404);
+  const res6 = await fetch(`${base}/DFT2_bot/package.json`);
+  assert.strictEqual(res6.status, 404);
+  const res7 = await fetch(`${base}/supabase/sql/banla_schema_v2.sql`);
+  assert.strictEqual(res7.status, 404);
 });
 
 test('Webhook Banla Payment: thiếu chữ ký -> 401', async () => {
