@@ -385,6 +385,38 @@ test('Admin: POST /api/admin/booking/smartlock cấp mã PIN thành công', asyn
   assert.strictEqual(data.booking.status, 'confirmed');
 });
 
+test('Admin update: từ chối status và paymentStatus ngoài danh sách', async () => {
+  const postRes = await post({
+    name: 'Khách Trạng Thái',
+    phone: '0906666777',
+    room: 'Deluxe Twin'
+  });
+  const { id } = await postRes.json();
+  const res = await fetch(`${base}/api/admin/booking/update`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-admin-key': ADMIN_KEY
+    },
+    body: JSON.stringify({ id, status: 'hacked', paymentStatus: 'PAID' })
+  });
+  assert.strictEqual(res.status, 400);
+  const bookings = JSON.parse(fs.readFileSync(tmp, 'utf8'));
+  const saved = bookings.find((item) => item.id === id);
+  assert.strictEqual(saved.status, 'pending');
+  assert.strictEqual(saved.paymentStatus, 'UNPAID');
+
+  const ok = await fetch(`${base}/api/admin/booking/update`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-admin-key': ADMIN_KEY
+    },
+    body: JSON.stringify({ id, status: 'confirmed', paymentStatus: 'PAID' })
+  });
+  assert.strictEqual(ok.status, 200);
+});
+
 test('Admin smartlock: PIN tự sinh là 6 chữ số từ crypto.randomInt', async () => {
   const postRes = await post({
     name: 'Khách PIN Ngẫu Nhiên',

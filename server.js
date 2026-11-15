@@ -624,9 +624,18 @@ app.get('/api/admin/stats', requireAdminAuth, (req, res) => {
 });
 
 // 4. Cập nhật thông tin đơn & trạng thái thanh toán
+const BOOKING_STATUSES = new Set(['pending', 'confirmed', 'completed', 'cancelled']);
+const PAYMENT_STATUSES = new Set(['UNPAID', 'DEPOSIT_PAID', 'PAID', 'REFUNDED', 'pending', 'paid', 'refunded']);
+
 app.post('/api/admin/booking/update', requireAdminAuth, (req, res) => {
   const { id, status, paymentStatus, paidAmount, totalPrice, room, message } = req.body || {};
   if (!id) return res.status(400).json({ success: false, message: 'Thiếu mã đơn đặt phòng.' });
+  if (status !== undefined && !BOOKING_STATUSES.has(status)) {
+    return res.status(400).json({ success: false, message: 'Trạng thái đơn không hợp lệ.' });
+  }
+  if (paymentStatus !== undefined && !PAYMENT_STATUSES.has(paymentStatus)) {
+    return res.status(400).json({ success: false, message: 'Trạng thái thanh toán không hợp lệ.' });
+  }
 
   try {
     const list = readBookingsSafe();
