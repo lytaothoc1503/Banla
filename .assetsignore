@@ -1,0 +1,21 @@
+# Cloudflare Workers: không phát hành mã nguồn và tệp nội bộ cùng site tĩnh.
+# GitHub Pages không đọc file này. Pages dùng _config.yml.
+server.js
+supabase_schema.sql
+skill.md
+package.json
+package-lock.json
+skills-lock.json
+wrangler.jsonc
+DFT2_bot/**
+docs/**
+test/**
+supabase/**
+scripts/**
+utils/**
+node_modules/**
+banla_payment_module/backend/**
+banla_payment_module/database/**
+**/.env
+**/.env.*
+.agents/**

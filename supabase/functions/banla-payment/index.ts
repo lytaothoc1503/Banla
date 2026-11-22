@@ -35,9 +35,12 @@ Deno.serve(async (req) => {
     const body = await readJson(req);
     if (containsForbidden(body)) return json({ success: false, message: "Banla không nhận số thẻ, ngày hết hạn hay mã CVV. Quý khách nhập thẻ trên trang PayPal, OnePay hoặc 9Pay." }, 400, origin);
     const action = String(body.action || "checkout");
-    if (action === "admin-login") return json(await adminLogin(String(body.key || "")), 200, origin);
+    if (action === "admin-login") {
+      if (!allowAdminLogin(clientIp(req))) return json({ success: false, message: "Quá nhiều lần thử. Vui lòng thử lại sau." }, 429, origin);
+      return json(await adminLogin(String(body.key || "")), 200, origin);
+    }
     if (action === "admin-payments") {
-      if (!adminOk(req)) return json({ success: false, message: "Chỉ chủ cửa hàng được xem dữ liệu thanh toán." }, 401, origin);
+      if (!(await adminOk(req))) return json({ success: false, message: "Chỉ chủ cửa hàng được xem dữ liệu thanh toán." }, 401, origin);
       return json({ success: true, payments: await listPayments() }, 200, origin);
     }
     const result = await createCheckout(body);
@@ -353,9 +356,11 @@ async function finishOnePay(params: URLSearchParams, ipn = false) {
   if (received.vpc_TxnResponseCode === "0" && received.vpc_CurrencyCode === "VND" && received.vpc_TransactionNo) {
     const marked = await markPaid(payment.id, received.vpc_TransactionNo, amount, "VND");
     if (marked.ok) return ipn ? new Response("responsecode=1&desc=confirm-success") : redirectResult("success", payment.booking_id, payment.amount);
+    await savePayment({ id: payment.id, status: "AMOUNT_MISMATCH" });
+    return ipn ? new Response("responsecode=1&desc=confirm-success") : redirectResult("mismatch", payment.booking_id, payment.amount);
   }
-  await savePayment({ id: payment.id, status: "AMOUNT_MISMATCH" });
-  return ipn ? new Response("responsecode=1&desc=confirm-success") : redirectResult("mismatch", payment.booking_id, payment.amount);
+  await savePayment({ id: payment.id, status: "FAILED" });
+  return ipn ? new Response("responsecode=1&desc=confirm-success") : redirectResult("failed", payment.booking_id, payment.amount);
 }
 async function finishPayPal(token: string) {
   if (!/^[A-Za-z0-9]+$/.test(token)) return redirectResult("failed", "", 0);
@@ -386,20 +391,45 @@ function redirectResult(state: string, bookingId: string, amount: number) {
   if (amount) target.searchParams.set("amount", String(amount));
   return Response.redirect(target.toString(), 302);
 }
-function adminOk(req: Request) {
-  const given = req.headers.get("x-admin-key") || "";
-  const expected = Deno.env.get("ADMIN_KEY") || "";
-  if (!given || !expected || given.length !== expected.length) return false;
-  let diff = 0;
-  for (let i = 0; i < given.length; i++) diff |= given.charCodeAt(i) ^ expected.charCodeAt(i);
-  return diff === 0;
+const loginAttempts = new Map<string, { count: number; reset: number }>();
+
+function clientIp(req: Request) {
+  const forwarded = req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || "";
+  return forwarded.split(",")[0].trim() || "unknown";
+}
+
+function allowAdminLogin(ip: string) {
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000;
+  if (loginAttempts.size > 500) {
+    for (const [key, row] of loginAttempts) {
+      if (row.reset < now) loginAttempts.delete(key);
+    }
+  }
+  const row = loginAttempts.get(ip);
+  if (!row || row.reset < now) {
+    loginAttempts.set(ip, { count: 1, reset: now + windowMs });
+    return true;
+  }
+  row.count += 1;
+  return row.count <= 8;
+}
+
+async function fixedSecretEqual(given: string, expected: string) {
+  const enc = new TextEncoder();
+  const left = new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(`banla-admin\0${given}`)));
+  const right = new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(`banla-admin\0${expected}`)));
+  let diff = left.length ^ right.length;
+  for (let i = 0; i < left.length; i++) diff |= left[i] ^ right[i];
+  return diff === 0 && given.length > 0 && expected.length > 0;
+}
+
+async function adminOk(req: Request) {
+  return fixedSecretEqual(req.headers.get("x-admin-key") || "", Deno.env.get("ADMIN_KEY") || "");
 }
 async function adminLogin(key: string) {
-  const expected = Deno.env.get("ADMIN_KEY") || "";
-  if (!key || !expected || key.length !== expected.length) return { success: false, message: "Mã quản trị không chính xác." };
-  let diff = 0;
-  for (let i = 0; i < key.length; i++) diff |= key.charCodeAt(i) ^ expected.charCodeAt(i);
-  return diff === 0 ? { success: true } : { success: false, message: "Mã quản trị không chính xác." };
+  const ok = await fixedSecretEqual(key, Deno.env.get("ADMIN_KEY") || "");
+  return ok ? { success: true } : { success: false, message: "Mã quản trị không chính xác." };
 }
 async function listPayments() {
   const client = db();

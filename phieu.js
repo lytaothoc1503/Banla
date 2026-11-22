@@ -365,6 +365,22 @@
     document.head.appendChild(st);
   }
 
+  // localStorage không phải bằng chứng thanh toán. Chỉ bản ghi từ máy chủ được giữ nguyên.
+  window.BanlaBookingForSlip = function (serverBooking, localBooking) {
+    if (serverBooking && typeof serverBooking === 'object') return serverBooking;
+    if (!localBooking || typeof localBooking !== 'object') return null;
+    const copy = Object.assign({}, localBooking);
+    copy.payment_status = 'pending';
+    copy.paymentStatus = 'UNPAID';
+    copy.paid_amount = 0;
+    copy.paidAmount = 0;
+    copy.booking_status = 'pending';
+    copy.status = 'pending';
+    copy.smartlock_pin = '';
+    copy.smartLockPin = '';
+    return copy;
+  };
+
   window.BanlaSlip = function (d = {}) {
     injectSlipStyles();
 

@@ -1,12 +1,12 @@
 -- =============================================================================
--- ⛔ KHÔNG CHẠY FILE NÀY. Bản v1 có lỗ hổng nghiêm trọng (docs/database_audit.md D2, D3):
---    anon đọc/sửa/xóa được mọi đơn và tự gọi hàm duyệt đơn để lấy mã PIN.
---    Dùng bản thay thế đã kiểm thử: supabase/sql/banla_schema_v2.sql
--- =============================================================================
--- =============================================================================
 -- BANLA BOUTIQUE HOTEL ĐÀ LẠT — SUPABASE DATABASE SCHEMA (ISOLATED)
 -- Quy tắc: Toàn bộ bảng nằm trong schema `banla` để cách ly 100% với `webmoi`.
--- Hướng dẫn: Copy toàn bộ nội dung file này vào Supabase SQL Editor và bấm RUN.
+--
+-- 16/11/2026: đã gỡ policy mở cho mọi dòng và GRANT đọc/sửa/xóa cho anon.
+-- Database ĐANG CÓ dữ liệu: KHÔNG chạy lại cả file này. Chạy
+-- supabase/sql/20261116_banla_lock_anon_dml.sql (xem hậu quả với admin.html
+-- ở đầu file đó). Bản schema v2 (supabase/sql/banla_schema_v2.sql) không chạy
+-- đè lên bảng v1.
 -- =============================================================================
 
 -- 1. Khởi tạo Schema riêng biệt `banla`
@@ -71,52 +71,37 @@ CREATE INDEX IF NOT EXISTS idx_banla_transactions_booking_id ON banla.transactio
 CREATE INDEX IF NOT EXISTS idx_banla_transactions_ref ON banla.transactions (reference_code);
 
 -- =============================================================================
--- 4. Bật Row Level Security (RLS) & Cấp quyền cho `anon` / `authenticated`
+-- 4. RLS — anon không đọc, không sửa, không xóa đơn và giao dịch
 -- =============================================================================
 ALTER TABLE banla.bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE banla.transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE banla.bookings FORCE ROW LEVEL SECURITY;
+ALTER TABLE banla.transactions FORCE ROW LEVEL SECURITY;
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE banla.bookings TO anon, authenticated, service_role;
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE banla.transactions TO anon, authenticated, service_role;
+REVOKE ALL ON TABLE banla.bookings FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON TABLE banla.transactions FROM PUBLIC, anon, authenticated;
+GRANT INSERT ON TABLE banla.bookings TO anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE banla.bookings TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE banla.transactions TO service_role;
 
--- Policies cho phép đọc/ghi đơn đặt phòng từ Web & Admin Dashboard của Banla
 DROP POLICY IF EXISTS "banla_bookings_select_policy" ON banla.bookings;
-CREATE POLICY "banla_bookings_select_policy"
-  ON banla.bookings FOR SELECT
-  TO anon, authenticated
-  USING (true);
-
+DROP POLICY IF EXISTS "banla_bookings_update_policy" ON banla.bookings;
 DROP POLICY IF EXISTS "banla_bookings_insert_policy" ON banla.bookings;
-CREATE POLICY "banla_bookings_insert_policy"
+DROP POLICY IF EXISTS "banla_transactions_select_policy" ON banla.transactions;
+DROP POLICY IF EXISTS "banla_transactions_insert_policy" ON banla.transactions;
+DROP POLICY IF EXISTS "banla_transactions_update_policy" ON banla.transactions;
+DROP POLICY IF EXISTS banla_bookings_insert_pending_policy ON banla.bookings;
+
+-- Chỉ tạo đơn mới ở trạng thái chờ. Không policy SELECT/UPDATE/DELETE cho anon.
+CREATE POLICY banla_bookings_insert_pending_policy
   ON banla.bookings FOR INSERT
   TO anon, authenticated
-  WITH CHECK (true);
-
-DROP POLICY IF EXISTS "banla_bookings_update_policy" ON banla.bookings;
-CREATE POLICY "banla_bookings_update_policy"
-  ON banla.bookings FOR UPDATE
-  TO anon, authenticated
-  USING (true)
-  WITH CHECK (true);
-
-DROP POLICY IF EXISTS "banla_transactions_select_policy" ON banla.transactions;
-CREATE POLICY "banla_transactions_select_policy"
-  ON banla.transactions FOR SELECT
-  TO anon, authenticated
-  USING (true);
-
-DROP POLICY IF EXISTS "banla_transactions_insert_policy" ON banla.transactions;
-CREATE POLICY "banla_transactions_insert_policy"
-  ON banla.transactions FOR INSERT
-  TO anon, authenticated
-  WITH CHECK (true);
-
-DROP POLICY IF EXISTS "banla_transactions_update_policy" ON banla.transactions;
-CREATE POLICY "banla_transactions_update_policy"
-  ON banla.transactions FOR UPDATE
-  TO anon, authenticated
-  USING (true)
-  WITH CHECK (true);
+  WITH CHECK (
+    payment_status = 'pending'
+    AND booking_status = 'pending'
+    AND paid_amount = 0
+    AND smartlock_pin IS NULL
+  );
 
 -- =============================================================================
 -- 5. Các hàm RPC Bridge (Prefix `banla_`) giúp gọi từ JS không cần chỉnh Exposed Schema
@@ -238,10 +223,16 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.banla_list_bookings() TO anon, authenticated, service_role;
+-- PUBLIC được EXECUTE mặc định trên hàm mới. Thu hồi rồi cấp lại đúng vai trò.
+REVOKE ALL ON FUNCTION public.banla_list_bookings() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.banla_approve_booking(UUID, VARCHAR, BOOLEAN, VARCHAR) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.banla_update_booking(UUID, VARCHAR, VARCHAR, NUMERIC, NUMERIC, VARCHAR, TEXT) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.banla_create_booking(VARCHAR, TEXT, VARCHAR, TEXT, VARCHAR, INTEGER, TIMESTAMPTZ, TIMESTAMPTZ, NUMERIC, TEXT) FROM PUBLIC;
+
+GRANT EXECUTE ON FUNCTION public.banla_list_bookings() TO service_role;
+GRANT EXECUTE ON FUNCTION public.banla_approve_booking(UUID, VARCHAR, BOOLEAN, VARCHAR) TO service_role;
+GRANT EXECUTE ON FUNCTION public.banla_update_booking(UUID, VARCHAR, VARCHAR, NUMERIC, NUMERIC, VARCHAR, TEXT) TO service_role;
 GRANT EXECUTE ON FUNCTION public.banla_create_booking(VARCHAR, TEXT, VARCHAR, TEXT, VARCHAR, INTEGER, TIMESTAMPTZ, TIMESTAMPTZ, NUMERIC, TEXT) TO anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.banla_approve_booking(UUID, VARCHAR, BOOLEAN, VARCHAR) TO anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.banla_update_booking(UUID, VARCHAR, VARCHAR, NUMERIC, NUMERIC, VARCHAR, TEXT) TO anon, authenticated, service_role;
 
 -- =============================================================================
 -- 6. Dữ liệu khởi tạo mẫu (Chỉ thêm nếu bảng đang trống)
