@@ -36,6 +36,9 @@
     } else if (state === 'mismatch') {
       title.textContent = 'Chưa xác nhận thanh toán';
       message.textContent = 'Số tiền cổng thanh toán trả về không khớp hóa đơn. Đơn chưa được thanh toán.';
+    } else if (state === 'pending') {
+      title.textContent = 'Thanh toán đang xử lý';
+      message.textContent = 'Cổng thanh toán đang xử lý giao dịch. Đơn chưa được thanh toán cho đến khi số tiền được xác nhận.';
     } else {
       title.textContent = 'Thanh toán chưa hoàn tất';
       message.textContent = 'Thanh toán chưa hoàn tất. Đơn chưa được thanh toán; bạn có thể thử lại.';
